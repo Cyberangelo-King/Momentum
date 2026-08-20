@@ -105,25 +105,69 @@ CREATE INDEX IF NOT EXISTS idx_ideas_category ON public.ideas(category);
 
 -- ------------------------------------------------------------------------------
 -- Row Level Security (RLS) Policies
--- Public access enabled for conference applet usage
+-- Hardened Single-Owner Access Control:
+-- ONLY authenticated Supabase sessions (auth.role() = 'authenticated') 
+-- are granted SELECT, INSERT, UPDATE, and DELETE operations.
+-- Anonymous / unauthenticated requests (anon key without active login) 
+-- are strictly denied by RLS.
 -- ------------------------------------------------------------------------------
+
+-- 1. Enable RLS on all private tables
 ALTER TABLE public.connections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.moments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ideas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.event_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow public read access on connections" ON public.connections FOR SELECT USING (true);
-CREATE POLICY "Allow public insert/update on connections" ON public.connections FOR ALL USING (true) WITH CHECK (true);
+-- 2. Drop any legacy public policies
+DROP POLICY IF EXISTS "Allow public read access on connections" ON public.connections;
+DROP POLICY IF EXISTS "Allow public insert/update on connections" ON public.connections;
+DROP POLICY IF EXISTS "Allow public read access on moments" ON public.moments;
+DROP POLICY IF EXISTS "Allow public insert/update on moments" ON public.moments;
+DROP POLICY IF EXISTS "Allow public read access on ideas" ON public.ideas;
+DROP POLICY IF EXISTS "Allow public insert/update on ideas" ON public.ideas;
+DROP POLICY IF EXISTS "Allow public read access on event_sessions" ON public.event_sessions;
+DROP POLICY IF EXISTS "Allow public insert/update on event_sessions" ON public.event_sessions;
+DROP POLICY IF EXISTS "Allow public read access on profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Allow public insert/update on profiles" ON public.profiles;
 
-CREATE POLICY "Allow public read access on moments" ON public.moments FOR SELECT USING (true);
-CREATE POLICY "Allow public insert/update on moments" ON public.moments FOR ALL USING (true) WITH CHECK (true);
+-- 3. Hardened Owner-Authenticated Policies for CONNECTIONS
+CREATE POLICY "Owner authenticated access on connections" 
+ON public.connections 
+FOR ALL 
+TO authenticated 
+USING ((auth.role() = 'authenticated'))
+WITH CHECK ((auth.role() = 'authenticated'));
 
-CREATE POLICY "Allow public read access on ideas" ON public.ideas FOR SELECT USING (true);
-CREATE POLICY "Allow public insert/update on ideas" ON public.ideas FOR ALL USING (true) WITH CHECK (true);
+-- 4. Hardened Owner-Authenticated Policies for MOMENTS
+CREATE POLICY "Owner authenticated access on moments" 
+ON public.moments 
+FOR ALL 
+TO authenticated 
+USING ((auth.role() = 'authenticated'))
+WITH CHECK ((auth.role() = 'authenticated'));
 
-CREATE POLICY "Allow public read access on event_sessions" ON public.event_sessions FOR SELECT USING (true);
-CREATE POLICY "Allow public insert/update on event_sessions" ON public.event_sessions FOR ALL USING (true) WITH CHECK (true);
+-- 5. Hardened Owner-Authenticated Policies for IDEAS
+CREATE POLICY "Owner authenticated access on ideas" 
+ON public.ideas 
+FOR ALL 
+TO authenticated 
+USING ((auth.role() = 'authenticated'))
+WITH CHECK ((auth.role() = 'authenticated'));
 
-CREATE POLICY "Allow public read access on profiles" ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Allow public insert/update on profiles" ON public.profiles FOR ALL USING (true) WITH CHECK (true);
+-- 6. Hardened Owner-Authenticated Policies for EVENT_SESSIONS
+CREATE POLICY "Owner authenticated access on event_sessions" 
+ON public.event_sessions 
+FOR ALL 
+TO authenticated 
+USING ((auth.role() = 'authenticated'))
+WITH CHECK ((auth.role() = 'authenticated'));
+
+-- 7. Hardened Owner-Authenticated Policies for PROFILES
+CREATE POLICY "Owner authenticated access on profiles" 
+ON public.profiles 
+FOR ALL 
+TO authenticated 
+USING ((auth.role() = 'authenticated'))
+WITH CHECK ((auth.role() = 'authenticated'));
+

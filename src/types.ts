@@ -120,4 +120,6 @@ export interface SecuritySettings {
   authorizedEmail: string;
   isLocked: boolean;
   lastUnlockedAt: string | null;
+  isBiometricEnabled?: boolean;
+  biometricCredentialId?: string | null;
 }

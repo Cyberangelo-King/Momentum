@@ -26,6 +26,8 @@ export const getSupabaseClient = (): SupabaseClient | null => {
         auth: {
           persistSession: true,
           autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storage: typeof window !== 'undefined' ? window.localStorage : undefined,
         },
       });
     } catch (err) {

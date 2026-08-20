@@ -2,12 +2,41 @@ import { SecuritySettings } from '../types';
 import { getSupabaseClient, isSupabaseConfigured } from './supabaseClient';
 import { triggerHaptic } from './haptics';
 import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
+import { getStoredBiometricCredentialId, isBiometricEnabled, authenticateWithBiometrics } from './biometricService';
 
 const SECURITY_SETTINGS_STORAGE_KEY = 'momentum_security_settings_v1';
 
 /**
+ * Computes the environment-aware redirect URL for Supabase Auth emails (confirmations, password resets, magic links).
+ * - Local development uses the active local origin (e.g., http://localhost:3000).
+ * - Production uses the deployed origin (e.g., https://angelomomentum.netlify.app or active production origin).
+ */
+export function getAuthRedirectUrl(): string {
+  if (typeof window !== 'undefined' && window.location) {
+    const origin = window.location.origin;
+    // Local development check
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return origin;
+    }
+    // Deployed Netlify / production check
+    if (origin.includes('netlify.app') || origin.includes('angelomomentum')) {
+      return origin;
+    }
+    // Environment variable check
+    const metaEnv = (import.meta as any).env || {};
+    const configuredUrl = (metaEnv.VITE_APP_URL || metaEnv.APP_URL || '').trim();
+    if (configuredUrl && !configuredUrl.includes('localhost') && !configuredUrl.includes('MY_APP_URL')) {
+      return configuredUrl.replace(/\/$/, '');
+    }
+    return origin;
+  }
+  return 'https://angelomomentum.netlify.app';
+}
+
+/**
  * Retrieves the designated owner email from environment configuration.
  * Momentum V1 is a private, single-owner system.
+ * Security requirement: Fails closed in production if VITE_OWNER_EMAIL is not explicitly configured.
  */
 export function getOwnerEmail(): string {
   const metaEnv = (import.meta as any).env || {};
@@ -15,16 +44,26 @@ export function getOwnerEmail(): string {
   if (configured && configured.trim()) {
     return configured.trim().toLowerCase();
   }
-  // Default fallback owner configuration
-  return 'faithakinboyejo@gmail.com';
+  // In development environments without env, support local development if explicit
+  const isProd = metaEnv.PROD || metaEnv.NODE_ENV === 'production';
+  if (!isProd) {
+    return (metaEnv.VITE_OWNER_EMAIL || 'faithakinboyejo@gmail.com').trim().toLowerCase();
+  }
+  // Fail closed in production: no hardcoded default
+  return '';
 }
 
 /**
  * Checks if the given email matches the designated single owner.
+ * Fails closed if the owner email is unconfigured or null.
  */
 export function isDesignatedOwner(email?: string | null): boolean {
   if (!email) return false;
   const ownerEmail = getOwnerEmail();
+  if (!ownerEmail) {
+    console.error('Security Alert: VITE_OWNER_EMAIL is not configured. Access denied.');
+    return false;
+  }
   return email.trim().toLowerCase() === ownerEmail.toLowerCase();
 }
 
@@ -34,6 +73,7 @@ export interface AuthResult {
   session?: Session | null;
   error?: string;
   isUnauthorizedUser?: boolean;
+  isUnconfirmedEmail?: boolean;
 }
 
 /**
@@ -78,15 +118,18 @@ export async function loginWithOwnerCredentials(
 
     if (error) {
       triggerHaptic('error');
-      // Format clean, user-friendly error messages
       let message = error.message;
+      const isUnconfirmed = error.message.toLowerCase().includes('email not confirmed');
+
       if (error.message.toLowerCase().includes('invalid login credentials')) {
         message = 'Invalid email or password. Please verify your credentials.';
-      } else if (error.message.toLowerCase().includes('email not confirmed')) {
-        message = 'Your Supabase email has not been confirmed yet. Please confirm your email.';
+      } else if (isUnconfirmed) {
+        message = 'Your Supabase email has not been confirmed yet. Please confirm your email using the link sent to your inbox.';
       }
+
       return {
         success: false,
+        isUnconfirmedEmail: isUnconfirmed,
         error: message,
       };
     }
@@ -128,6 +171,56 @@ export async function loginWithOwnerCredentials(
 }
 
 /**
+ * Resends the Supabase signup confirmation email to the owner with environment-aware redirect URL.
+ */
+export async function resendOwnerConfirmationEmail(emailInput?: string): Promise<{
+  success: boolean;
+  message?: string;
+  error?: string;
+}> {
+  const client = getSupabaseClient();
+  const email = (emailInput || getOwnerEmail()).trim();
+  const redirectUrl = getAuthRedirectUrl();
+
+  if (!client || !isSupabaseConfigured()) {
+    return {
+      success: false,
+      error: 'Supabase authentication is not configured.',
+    };
+  }
+
+  try {
+    const { error } = await client.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: redirectUrl,
+      },
+    });
+
+    if (error) {
+      triggerHaptic('error');
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+
+    triggerHaptic('success');
+    return {
+      success: true,
+      message: `Confirmation email dispatched to ${email}. Redirect destination: ${redirectUrl}`,
+    };
+  } catch (err: any) {
+    triggerHaptic('error');
+    return {
+      success: false,
+      error: err?.message || 'Failed to resend confirmation email.',
+    };
+  }
+}
+
+/**
  * Signs out the owner and terminates the Supabase session.
  */
 export async function logoutOwner(): Promise<void> {
@@ -145,7 +238,7 @@ export async function logoutOwner(): Promise<void> {
 
 /**
  * Restores and verifies the current Supabase session.
- * Handles offline scenarios gracefully for already authenticated sessions.
+ * Handles incoming email confirmation tokens, PKCE auth codes, and offline scenarios.
  */
 export async function getVerifiedOwnerSession(): Promise<{
   session: Session | null;
@@ -168,6 +261,49 @@ export async function getVerifiedOwnerSession(): Promise<{
   }
 
   try {
+    // 1. Check for incoming PKCE auth code in URL (e.g. from email confirmation redirect)
+    if (typeof window !== 'undefined' && window.location.search) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      if (code) {
+        try {
+          const { data: exchangeData, error: exchangeError } = await client.auth.exchangeCodeForSession(code);
+          if (!exchangeError && exchangeData.session) {
+            // Clean URL search parameters without reloading
+            const cleanUrl = window.location.pathname + window.location.hash;
+            window.history.replaceState({}, document.title, cleanUrl || '/');
+
+            const email = exchangeData.session.user.email;
+            const isOwner = isDesignatedOwner(email);
+
+            if (isOwner) {
+              triggerHaptic('unlock');
+              return {
+                session: exchangeData.session,
+                user: exchangeData.session.user,
+                isOwner: true,
+                isOffline: false,
+              };
+            }
+          }
+        } catch (exchangeErr) {
+          console.warn('Error exchanging PKCE code for session:', exchangeErr);
+        }
+      }
+    }
+
+    // 2. Check for incoming access_token hash from email confirmation
+    if (typeof window !== 'undefined' && window.location.hash.includes('access_token=')) {
+      // Delay clean URL slightly to allow Supabase listener to capture token
+      setTimeout(() => {
+        try {
+          if (window.location.hash.includes('access_token=')) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch (e) {}
+      }, 600);
+    }
+
     const { data, error } = await client.auth.getSession();
 
     if (error) {
@@ -264,10 +400,8 @@ export function subscribeToAuthChanges(
 }
 
 // ============================================================================
-// OPTIONAL SECONDARY IN-SESSION PRIVACY LOCK (SCREEN SHADE)
+// OPTIONAL SECONDARY IN-SESSION PRIVACY LOCK (SCREEN SHADE + BIOMETRICS)
 // ============================================================================
-// Note: This is an optional secondary in-session lock when the owner is away from
-// their device. It is NOT a substitute for primary Supabase authentication.
 
 function hashPin(pin: string): string {
   let hash = 0;
@@ -286,17 +420,23 @@ export function getInitialSecuritySettings(): SecuritySettings {
     authorizedEmail: getOwnerEmail(),
     isLocked: false,
     lastUnlockedAt: new Date().toISOString(),
+    isBiometricEnabled: isBiometricEnabled(),
+    biometricCredentialId: getStoredBiometricCredentialId(),
   };
 }
 
 export function loadSecuritySettings(): SecuritySettings {
   try {
     const data = localStorage.getItem(SECURITY_SETTINGS_STORAGE_KEY);
+    const bioEnabled = isBiometricEnabled();
+    const bioId = getStoredBiometricCredentialId();
     if (data) {
       const parsed = JSON.parse(data);
       return {
         ...getInitialSecuritySettings(),
         ...parsed,
+        isBiometricEnabled: parsed.isBiometricEnabled ?? bioEnabled,
+        biometricCredentialId: parsed.biometricCredentialId ?? bioId,
         authorizedEmail: getOwnerEmail(),
       };
     }
@@ -317,13 +457,17 @@ export function saveSecuritySettings(settings: SecuritySettings): void {
 export function verifySessionPin(input: string, settings: SecuritySettings): boolean {
   const clean = input.trim();
   if (!settings.pinHash) {
-    // If no pin is set yet, any 4-digit setup attempt or owner email unlocks
     return clean.length >= 4;
   }
   const match = hashPin(clean) === settings.pinHash;
   if (match) triggerHaptic('unlock');
   else triggerHaptic('error');
   return match;
+}
+
+export async function verifySessionBiometrics(): Promise<boolean> {
+  const res = await authenticateWithBiometrics();
+  return res.success;
 }
 
 export function updateSessionPin(newPin: string): boolean {

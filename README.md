@@ -155,19 +155,19 @@ CREATE TABLE IF NOT EXISTS public.ideas (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 4. ROW LEVEL SECURITY (RLS) POLICIES
+-- 4. ROW LEVEL SECURITY (RLS) POLICIES (HARDENED SINGLE-OWNER ACCESS)
 ALTER TABLE public.connections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.moments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ideas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.event_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow public read access on connections" ON public.connections FOR SELECT USING (true);
-CREATE POLICY "Allow public insert/update on connections" ON public.connections FOR ALL USING (true) WITH CHECK (true);
-
-CREATE POLICY "Allow public read access on moments" ON public.moments FOR SELECT USING (true);
-CREATE POLICY "Allow public insert/update on moments" ON public.moments FOR ALL USING (true) WITH CHECK (true);
-
-CREATE POLICY "Allow public read access on ideas" ON public.ideas FOR SELECT USING (true);
-CREATE POLICY "Allow public insert/update on ideas" ON public.ideas FOR ALL USING (true) WITH CHECK (true);
+-- Deny public/anon access: only authenticated sessions have full access
+CREATE POLICY "Owner authenticated access on connections" ON public.connections FOR ALL TO authenticated USING ((auth.role() = 'authenticated')) WITH CHECK ((auth.role() = 'authenticated'));
+CREATE POLICY "Owner authenticated access on moments" ON public.moments FOR ALL TO authenticated USING ((auth.role() = 'authenticated')) WITH CHECK ((auth.role() = 'authenticated'));
+CREATE POLICY "Owner authenticated access on ideas" ON public.ideas FOR ALL TO authenticated USING ((auth.role() = 'authenticated')) WITH CHECK ((auth.role() = 'authenticated'));
+CREATE POLICY "Owner authenticated access on event_sessions" ON public.event_sessions FOR ALL TO authenticated USING ((auth.role() = 'authenticated')) WITH CHECK ((auth.role() = 'authenticated'));
+CREATE POLICY "Owner authenticated access on profiles" ON public.profiles FOR ALL TO authenticated USING ((auth.role() = 'authenticated')) WITH CHECK ((auth.role() = 'authenticated'));
 ```
 
 ### 3. Configure API Credentials

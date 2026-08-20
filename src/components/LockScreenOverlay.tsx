@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Lock, Unlock, ShieldAlert, ArrowRight, KeyRound, Sparkles, LogOut } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Lock, Unlock, ShieldAlert, ArrowRight, KeyRound, Sparkles, LogOut, Fingerprint, ScanFace } from 'lucide-react';
 import { SecuritySettings, UserProfile } from '../types';
 import { verifySessionPin, setAppLockState } from '../services/authService';
+import { checkBiometricAvailability, authenticateWithBiometrics, BiometricAvailability } from '../services/biometricService';
 
 interface LockScreenOverlayProps {
   isLocked: boolean;
@@ -20,9 +21,45 @@ export const LockScreenOverlay: React.FC<LockScreenOverlayProps> = ({
 }) => {
   const [inputVal, setInputVal] = useState('');
   const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [shake, setShake] = useState(false);
+  const [biometricInfo, setBiometricInfo] = useState<BiometricAvailability | null>(null);
+  const [isVerifyingBio, setIsVerifyingBio] = useState(false);
+
+  // Check biometric hardware capability on mount
+  useEffect(() => {
+    if (!isLocked) return;
+    checkBiometricAvailability().then((info) => {
+      setBiometricInfo(info);
+      // If biometrics is registered and enabled, attempt verification
+      if (info.isRegistered && info.isEnabled) {
+        handleBiometricUnlock();
+      }
+    });
+  }, [isLocked]);
 
   if (!isLocked) return null;
+
+  const handleBiometricUnlock = async () => {
+    if (isVerifyingBio) return;
+    setIsVerifyingBio(true);
+    setError(false);
+    setErrorMessage(null);
+
+    try {
+      const result = await authenticateWithBiometrics();
+      if (result.success) {
+        setAppLockState(false);
+        onUnlock();
+      } else if (!result.cancelled && result.error) {
+        setErrorMessage(result.error);
+      }
+    } catch (err: any) {
+      console.warn('Biometric unlock exception:', err);
+    } finally {
+      setIsVerifyingBio(false);
+    }
+  };
 
   const handleUnlockSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,8 +68,10 @@ export const LockScreenOverlay: React.FC<LockScreenOverlayProps> = ({
       onUnlock();
       setInputVal('');
       setError(false);
+      setErrorMessage(null);
     } else {
       setError(true);
+      setErrorMessage('Incorrect PIN passcode.');
       setShake(true);
       setTimeout(() => setShake(false), 500);
     }
@@ -41,7 +80,7 @@ export const LockScreenOverlay: React.FC<LockScreenOverlayProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0A0A0A]/95 backdrop-blur-xl text-neutral-100 animate-fade-in">
       <div
-        className={`w-full max-w-sm bg-[#120906] border border-white/10 rounded-3xl p-8 shadow-2xl text-center space-y-6 ${
+        className={`w-full max-w-sm bg-[#120906] border border-white/10 rounded-3xl p-7 sm:p-8 shadow-2xl text-center space-y-6 ${
           shake ? 'animate-bounce' : ''
         }`}
       >
@@ -58,8 +97,21 @@ export const LockScreenOverlay: React.FC<LockScreenOverlayProps> = ({
           <p className="text-[11px] font-mono text-white/40">{security.authorizedEmail}</p>
         </div>
 
-        {/* Input Form */}
-        <form onSubmit={handleUnlockSubmit} className="space-y-4">
+        {/* Biometric Quick Unlock if Available */}
+        {biometricInfo?.isRegistered && (
+          <button
+            type="button"
+            onClick={handleBiometricUnlock}
+            disabled={isVerifyingBio}
+            className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-2xl text-xs transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+          >
+            <Fingerprint className="w-4 h-4 stroke-[2.2]" />
+            <span>{isVerifyingBio ? 'Scanning Biometrics...' : `Unlock with ${biometricInfo.biometricLabel}`}</span>
+          </button>
+        )}
+
+        {/* PIN Input Form */}
+        <form onSubmit={handleUnlockSubmit} className="space-y-3.5">
           <div className="space-y-1">
             <input
               type="password"
@@ -67,16 +119,17 @@ export const LockScreenOverlay: React.FC<LockScreenOverlayProps> = ({
               onChange={(e) => {
                 setInputVal(e.target.value);
                 setError(false);
+                setErrorMessage(null);
               }}
               placeholder="Enter PIN Passcode"
-              autoFocus
+              autoFocus={!biometricInfo?.isRegistered}
               className={`w-full bg-[#1c0d08] border ${
                 error ? 'border-rose-500 text-rose-300' : 'border-white/15 text-white focus:border-[#FF5C00]'
               } rounded-2xl px-4 py-3.5 text-center text-base tracking-widest placeholder-white/20 focus:outline-none transition-colors font-mono`}
             />
-            {error && (
-              <p className="text-xs text-rose-400 font-medium">
-                Incorrect PIN passcode.
+            {errorMessage && (
+              <p className="text-xs text-rose-400 font-medium pt-1">
+                {errorMessage}
               </p>
             )}
           </div>
@@ -86,7 +139,7 @@ export const LockScreenOverlay: React.FC<LockScreenOverlayProps> = ({
             className="w-full py-3.5 bg-gradient-to-r from-[#FF5C00] to-[#E62B1E] hover:from-[#ff7324] hover:to-[#FF5C00] text-black font-bold rounded-2xl text-sm transition-all shadow-lg shadow-[#FF5C00]/20 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
           >
             <Unlock className="w-4 h-4" />
-            <span>Unlock Workspace</span>
+            <span>Unlock with PIN</span>
           </button>
         </form>
 

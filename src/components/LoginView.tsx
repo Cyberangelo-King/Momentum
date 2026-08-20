@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Lock, 
@@ -14,9 +14,22 @@ import {
   AlertCircle,
   CheckCircle2,
   Terminal,
-  Loader2
+  Loader2,
+  Fingerprint,
+  RefreshCw,
+  Send
 } from 'lucide-react';
-import { loginWithOwnerCredentials, getOwnerEmail } from '../services/authService';
+import { 
+  loginWithOwnerCredentials, 
+  getOwnerEmail, 
+  resendOwnerConfirmationEmail,
+  getAuthRedirectUrl 
+} from '../services/authService';
+import { 
+  checkBiometricAvailability, 
+  authenticateWithBiometrics, 
+  BiometricAvailability 
+} from '../services/biometricService';
 import { triggerHaptic } from '../services/haptics';
 
 interface LoginViewProps {
@@ -29,10 +42,14 @@ export const LoginView: React.FC<LoginViewProps> = ({
   unauthorizedAttemptEmail,
 }) => {
   const configuredOwnerEmail = getOwnerEmail();
+  const currentRedirectUrl = getAuthRedirectUrl();
   const [email, setEmail] = useState<string>(configuredOwnerEmail);
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isResending, setIsResending] = useState<boolean>(false);
+  const [resendSuccessMessage, setResendSuccessMessage] = useState<string | null>(null);
+  const [isUnconfirmed, setIsUnconfirmed] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(
     unauthorizedAttemptEmail
       ? `Access Denied: Account (${unauthorizedAttemptEmail}) is not the designated owner of this Momentum instance.`
@@ -41,12 +58,20 @@ export const LoginView: React.FC<LoginViewProps> = ({
   const [isUnauthorized, setIsUnauthorized] = useState<boolean>(Boolean(unauthorizedAttemptEmail));
   const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
 
+  const [biometricInfo, setBiometricInfo] = useState<BiometricAvailability | null>(null);
+  const [isBioScanning, setIsBioScanning] = useState<boolean>(false);
+
+  useEffect(() => {
+    checkBiometricAvailability().then(setBiometricInfo);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return;
 
     setErrorMessage(null);
     setIsUnauthorized(false);
+    setResendSuccessMessage(null);
 
     if (!email.trim()) {
       setErrorMessage('Please enter your owner email address.');
@@ -73,6 +98,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
         if (result.isUnauthorizedUser) {
           setIsUnauthorized(true);
         }
+        if (result.isUnconfirmedEmail) {
+          setIsUnconfirmed(true);
+        }
         setErrorMessage(result.error || 'Authentication failed. Please check your credentials.');
         triggerHaptic('error');
       }
@@ -81,6 +109,51 @@ export const LoginView: React.FC<LoginViewProps> = ({
       triggerHaptic('error');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    if (isResending) return;
+    setIsResending(true);
+    setResendSuccessMessage(null);
+    setErrorMessage(null);
+
+    try {
+      const res = await resendOwnerConfirmationEmail(email);
+      if (res.success) {
+        setResendSuccessMessage(
+          `Confirmation email sent to ${email}. When you click the link in your email, you will be redirected to: ${currentRedirectUrl}`
+        );
+        triggerHaptic('success');
+      } else {
+        setErrorMessage(res.error || 'Failed to resend confirmation email.');
+        triggerHaptic('error');
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Error sending confirmation email.');
+      triggerHaptic('error');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const handleBiometricQuickUnlock = async () => {
+    if (isBioScanning) return;
+    setIsBioScanning(true);
+    setErrorMessage(null);
+
+    try {
+      const res = await authenticateWithBiometrics();
+      if (res.success) {
+        triggerHaptic('unlock');
+        onLoginSuccess();
+      } else if (!res.cancelled && res.error) {
+        setErrorMessage(res.error);
+      }
+    } catch (err: any) {
+      console.warn('Biometric login exception:', err);
+    } finally {
+      setIsBioScanning(false);
     }
   };
 
@@ -132,7 +205,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 Private Workspace
               </h1>
               <p className="text-xs text-[#e4beb1]/70 max-w-xs mx-auto">
-                Single-owner terminal for <strong className="text-white">TEDxAkure 2026</strong>. Enter credentials to authenticate.
+                Single-owner terminal for <strong className="text-white">TEDxAkure 2026</strong>.
               </p>
             </div>
           </div>
@@ -147,6 +220,24 @@ export const LoginView: React.FC<LoginViewProps> = ({
             </div>
           )}
 
+          {/* Success Banner (e.g. for resend confirmation) */}
+          <AnimatePresence>
+            {resendSuccessMessage && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="p-3.5 rounded-2xl border bg-emerald-950/80 border-emerald-500/50 text-emerald-200 text-xs leading-relaxed flex items-start gap-2.5"
+              >
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-bold">Confirmation Email Sent</p>
+                  <p className="text-[11px] opacity-90">{resendSuccessMessage}</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Error / Access Denied Banner */}
           <AnimatePresence>
             {errorMessage && (
@@ -154,26 +245,61 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className={`p-3.5 rounded-2xl border flex items-start gap-3 text-xs leading-relaxed ${
+                className={`p-3.5 rounded-2xl border flex flex-col gap-2 text-xs leading-relaxed ${
                   isUnauthorized
                     ? 'bg-rose-950/80 border-rose-500/50 text-rose-200'
                     : 'bg-[#260f08] border-[#FF5C00]/40 text-[#ffc5b2]'
                 }`}
               >
-                {isUnauthorized ? (
-                  <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                ) : (
-                  <AlertCircle className="w-4 h-4 text-[#FF5C00] shrink-0 mt-0.5" />
-                )}
-                <div className="space-y-0.5 flex-1">
-                  <p className="font-bold">
-                    {isUnauthorized ? 'Access Denied' : 'Authentication Error'}
-                  </p>
-                  <p className="text-[11px] opacity-90">{errorMessage}</p>
+                <div className="flex items-start gap-2.5">
+                  {isUnauthorized ? (
+                    <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-[#FF5C00] shrink-0 mt-0.5" />
+                  )}
+                  <div className="space-y-0.5 flex-1">
+                    <p className="font-bold">
+                      {isUnauthorized ? 'Access Denied' : 'Authentication Notice'}
+                    </p>
+                    <p className="text-[11px] opacity-90">{errorMessage}</p>
+                  </div>
                 </div>
+
+                {/* If unconfirmed email, show one-click resend button */}
+                {isUnconfirmed && (
+                  <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
+                    <span className="text-[10px] text-white/50">Need a new link?</span>
+                    <button
+                      type="button"
+                      onClick={handleResendConfirmation}
+                      disabled={isResending}
+                      className="px-3 py-1.5 bg-[#FF5C00]/20 hover:bg-[#FF5C00]/30 text-[#FF5C00] border border-[#FF5C00]/40 rounded-xl text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      {isResending ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Send className="w-3 h-3" />
+                      )}
+                      <span>Resend Confirmation Email</span>
+                    </button>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Biometric Quick Unlock (if paired on this device) */}
+          {biometricInfo?.isRegistered && (
+            <button
+              type="button"
+              onClick={handleBiometricQuickUnlock}
+              disabled={isBioScanning}
+              className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-2xl text-xs transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+            >
+              <Fingerprint className="w-4 h-4 stroke-[2.2]" />
+              <span>{isBioScanning ? 'Scanning Sensor...' : `Unlock with ${biometricInfo.biometricLabel}`}</span>
+            </button>
+          )}
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -200,7 +326,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                     setEmail(e.target.value);
                     if (errorMessage) setErrorMessage(null);
                   }}
-                  placeholder="faithakinboyejo@gmail.com"
+                  placeholder="owner@domain.com"
                   className="w-full bg-[#1c0d08] border border-white/10 focus:border-[#FF5C00] rounded-2xl pl-10 pr-4 py-3.5 text-sm text-white placeholder-white/20 focus:outline-none transition-colors font-mono"
                 />
               </div>
@@ -263,11 +389,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
             </button>
           </form>
 
-          {/* Privacy & No Public Registration Notice */}
+          {/* Redirect Destination & Environment Indicator */}
           <div className="pt-2 border-t border-white/5 space-y-2 text-center">
             <div className="flex items-center justify-center gap-1.5 text-[11px] font-mono text-[#e4beb1]/60">
               <Terminal className="w-3 h-3 text-[#FF5C00]" />
-              <span>Public Registration: <strong>DISABLED</strong></span>
+              <span>Redirect Target: <strong className="text-white">{currentRedirectUrl.replace('https://', '').replace('http://', '')}</strong></span>
             </div>
             <p className="text-[10px] text-white/30 leading-normal max-w-xs mx-auto">
               All attendee contacts, voice transcripts, memories, and conference insights are strictly isolated and private to the verified owner.

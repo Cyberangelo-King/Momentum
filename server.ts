@@ -221,7 +221,7 @@ app.get("/api/sync/stream", (req, res) => {
 });
 
 // Multi-device SSE sync pool and endpoints
-const OWNER_EMAIL = (process.env.VITE_OWNER_EMAIL || "faithakinboyejo@gmail.com").trim().toLowerCase();
+const OWNER_EMAIL = (process.env.VITE_OWNER_EMAIL || (process.env.NODE_ENV === "production" ? "" : "faithakinboyejo@gmail.com")).trim().toLowerCase();
 
 // API: Generate personalized follow-up message
 app.post("/api/gemini/quick-message", async (req, res) => {
