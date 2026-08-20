@@ -1,6 +1,6 @@
 import { Connection, Moment, Idea, EventSession, UserProfile } from '../types';
 import { initialConnections, initialMoments, initialIdeas, initialSessions, initialProfile } from '../data/mockData';
-import { syncConnectionsToSupabase, syncMomentsToSupabase, syncIdeasToSupabase, isSupabaseConfigured } from './supabaseSync';
+import { syncManager } from './syncManager';
 
 const STORAGE_KEYS = {
   CONNECTIONS: 'momentum_connections_v1',
@@ -10,7 +10,11 @@ const STORAGE_KEYS = {
   PROFILE: 'momentum_profile_v1',
 };
 
-// Safe LocalStorage helpers
+// Tag initial mock data with isDemo: true so user can distinguish demo data vs their live event data
+const taggedMockConnections: Connection[] = initialConnections.map((c) => ({ ...c, isDemo: true }));
+const taggedMockMoments: Moment[] = initialMoments.map((m) => ({ ...m, isDemo: true }));
+const taggedMockIdeas: Idea[] = initialIdeas.map((i) => ({ ...i, isDemo: true }));
+
 export function loadConnections(): Connection[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.CONNECTIONS);
@@ -18,17 +22,14 @@ export function loadConnections(): Connection[] {
   } catch (e) {
     console.warn('Failed to load connections from storage', e);
   }
-  return initialConnections;
+  return taggedMockConnections;
 }
 
 export function saveConnections(connections: Connection[]): void {
   try {
     localStorage.setItem(STORAGE_KEYS.CONNECTIONS, JSON.stringify(connections));
-    if (isSupabaseConfigured()) {
-      syncConnectionsToSupabase(connections).catch((err) =>
-        console.warn('Background Supabase connection sync failed:', err)
-      );
-    }
+    // Trigger queue sync via syncManager
+    syncManager.flushQueue().catch(() => {});
   } catch (e) {
     console.warn('Failed to save connections to storage', e);
   }
@@ -41,17 +42,13 @@ export function loadMoments(): Moment[] {
   } catch (e) {
     console.warn('Failed to load moments from storage', e);
   }
-  return initialMoments;
+  return taggedMockMoments;
 }
 
 export function saveMoments(moments: Moment[]): void {
   try {
     localStorage.setItem(STORAGE_KEYS.MOMENTS, JSON.stringify(moments));
-    if (isSupabaseConfigured()) {
-      syncMomentsToSupabase(moments).catch((err) =>
-        console.warn('Background Supabase moments sync failed:', err)
-      );
-    }
+    syncManager.flushQueue().catch(() => {});
   } catch (e) {
     console.warn('Failed to save moments to storage', e);
   }
@@ -64,17 +61,13 @@ export function loadIdeas(): Idea[] {
   } catch (e) {
     console.warn('Failed to load ideas from storage', e);
   }
-  return initialIdeas;
+  return taggedMockIdeas;
 }
 
 export function saveIdeas(ideas: Idea[]): void {
   try {
     localStorage.setItem(STORAGE_KEYS.IDEAS, JSON.stringify(ideas));
-    if (isSupabaseConfigured()) {
-      syncIdeasToSupabase(ideas).catch((err) =>
-        console.warn('Background Supabase ideas sync failed:', err)
-      );
-    }
+    syncManager.flushQueue().catch(() => {});
   } catch (e) {
     console.warn('Failed to save ideas to storage', e);
   }
@@ -106,6 +99,89 @@ export function saveProfile(profile: UserProfile): void {
   } catch (e) {
     console.warn('Failed to save profile to storage', e);
   }
+}
+
+/**
+ * Move all demo data items into trash so Angelo can restore them or empty trash completely
+ */
+export function sendDemoDataToTrash(): {
+  connectionsCount: number;
+  momentsCount: number;
+  ideasCount: number;
+} {
+  const connections = loadConnections();
+  const moments = loadMoments();
+  const ideas = loadIdeas();
+
+  let cCount = 0;
+  let mCount = 0;
+  let iCount = 0;
+
+  const updatedConnections = connections.map((c) => {
+    if (c.isDemo) {
+      cCount++;
+      return { ...c, inTrash: true, deletedAt: new Date().toISOString() };
+    }
+    return c;
+  });
+
+  const updatedMoments = moments.map((m) => {
+    if (m.isDemo) {
+      mCount++;
+      return { ...m, inTrash: true, deletedAt: new Date().toISOString() };
+    }
+    return m;
+  });
+
+  const updatedIdeas = ideas.map((i) => {
+    if (i.isDemo) {
+      iCount++;
+      return { ...i, inTrash: true, deletedAt: new Date().toISOString() };
+    }
+    return i;
+  });
+
+  saveConnections(updatedConnections);
+  saveMoments(updatedMoments);
+  saveIdeas(updatedIdeas);
+
+  return { connectionsCount: cCount, momentsCount: mCount, ideasCount: iCount };
+}
+
+/**
+ * Permanently deletes all demo data from local and cloud storage
+ */
+export function permanentlyDeleteDemoData(): {
+  deletedConnections: number;
+  deletedMoments: number;
+  deletedIdeas: number;
+} {
+  const connections = loadConnections().filter((c) => !c.isDemo);
+  const moments = loadMoments().filter((m) => !m.isDemo);
+  const ideas = loadIdeas().filter((i) => !i.isDemo);
+
+  saveConnections(connections);
+  saveMoments(moments);
+  saveIdeas(ideas);
+
+  return {
+    deletedConnections: initialConnections.length,
+    deletedMoments: initialMoments.length,
+    deletedIdeas: initialIdeas.length,
+  };
+}
+
+/**
+ * Restore all demo data from trash back to active view
+ */
+export function restoreAllDemoData(): void {
+  const connections = loadConnections().map((c) => (c.isDemo ? { ...c, inTrash: false, deletedAt: undefined } : c));
+  const moments = loadMoments().map((m) => (m.isDemo ? { ...m, inTrash: false, deletedAt: undefined } : m));
+  const ideas = loadIdeas().map((i) => (i.isDemo ? { ...i, inTrash: false, deletedAt: undefined } : i));
+
+  saveConnections(connections);
+  saveMoments(moments);
+  saveIdeas(ideas);
 }
 
 // Reset data back to initial TEDxAkure 2026 conference state

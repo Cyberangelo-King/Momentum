@@ -182,13 +182,97 @@ In Supabase, navigate to **Project Settings ➔ API**:
 
 ---
 
-## 📱 Progressive Web App (PWA) & Offline Capabilities
+## 📱 Progressive Web App (PWA) & Native Installation
 
-Momentum is configured with `vite-plugin-pwa` for high-performance offline conference usage:
-- **Service Worker Auto-Update**: Caches app bundle, fonts, and assets automatically.
-- **Offline First Architecture**: When offline, data operations persist locally to `localStorage` and automatically sync to Supabase when reconnected.
-- **Home Screen Install**: Can be installed as a native app on iOS Safari ("Add to Home Screen") and Android Chrome ("Install App").
-- **Offline Assets**: All Google Fonts, Material Symbols, and icons are cached via Workbox `CacheFirst` strategies.
+Momentum is configured with `vite-plugin-pwa` for high-performance offline conference usage and native-like installation on Android & iOS:
+
+### 1. Static Icon Assets Location
+The static icons are placed in the `/public` directory and automatically bundled into the root of `dist/` on build:
+- `/public/pwa-192x192.svg`: Standard 192x192 app icon for Android home screen and app drawers.
+- `/public/pwa-512x512.svg`: High-resolution 512x512 maskable & splash icon for Android and splash screens.
+- `/public/apple-touch-icon.svg`: High-contrast icon for iOS Safari home screen bookmarks.
+- `/public/favicon.svg`: Browser tab icon with TEDx theme.
+
+### 2. PWA Configuration in `vite.config.ts`
+The manifest and asset caching rules are configured in `vite.config.ts`:
+```ts
+VitePWA({
+  registerType: 'autoUpdate',
+  includeAssets: ['favicon.svg', 'apple-touch-icon.svg', 'pwa-192x192.svg', 'pwa-512x512.svg', 'robots.txt'],
+  manifest: {
+    name: 'Momentum — TEDxAkure 2026 Event OS',
+    short_name: 'Momentum',
+    description: 'A mobile-first personal event OS for TEDxAkure 2026 to meet 50 connections, capture moments & ideas, track follow-ups, and synthesize your journey.',
+    theme_color: '#0A0A0A',
+    background_color: '#0A0A0A',
+    display: 'standalone',
+    orientation: 'portrait-primary',
+    icons: [
+      { src: '/pwa-192x192.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any' },
+      { src: '/pwa-512x512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any' },
+      { src: '/pwa-512x512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'maskable' }
+    ]
+  }
+})
+```
+
+### 3. How to Install Natively
+- **iOS Safari**: Tap the **Share** button at the bottom of Safari ➔ Scroll down and tap **"Add to Home Screen"** ➔ Tap **Add**.
+- **Android Chrome**: Tap the three-dot menu ➔ Tap **"Install app"** (or **"Add to Home screen"**).
+- **Desktop Chrome / Edge**: Click the **Install** icon in the URL address bar.
+
+---
+
+## 🔄 Offline-to-Online Sync Manager (`syncManager.ts`)
+
+Momentum features an automated **Sync Manager** (`src/services/syncManager.ts`) that guarantees zero data loss in low-connectivity conference venues:
+
+### 1. Network Status Monitoring
+The service listens to standard browser events:
+- `window.addEventListener('online', handleOnline)`
+- `window.addEventListener('offline', handleOffline)`
+
+### 2. Offline Action Queue & Zero Duplicate Cloud Push
+- When offline, any created connection, captured photo moment, or recorded talk insight is saved to `localStorage` and added to an offline queue (`momentum_offline_queue_v1`).
+- When a transition from **offline to online** is detected (or when the user clicks **"Sync Now"**), the `syncManager` automatically iterates through the queued items and performs an asynchronous batch upsert to Supabase PostgreSQL.
+- **Duplicate Prevention**: All records use deterministic IDs and PostgreSQL `ON CONFLICT (id) DO UPDATE`, guaranteeing that syncing offline-created records never produces duplicate entries.
+
+### 3. Live Sync Status Badge
+Located in the navigation bar:
+- 🟢 **Cloud Synced**: All local records are in sync with Supabase.
+- 🟡 **Syncing (X queued)**: Pushing offline changes to the cloud.
+- 🔴 **Offline (Local)**: No network connection; all changes saved with zero latency locally.
+
+---
+
+## 🔒 Owner Authentication & Privacy Lock (Angelo)
+
+To keep private networking notes, follow-up messages, and contact details confidential:
+
+- **Verified Owner**: **Angelo** (`faithakinboyejo@gmail.com`).
+- **Passcode Protection**: Configured with a 4-digit PIN (Default: `2026`).
+- **Owner Override**: You can always unlock the workspace by entering your email `faithakinboyejo@gmail.com` or your custom PIN.
+- **1-Tap Quick Lock**: Click the lock icon in the navigation bar (or press `Ctrl/Cmd + L`) to lock the workspace with an OLED privacy overlay.
+
+---
+
+## 🗑️ Clean Slate & Demo Data Management
+
+To start completely fresh for the live TEDxAkure 2026 conference:
+1. Open **More ➔ Demo Data & Clean Slate** (or click the trash icon in the desktop drawer).
+2. **Move to Trash**: Hides sample mock data so only people and moments you personally capture are displayed.
+3. **Permanently Delete Demo Data**: Wipes all demo records completely from both local and cloud databases.
+4. **Restore Demo Data**: Available if you ever want to re-populate the sample data for testing.
+
+---
+
+## 📱 Angelo's TEDxAkure 2026 Portfolio QR Code Showcase
+
+During networking sessions at TEDxAkure 2026, you can instantly share your portfolio with attendees and speakers:
+- **Portfolio Link**: [`https://angelo-tedxakure-portfolio.netlify.app`](https://angelo-tedxakure-portfolio.netlify.app)
+- **Interactive QR Modal**: Click the **"Angelo's QR"** button in the navigation header or press `Ctrl/Cmd + P`.
+- **Attendee Scanning**: Displays a crisp, high-contrast QR code formatted specifically for camera scanning from your mobile screen.
+- **Quick Actions**: Includes **Copy Link**, **Open in New Tab**, and **Download QR Card** buttons.
 
 ---
 
@@ -199,31 +283,71 @@ Momentum is configured with `vite-plugin-pwa` for high-performance offline confe
 - **Sanitized Exports**: PDF, CSV, and JSON data exports encode data without executing scripts or injecting raw HTML.
 - **Strict Headers**: `netlify.toml` enforces `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, and `Referrer-Policy: strict-origin-when-cross-origin`.
 
+
 ---
 
-## 🌐 Step 3: Deploying to Netlify
+## 🌐 Step 3: Deploying to Netlify & Environment Configuration
 
-This repository includes pre-configured [`netlify.toml`](./netlify.toml) and [`public/_redirects`](./public/_redirects).
+This repository includes a production-ready [`netlify.toml`](./netlify.toml) and [`public/_redirects`](./public/_redirects) configured for Single-Page Application (SPA) routing, asset caching, and security headers.
 
-### Method A: Deploy via Netlify Dashboard (Recommended)
+### 1. SPA Routing & 404 Prevention
+Netlify serves single-page React apps by rewriting all incoming routes (e.g. `/moments`, `/people`, `/ideas`) to `/index.html` with an HTTP `200` status code. This is configured in `netlify.toml`:
+
+```toml
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+```
+
+### 2. Required Netlify Environment Variables
+
+To ensure all cloud syncing and Gemini AI features work properly on Netlify, configure these environment variables in your Netlify dashboard:
+
+| Variable Name | Description | Example / Source |
+| :--- | :--- | :--- |
+| `GEMINI_API_KEY` | Google Gemini AI Key for connection notes and outreach synthesis | Obtain from [Google AI Studio](https://aistudio.google.com/app/apikey) |
+| `VITE_SUPABASE_URL` | Your Supabase PostgreSQL Project URL | `https://gdcpioggwhfuhrufxuck.supabase.co` (Supabase Project Settings ➔ API) |
+| `VITE_SUPABASE_ANON_KEY` | Your Supabase `anon` `public` API Key | `eyJhbGciOi...` (Supabase Project Settings ➔ API) |
+| `APP_URL` | The public production URL of your deployed site | `https://your-site-name.netlify.app` |
+
+### 3. How to Set Environment Variables in Netlify
 1. Log in to **[Netlify](https://app.netlify.com)**.
-2. Click **Add new site** ➔ **Import an existing project**.
-3. Select **GitHub** and authorize access to your `momentum-tedxakure-2026` repository.
-4. Netlify will automatically detect the build settings from `netlify.toml`:
+2. Select your site ➔ Go to **Site configuration** (or **Site settings**) in the left sidebar.
+3. Click on **Environment variables**.
+4. Click **"Add a variable"** (or **"Import from .env"**), and add the 4 variables listed above.
+5. Trigger a new deploy under **Deploys ➔ Trigger deploy ➔ Clear cache and deploy site** so the variables are injected at build time.
+
+### 4. Deploy Methods
+
+#### Method A: Deploy via Netlify Dashboard (Recommended)
+1. Click **Add new site** ➔ **Import an existing project**.
+2. Select **GitHub** and authorize access to your `momentum-tedxakure-2026` repository.
+3. Netlify will automatically detect the build settings from `netlify.toml`:
    - **Build command**: `npm run build`
    - **Publish directory**: `dist`
-5. Click **Environment variables** and add:
-   - `GEMINI_API_KEY`: `your-google-gemini-api-key`
-   - `VITE_SUPABASE_URL`: `https://your-project-id.supabase.co`
-   - `VITE_SUPABASE_ANON_KEY`: `your-supabase-anon-key`
-6. Click **Deploy Site**!
+4. Add the environment variables from the table above.
+5. Click **Deploy Site**!
 
-### Method B: Deploy via Netlify CLI
+#### Method B: Deploy via Netlify CLI
 ```bash
+# 1. Install Netlify CLI
 npm install -g netlify-cli
+
+# 2. Login to your Netlify account
 netlify login
+
+# 3. Link or initialize your project
 netlify init
-netlify deploy --prod
+
+# 4. Set environment variables via CLI (optional)
+netlify env:set VITE_SUPABASE_URL "https://your-project.supabase.co"
+netlify env:set VITE_SUPABASE_ANON_KEY "your-anon-key"
+netlify env:set GEMINI_API_KEY "your-gemini-key"
+
+# 5. Build and deploy to production
+netlify deploy --prod --build
 ```
 
 ---

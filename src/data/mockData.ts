@@ -1,9 +1,11 @@
 import { Connection, Moment, Idea, EventSession, UserProfile } from '../types';
 
 export const initialProfile: UserProfile = {
-  name: 'Alex Mercer',
-  title: 'Speaker Access',
+  name: 'Angelo',
+  email: 'faithakinboyejo@gmail.com',
+  title: 'TEDxAkure 2026 Delegate & Creator',
   avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBgIYPVxXRupm0SEpAiSL0J6hVw4NSOnFyMLTTwriIzTaOc1BejR3RgCPSuCZJqOSuoWYCMHIbTxIsuvuO67-zrIQOnxI8bUFXG30SPYhzplGbZC1er1mGbdN6qZ7r10K2FBd89kF_VWkBDUn_5kzKRKRlcP-azRnizmJ3xIpuLukA-WMD_GSoA3WIfjJN06Aq2yqtn77eMhte11UoKyg1fcYKJac4R1VJnCu9mkid8ySY6cBcwDe2iMQ',
+  portfolioUrl: 'https://angelo-tedxakure-portfolio.netlify.app',
   targetConnections: 50,
   conferenceName: 'TEDxAkure',
   conferenceYear: '2026',

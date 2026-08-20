@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Connection, Moment, Idea, EventSession, UserProfile } from './types';
+import { Connection, Moment, Idea, EventSession, UserProfile, SecuritySettings } from './types';
 import {
   loadConnections,
   saveConnections,
@@ -9,8 +9,12 @@ import {
   saveIdeas,
   loadSessions,
   loadProfile,
+  saveProfile,
   resetConferenceData,
+  sendDemoDataToTrash,
 } from './services/storage';
+import { loadSecuritySettings, saveSecuritySettings, setAppLockState } from './services/authService';
+import { calculateGamification } from './services/gamification';
 
 import { Navigation, NavTab } from './components/Navigation';
 import { DashboardView } from './components/DashboardView';
@@ -27,6 +31,12 @@ import { ConnectionDetailModal } from './components/ConnectionDetailModal';
 import { QuickMessageModal } from './components/QuickMessageModal';
 import { CollageGeneratorModal } from './components/CollageGeneratorModal';
 import { SearchModal } from './components/SearchModal';
+import { PortfolioModal } from './components/PortfolioModal';
+import { SecurityLockModal } from './components/SecurityLockModal';
+import { LockScreenOverlay } from './components/LockScreenOverlay';
+import { TrashAndDemoModal } from './components/TrashAndDemoModal';
+import { ProfileEditModal } from './components/ProfileEditModal';
+import { GamificationModal } from './components/GamificationModal';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<NavTab>('home');
@@ -34,7 +44,9 @@ export const App: React.FC = () => {
   const [moments, setMoments] = useState<Moment[]>(loadMoments);
   const [ideas, setIdeas] = useState<Idea[]>(loadIdeas);
   const [sessions] = useState<EventSession[]>(loadSessions);
-  const [profile] = useState<UserProfile>(loadProfile);
+  const [profile, setProfile] = useState<UserProfile>(loadProfile);
+  const [security, setSecurity] = useState<SecuritySettings>(loadSecuritySettings);
+  const [isLocked, setIsLocked] = useState<boolean>(security.isLocked);
 
   // Modals state
   const [isQuickConnectOpen, setIsQuickConnectOpen] = useState(false);
@@ -42,7 +54,25 @@ export const App: React.FC = () => {
   const [quickMessageConnection, setQuickMessageConnection] = useState<Connection | null>(null);
   const [isCollageOpen, setIsCollageOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isPortfolioOpen, setIsPortfolioOpen] = useState(false);
+  const [isSecurityOpen, setIsSecurityOpen] = useState(false);
+  const [isTrashModalOpen, setIsTrashModalOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isGamificationOpen, setIsGamificationOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+  // Filter out trashed items from active tab views
+  const activeConnections = connections.filter((c) => !c.inTrash);
+  const activeMoments = moments.filter((m) => !m.inTrash);
+  const activeIdeas = ideas.filter((i) => !i.inTrash);
+
+  // Calculate real-time gamification stats
+  const gamificationStats = calculateGamification(
+    activeConnections,
+    activeMoments,
+    activeIdeas,
+    profile.targetConnections || 50
+  );
 
   // Sync to local storage
   useEffect(() => {
@@ -57,6 +87,10 @@ export const App: React.FC = () => {
     saveIdeas(ideas);
   }, [ideas]);
 
+  useEffect(() => {
+    saveProfile(profile);
+  }, [profile]);
+
   // Online / Offline monitor
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -69,7 +103,7 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Keyboard Shortcuts (Ctrl/Cmd + K = Search, Ctrl/Cmd + N = Quick Connect)
+  // Keyboard Shortcuts (Ctrl/Cmd + K = Search, Ctrl/Cmd + N = Quick Connect, Ctrl/Cmd + P = Portfolio QR, Ctrl/Cmd + L = Lock)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -80,10 +114,30 @@ export const App: React.FC = () => {
         e.preventDefault();
         setIsQuickConnectOpen(true);
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
+        e.preventDefault();
+        setIsPortfolioOpen((prev) => !prev);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'l' && security.isLockEnabled) {
+        e.preventDefault();
+        handleLockApp();
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [security.isLockEnabled]);
+
+  // Lock App
+  const handleLockApp = () => {
+    setAppLockState(true);
+    setIsLocked(true);
+    setSecurity((prev) => ({ ...prev, isLocked: true }));
+  };
+
+  const handleUnlockApp = () => {
+    setIsLocked(false);
+    setSecurity((prev) => ({ ...prev, isLocked: false }));
+  };
 
   // Handlers
   const handleSaveConnection = (newConn: Connection) => {
@@ -109,6 +163,18 @@ export const App: React.FC = () => {
     setIdeas((prev) => [newIdea, ...prev]);
   };
 
+  const handleUpdateProfile = (updatedProfile: UserProfile) => {
+    setProfile(updatedProfile);
+    saveProfile(updatedProfile);
+  };
+
+  const handleClearDemoData = () => {
+    sendDemoDataToTrash();
+    setConnections(loadConnections());
+    setMoments(loadMoments());
+    setIdeas(loadIdeas());
+  };
+
   const handleMarkFollowUpComplete = (connectionId: string, message: string) => {
     setConnections((prev) =>
       prev.map((c) =>
@@ -130,7 +196,13 @@ export const App: React.FC = () => {
     setIdeas(loadIdeas());
   };
 
-  const overdueCount = connections.filter(
+  const handleDataRefresh = (newConn: Connection[], newMoments: Moment[], newIdeas: Idea[]) => {
+    setConnections(newConn);
+    setMoments(newMoments);
+    setIdeas(newIdeas);
+  };
+
+  const overdueCount = activeConnections.filter(
     (c) => c.followUpStatus === 'overdue' || c.followUpStatus === 'today'
   ).length;
 
@@ -144,6 +216,15 @@ export const App: React.FC = () => {
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenQuickConnect={() => setIsQuickConnectOpen(true)}
         overdueCount={overdueCount}
+        connections={activeConnections}
+        moments={activeMoments}
+        ideas={activeIdeas}
+        onOpenPortfolio={() => setIsPortfolioOpen(true)}
+        onOpenSecurity={() => setIsSecurityOpen(true)}
+        onOpenTrashModal={() => setIsTrashModalOpen(true)}
+        onOpenProfile={() => setIsProfileOpen(true)}
+        security={security}
+        onLockNow={handleLockApp}
       />
 
       {/* Main Content Viewport */}
@@ -154,7 +235,7 @@ export const App: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-base text-[#FF5C00]">cloud_off</span>
               <span>
-                <strong>Offline Mode Active:</strong> All changes, snaps & notes saved locally.
+                <strong>Offline Mode Active:</strong> All changes, snaps & notes saved locally and will sync when reconnected.
               </span>
             </div>
             <span className="text-[10px] uppercase font-bold text-[#FF5C00]">Zero Latency</span>
@@ -164,9 +245,9 @@ export const App: React.FC = () => {
         {/* Tab Router */}
         {currentTab === 'home' && (
           <DashboardView
-            connections={connections}
-            moments={moments}
-            ideas={ideas}
+            connections={activeConnections}
+            moments={activeMoments}
+            ideas={activeIdeas}
             sessions={sessions}
             profile={profile}
             onOpenQuickConnect={() => setIsQuickConnectOpen(true)}
@@ -174,24 +255,27 @@ export const App: React.FC = () => {
             onOpenAddIdea={() => setCurrentTab('ideas')}
             onSelectConnection={(c) => setSelectedConnection(c)}
             onSelectTab={setCurrentTab}
+            onOpenProfile={() => setIsProfileOpen(true)}
+            onOpenGamification={() => setIsGamificationOpen(true)}
           />
         )}
 
         {currentTab === 'people' && (
           <PeopleView
-            connections={connections}
+            connections={activeConnections}
             onSelectConnection={(c) => setSelectedConnection(c)}
             onOpenQuickConnect={() => setIsQuickConnectOpen(true)}
             onOpenQuickMessage={(c) => setQuickMessageConnection(c)}
             targetCount={profile.targetConnections}
+            onClearDemoData={handleClearDemoData}
           />
         )}
 
         {currentTab === 'capture' && (
           <CaptureHubView
-            moments={moments}
-            ideas={ideas}
-            connections={connections}
+            moments={activeMoments}
+            ideas={activeIdeas}
+            connections={activeConnections}
             onAddMoment={handleAddMoment}
             onAddIdea={handleAddIdea}
           />
@@ -199,8 +283,8 @@ export const App: React.FC = () => {
 
         {currentTab === 'moments' && (
           <MomentsView
-            moments={moments}
-            connections={connections}
+            moments={activeMoments}
+            connections={activeConnections}
             onOpenCapture={() => setCurrentTab('capture')}
             onSelectConnection={(c) => setSelectedConnection(c)}
             onAddMoment={handleAddMoment}
@@ -208,12 +292,12 @@ export const App: React.FC = () => {
         )}
 
         {currentTab === 'ideas' && (
-          <IdeasView ideas={ideas} onAddIdea={handleAddIdea} />
+          <IdeasView ideas={activeIdeas} onAddIdea={handleAddIdea} />
         )}
 
         {currentTab === 'followups' && (
           <FollowUpsView
-            connections={connections}
+            connections={activeConnections}
             onSelectConnection={(c) => setSelectedConnection(c)}
             onOpenQuickMessage={(c) => setQuickMessageConnection(c)}
             onUpdateConnection={handleUpdateConnection}
@@ -222,9 +306,9 @@ export const App: React.FC = () => {
 
         {currentTab === 'recap' && (
           <RecapView
-            connections={connections}
-            moments={moments}
-            ideas={ideas}
+            connections={activeConnections}
+            moments={activeMoments}
+            ideas={activeIdeas}
             profile={profile}
             onOpenExports={() => setCurrentTab('export')}
             onOpenCollage={() => setIsCollageOpen(true)}
@@ -233,9 +317,9 @@ export const App: React.FC = () => {
 
         {currentTab === 'export' && (
           <ExportsView
-            connections={connections}
-            moments={moments}
-            ideas={ideas}
+            connections={activeConnections}
+            moments={activeMoments}
+            ideas={activeIdeas}
             profile={profile}
             onOpenCollage={() => setIsCollageOpen(true)}
             onResetData={handleResetData}
@@ -244,11 +328,93 @@ export const App: React.FC = () => {
 
         {currentTab === 'more' && (
           <div className="space-y-6 max-w-lg mx-auto pb-24">
-            <h1 className="text-2xl font-bold font-serif-display text-[#fadcd2]">
-              Event OS Features
-            </h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold font-serif-display text-[#fadcd2]">
+                Event OS Features
+              </h1>
+              <button
+                onClick={() => setIsPortfolioOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FF4D00]/20 hover:bg-[#FF4D00]/30 text-[#FF8246] border border-[#FF4D00]/40 rounded-xl text-xs font-semibold transition-colors"
+              >
+                <span>Angelo's QR</span>
+              </button>
+            </div>
 
             <div className="space-y-2">
+              <button
+                onClick={() => setIsProfileOpen(true)}
+                className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full border border-[#FF5C00]/40 overflow-hidden bg-black flex-shrink-0">
+                    <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#fadcd2]">Edit My Profile & Photo</h3>
+                    <p className="text-xs text-[#e4beb1]/60">Change picture, headline, and bio</p>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-white/40">chevron_right</span>
+              </button>
+
+              <button
+                onClick={() => setIsGamificationOpen(true)}
+                className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/15 text-[#FF5C00] flex items-center justify-center font-bold text-lg flex-shrink-0">
+                    {gamificationStats.levelBadge}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#fadcd2]">Badges & Achievements</h3>
+                    <p className="text-xs text-[#e4beb1]/60">Level {gamificationStats.level} • {gamificationStats.totalXp} XP</p>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-white/40">chevron_right</span>
+              </button>
+
+              <button
+                onClick={() => setIsPortfolioOpen(true)}
+                className="w-full p-4 rounded-2xl bg-gradient-to-r from-[#221008] to-[#170a04] hover:from-[#2e150b] hover:to-[#221008] border border-[#FF4D00]/30 flex items-center justify-between text-left transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-2xl text-[#FF5C00]">qr_code_2</span>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">Angelo's Portfolio QR Code</h3>
+                    <p className="text-xs text-[#FF8246]/80 font-mono">angelo-tedxakure-portfolio.netlify.app</p>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-white/40">chevron_right</span>
+              </button>
+
+              <button
+                onClick={() => setIsTrashModalOpen(true)}
+                className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-2xl text-rose-400">delete_sweep</span>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#fadcd2]">Demo Data & Clean Slate</h3>
+                    <p className="text-xs text-[#e4beb1]/60">Wipe demo records or move to trash</p>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-white/40">chevron_right</span>
+              </button>
+
+              <button
+                onClick={() => setIsSecurityOpen(true)}
+                className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-2xl text-amber-400">lock</span>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#fadcd2]">Privacy & Passcode Lock</h3>
+                    <p className="text-xs text-[#e4beb1]/60">Restrict workspace to Angelo (faithakinboyejo@gmail.com)</p>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-white/40">chevron_right</span>
+              </button>
+
               <button
                 onClick={() => setCurrentTab('ideas')}
                 className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
@@ -325,12 +491,61 @@ export const App: React.FC = () => {
         )}
       </main>
 
+      {/* Profile Edit Modal */}
+      <ProfileEditModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        profile={profile}
+        onSaveProfile={handleUpdateProfile}
+      />
+
+      {/* Gamification Modal */}
+      <GamificationModal
+        isOpen={isGamificationOpen}
+        onClose={() => setIsGamificationOpen(false)}
+        stats={gamificationStats}
+      />
+
+      {/* Angelo Portfolio QR Code Modal */}
+      <PortfolioModal
+        isOpen={isPortfolioOpen}
+        onClose={() => setIsPortfolioOpen(false)}
+        profile={profile}
+      />
+
+      {/* Security Settings & PIN Modal */}
+      <SecurityLockModal
+        isOpen={isSecurityOpen}
+        onClose={() => setIsSecurityOpen(false)}
+        security={security}
+        onSecurityUpdate={(updated) => setSecurity(updated)}
+        profile={profile}
+      />
+
+      {/* Full Screen Workspace Lock Overlay */}
+      <LockScreenOverlay
+        isLocked={isLocked}
+        security={security}
+        profile={profile}
+        onUnlock={handleUnlockApp}
+      />
+
+      {/* Clean Slate & Demo Data Modal */}
+      <TrashAndDemoModal
+        isOpen={isTrashModalOpen}
+        onClose={() => setIsTrashModalOpen(false)}
+        connections={connections}
+        moments={moments}
+        ideas={ideas}
+        onDataRefresh={handleDataRefresh}
+      />
+
       {/* Quick Connect Modal */}
       <QuickConnectModal
         isOpen={isQuickConnectOpen}
         onClose={() => setIsQuickConnectOpen(false)}
         onSaveConnection={handleSaveConnection}
-        existingCount={connections.length}
+        existingCount={activeConnections.length}
       />
 
       {/* Connection Detail Modal */}
@@ -341,7 +556,7 @@ export const App: React.FC = () => {
         onDeleteConnection={handleDeleteConnection}
         relatedMoments={
           selectedConnection
-            ? moments.filter((m) => m.taggedPeopleIds?.includes(selectedConnection.id))
+            ? activeMoments.filter((m) => m.taggedPeopleIds?.includes(selectedConnection.id))
             : []
         }
         onOpenQuickMessage={(c) => {
@@ -362,17 +577,17 @@ export const App: React.FC = () => {
       <CollageGeneratorModal
         isOpen={isCollageOpen}
         onClose={() => setIsCollageOpen(false)}
-        moments={moments}
-        ideas={ideas}
+        moments={activeMoments}
+        ideas={activeIdeas}
       />
 
       {/* Global Search Modal */}
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        connections={connections}
-        moments={moments}
-        ideas={ideas}
+        connections={activeConnections}
+        moments={activeMoments}
+        ideas={activeIdeas}
         onSelectConnection={(c) => setSelectedConnection(c)}
         onSelectMoment={() => setCurrentTab('moments')}
         onSelectIdea={() => setCurrentTab('ideas')}

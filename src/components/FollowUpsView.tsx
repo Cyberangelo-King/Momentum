@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Connection, FollowUpStatus } from '../types';
+import { motion, AnimatePresence } from 'motion/react';
+import { CheckCircle2, Circle, Sparkles, Clock, AlertCircle, CheckCircle, Calendar, MessageSquare, ArrowRight } from 'lucide-react';
 
 interface FollowUpsViewProps {
   connections: Connection[];
@@ -39,7 +41,12 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6 pb-28 md:pb-12">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      className="w-full max-w-4xl mx-auto space-y-6 pb-28 md:pb-12"
+    >
       {/* Header */}
       <div>
         <span className="text-[11px] font-bold text-[#FF5C00] tracking-widest uppercase">
@@ -54,7 +61,7 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
       </div>
 
       {/* Tabs */}
-      <div className="grid grid-cols-4 gap-2 bg-[#140b07] p-1 rounded-2xl border border-white/10">
+      <div className="grid grid-cols-4 gap-2 bg-[#140b07] p-1.5 rounded-2xl border border-white/10">
         {[
           { id: 'today', label: 'Today', count: counts.today, color: 'text-[#FF5C00]' },
           { id: 'upcoming', label: 'Upcoming', count: counts.upcoming, color: 'text-blue-400' },
@@ -64,7 +71,7 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as FollowUpStatus)}
-            className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 ${
+            className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${
               activeTab === tab.id
                 ? 'bg-[#FF5C00] text-black shadow-md'
                 : 'text-[#e4beb1]/70 hover:text-white'
@@ -72,7 +79,7 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
           >
             <span>{tab.label}</span>
             <span
-              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+              className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                 activeTab === tab.id ? 'bg-black/20 text-black' : 'bg-white/5 ' + tab.color
               }`}
             >
@@ -85,8 +92,8 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
       {/* List */}
       {currentList.length === 0 ? (
         <div className="text-center py-16 bg-[#140b07] rounded-2xl border border-white/5 space-y-3">
-          <div className="w-12 h-12 rounded-full bg-white/5 text-emerald-400 flex items-center justify-center mx-auto">
-            <span className="material-symbols-outlined text-2xl">task_alt</span>
+          <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/20">
+            <CheckCircle2 className="w-6 h-6" />
           </div>
           <p className="text-sm font-semibold text-[#fadcd2]">
             No follow-ups currently in "{activeTab}"
@@ -97,69 +104,78 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
         </div>
       ) : (
         <div className="space-y-3">
-          {currentList.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => onSelectConnection(item)}
-              className="bg-[#140b07] hover:bg-[#20110a] border border-white/10 hover:border-[#FF5C00]/40 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer transition-all shadow-md"
-            >
-              {/* Person details */}
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-12 h-12 rounded-full overflow-hidden border border-white/10 flex-shrink-0">
-                  <img
-                    src={item.avatarUrl}
-                    alt={item.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-[#fadcd2] truncate">{item.name}</h3>
-                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#271812] text-[#ffb59a] font-bold uppercase tracking-wider">
-                      {item.relationship}
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#FF5C00] truncate">
-                    {item.profession} • {item.company}
-                  </p>
-                  <p className="text-[11px] text-[#e4beb1]/70 mt-1 line-clamp-1">
-                    "{item.notes || 'Met at TEDxAkure'}"
-                  </p>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div
-                className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5 justify-between sm:justify-end"
-                onClick={(e) => e.stopPropagation()}
+          <AnimatePresence mode="popLayout">
+            {currentList.map((item, index) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2, delay: index * 0.03 }}
+                onClick={() => onSelectConnection(item)}
+                className="bg-[#140b07] hover:bg-[#20110a] border border-white/10 hover:border-[#FF5C00]/40 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer transition-all shadow-md group"
               >
-                <button
-                  onClick={() => toggleComplete(item)}
-                  className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-                    item.followUpStatus === 'completed'
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                      : 'bg-white/5 hover:bg-white/10 text-[#e4beb1]'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-sm">
-                    {item.followUpStatus === 'completed' ? 'check_circle' : 'radio_button_unchecked'}
-                  </span>
-                  <span>{item.followUpStatus === 'completed' ? 'Completed' : 'Mark Done'}</span>
-                </button>
+                {/* Person details */}
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="w-12 h-12 rounded-full overflow-hidden border border-white/10 flex-shrink-0 bg-neutral-900">
+                    <img
+                      src={item.avatarUrl}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
 
-                <button
-                  onClick={() => onOpenQuickMessage(item)}
-                  className="px-3.5 py-2 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] flex items-center gap-1.5 shadow-md active:scale-95"
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-[#fadcd2] truncate group-hover:text-white transition-colors">{item.name}</h3>
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#271812] text-[#ffb59a] font-bold uppercase tracking-wider">
+                        {item.relationship}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#FF5C00] truncate">
+                      {item.profession} {item.company ? `• ${item.company}` : ''}
+                    </p>
+                    <p className="text-[11px] text-[#e4beb1]/70 mt-1 line-clamp-1">
+                      "{item.notes || 'Met at TEDxAkure'}"
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div
+                  className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5 justify-between sm:justify-end flex-shrink-0"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <span className="material-symbols-outlined text-sm font-bold">auto_awesome</span>
-                  <span>AI Message</span>
-                </button>
-              </div>
-            </div>
-          ))}
+                  <button
+                    onClick={() => toggleComplete(item)}
+                    className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                      item.followUpStatus === 'completed'
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                        : 'bg-white/5 hover:bg-white/10 text-[#e4beb1]'
+                    }`}
+                  >
+                    {item.followUpStatus === 'completed' ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <Circle className="w-4 h-4" />
+                    )}
+                    <span>{item.followUpStatus === 'completed' ? 'Completed' : 'Mark Done'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => onOpenQuickMessage(item)}
+                    className="px-3.5 py-2 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>AI Message</span>
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
+

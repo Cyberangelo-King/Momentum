@@ -9,6 +9,7 @@ export interface Connection {
   profession: string;
   company: string;
   avatarUrl: string;
+  photos?: string[]; // Multiple photos/snaps for each connection (business cards, selfies, badges)
   phone?: string;
   whatsapp?: string;
   email?: string;
@@ -26,6 +27,9 @@ export interface Connection {
   tags: string[];
   relatedMomentIds?: string[];
   lastFollowUpMessage?: string;
+  isDemo?: boolean;
+  inTrash?: boolean;
+  deletedAt?: string;
 }
 
 export interface Moment {
@@ -40,6 +44,9 @@ export interface Moment {
   taggedPeopleIds: string[];
   taggedPeopleNames?: string[];
   location: string;
+  isDemo?: boolean;
+  inTrash?: boolean;
+  deletedAt?: string;
 }
 
 export interface Idea {
@@ -54,6 +61,9 @@ export interface Idea {
   timeStr: string;
   category: 'Keynote' | 'Workshop' | 'Fireside Chat' | 'Panel' | 'Design & UX' | 'Leadership' | 'Technology';
   tags: string[];
+  isDemo?: boolean;
+  inTrash?: boolean;
+  deletedAt?: string;
 }
 
 export interface EventSession {
@@ -70,10 +80,37 @@ export interface EventSession {
 
 export interface UserProfile {
   name: string;
+  email: string;
   title: string;
   avatarUrl: string;
+  portfolioUrl: string;
   targetConnections: number;
   conferenceName: string;
   conferenceYear: string;
   location: string;
+}
+
+export interface SyncQueueItem {
+  id: string;
+  entityType: 'connection' | 'moment' | 'idea';
+  action: 'upsert' | 'delete';
+  payload: any;
+  queuedAt: string;
+  retries: number;
+}
+
+export interface SyncState {
+  isOnline: boolean;
+  isSyncing: boolean;
+  pendingCount: number;
+  lastSyncedAt: string | null;
+  error: string | null;
+}
+
+export interface SecuritySettings {
+  isLockEnabled: boolean;
+  pinHash: string | null;
+  authorizedEmail: string;
+  isLocked: boolean;
+  lastUnlockedAt: string | null;
 }

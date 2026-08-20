@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Idea } from '../types';
+import { motion, AnimatePresence } from 'motion/react';
+import { Lightbulb, Plus, Search, Copy, Check, Sparkles, X, Quote } from 'lucide-react';
 
 interface IdeasViewProps {
   ideas: Idea[];
@@ -70,9 +72,14 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ ideas, onAddIdea }) => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6 pb-28 md:pb-12">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      className="w-full max-w-4xl mx-auto space-y-6 pb-28 md:pb-12"
+    >
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <span className="text-[11px] font-bold text-[#FF5C00] tracking-widest uppercase">
             Intellectual Synthesis
@@ -84,29 +91,27 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ ideas, onAddIdea }) => {
 
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="px-4 py-2 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] flex items-center gap-1.5 shadow-lg active:scale-95 transition-transform"
+          className="px-4 py-2.5 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] flex items-center justify-center gap-2 shadow-lg shadow-[#FF5C00]/20 active:scale-95 transition-all self-start sm:self-auto"
         >
-          <span className="material-symbols-outlined text-base font-bold">add</span>
-          <span className="hidden sm:inline">Log Insight</span>
+          <Plus className="w-4 h-4" />
+          <span>Log Insight</span>
         </button>
       </div>
 
       {/* Search Bar */}
       <div className="relative">
-        <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#e4beb1]/50 text-xl">
-          search
-        </span>
+        <Search className="absolute left-3.5 top-3.5 text-[#e4beb1]/50 w-4 h-4" />
         <input
           type="text"
           placeholder="Search by quote, speaker name, or topic..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-[#140b07] border border-white/10 rounded-xl pl-11 pr-10 py-2.5 text-xs sm:text-sm text-[#fadcd2] placeholder:text-[#e4beb1]/40 focus:outline-none focus:border-[#FF5C00] transition-colors"
+          className="w-full bg-[#140b07] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-[#fadcd2] placeholder:text-[#e4beb1]/40 focus:outline-none focus:border-[#FF5C00] transition-colors"
         />
       </div>
 
       {/* Category Chips */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
         {[
           { id: 'all', label: 'All Insights' },
           { id: 'Keynote', label: 'Keynotes' },
@@ -131,61 +136,65 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ ideas, onAddIdea }) => {
 
       {/* Idea Cards List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredIdeas.map((idea) => (
-          <div
-            key={idea.id}
-            className="bg-[#140b07] border border-white/10 hover:border-[#FF5C00]/40 rounded-2xl p-5 flex flex-col justify-between transition-all shadow-md group relative"
-          >
-            <div className="space-y-3">
-              {/* Category & Session Badge */}
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#FF5C00]/15 text-[#FF5C00] uppercase tracking-wider">
-                  {idea.category}
-                </span>
-                <span className="text-[11px] text-[#e4beb1]/60">{idea.timeStr} • {idea.stageName}</span>
+        <AnimatePresence mode="popLayout">
+          {filteredIdeas.map((idea, index) => (
+            <motion.div
+              key={idea.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2, delay: index * 0.03 }}
+              className="bg-[#140b07] border border-white/10 hover:border-[#FF5C00]/40 rounded-2xl p-5 flex flex-col justify-between transition-all shadow-md group relative"
+            >
+              <div className="space-y-3">
+                {/* Category & Session Badge */}
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#FF5C00]/15 text-[#FF5C00] uppercase tracking-wider">
+                    {idea.category}
+                  </span>
+                  <span className="text-[11px] text-[#e4beb1]/60">{idea.timeStr} • {idea.stageName}</span>
+                </div>
+
+                {/* Quote */}
+                <blockquote className="text-base font-serif-display italic text-[#fadcd2] leading-relaxed relative">
+                  "{idea.quote}"
+                </blockquote>
+
+                {/* Key Takeaway */}
+                {idea.takeaway && (
+                  <div className="bg-[#1e100a] p-3 rounded-xl border border-white/5">
+                    <p className="text-xs text-[#e4beb1]/90 leading-relaxed">
+                      <strong className="text-[#FF5C00]">Core Takeaway:</strong> {idea.takeaway}
+                    </p>
+                  </div>
+                )}
               </div>
 
-              {/* Quote */}
-              <blockquote className="text-base font-serif-display italic text-[#fadcd2] leading-relaxed">
-                "{idea.quote}"
-              </blockquote>
-
-              {/* Key Takeaway */}
-              {idea.takeaway && (
-                <div className="bg-[#1e100a] p-3 rounded-xl border border-white/5">
-                  <p className="text-xs text-[#e4beb1]/90 leading-relaxed">
-                    <strong className="text-[#FF5C00]">Core Takeaway:</strong> {idea.takeaway}
-                  </p>
+              {/* Speaker Info & Copy Button */}
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src={idea.speakerAvatar}
+                    alt={idea.speakerName}
+                    className="w-8 h-8 rounded-full object-cover border border-white/10"
+                  />
+                  <div>
+                    <h4 className="text-xs font-bold text-[#fadcd2]">{idea.speakerName}</h4>
+                    <p className="text-[10px] text-[#e4beb1]/60">{idea.sessionTitle}</p>
+                  </div>
                 </div>
-              )}
-            </div>
 
-            {/* Speaker Info & Copy Button */}
-            <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <img
-                  src={idea.speakerAvatar}
-                  alt={idea.speakerName}
-                  className="w-8 h-8 rounded-full object-cover border border-white/10"
-                />
-                <div>
-                  <h4 className="text-xs font-bold text-[#fadcd2]">{idea.speakerName}</h4>
-                  <p className="text-[10px] text-[#e4beb1]/60">{idea.sessionTitle}</p>
-                </div>
+                <button
+                  onClick={() => handleCopyQuote(idea)}
+                  className="p-2 rounded-lg bg-white/5 hover:bg-[#FF5C00] hover:text-black text-[#e4beb1] transition-all flex items-center justify-center"
+                  title="Copy Quote"
+                >
+                  {copiedId === idea.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
               </div>
-
-              <button
-                onClick={() => handleCopyQuote(idea)}
-                className="p-2 rounded-lg bg-white/5 hover:bg-[#FF5C00] hover:text-black text-[#e4beb1] transition-all"
-                title="Copy Quote"
-              >
-                <span className="material-symbols-outlined text-sm">
-                  {copiedId === idea.id ? 'check' : 'content_copy'}
-                </span>
-              </button>
-            </div>
-          </div>
-        ))}
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
 
       {/* Add Idea Modal */}
@@ -203,7 +212,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ ideas, onAddIdea }) => {
                 onClick={() => setIsAddModalOpen(false)}
                 className="text-white/60 hover:text-white"
               >
-                <span className="material-symbols-outlined">close</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -304,6 +313,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ ideas, onAddIdea }) => {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
+

@@ -1,6 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Connection, Moment } from '../types';
 import { generateQuickMessage, summarizeConnection } from '../services/aiService';
+import { CameraCaptureModal } from './CameraCaptureModal';
+import { 
+  Camera, 
+  Upload, 
+  Image as ImageIcon, 
+  Trash2, 
+  Check, 
+  X, 
+  MessageSquare, 
+  Phone, 
+  Mail, 
+  Sparkles, 
+  Star, 
+  Calendar, 
+  ExternalLink,
+  Plus
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface ConnectionDetailModalProps {
   connection: Connection | null;
@@ -23,6 +41,9 @@ export const ConnectionDetailModal: React.FC<ConnectionDetailModalProps> = ({
   const [editedNotes, setEditedNotes] = useState('');
   const [editedStatus, setEditedStatus] = useState(connection?.followUpStatus || 'today');
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [selectedPhotoPreview, setSelectedPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   if (!connection) return null;
 
@@ -39,6 +60,57 @@ export const ConnectionDetailModal: React.FC<ConnectionDetailModalProps> = ({
       followUpStatus: editedStatus,
     });
     setIsEditing(false);
+  };
+
+  const handleAddPhoto = (newPhotoUrl: string) => {
+    const existingPhotos = connection.photos || [];
+    const updatedPhotos = [...existingPhotos, newPhotoUrl];
+    onUpdateConnection({
+      ...connection,
+      photos: updatedPhotos,
+      avatarUrl: connection.avatarUrl || newPhotoUrl,
+    });
+    setIsCameraOpen(false);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file: File) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result) {
+          const url = reader.result as string;
+          handleAddPhoto(url);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleSetPrimaryAvatar = (url: string) => {
+    onUpdateConnection({
+      ...connection,
+      avatarUrl: url,
+    });
+  };
+
+  const handleDeletePhoto = (index: number) => {
+    const existingPhotos = connection.photos || [];
+    const photoToDelete = existingPhotos[index];
+    const updatedPhotos = existingPhotos.filter((_, i) => i !== index);
+    
+    let newAvatar = connection.avatarUrl;
+    if (connection.avatarUrl === photoToDelete) {
+      newAvatar = updatedPhotos[0] || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80';
+    }
+
+    onUpdateConnection({
+      ...connection,
+      photos: updatedPhotos,
+      avatarUrl: newAvatar,
+    });
   };
 
   const handleAiRefreshSummary = async () => {
@@ -66,281 +138,443 @@ export const ConnectionDetailModal: React.FC<ConnectionDetailModalProps> = ({
     speaker: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
   };
 
+  const allPhotos = Array.from(
+    new Set([
+      ...(connection.photos || []),
+      ...(connection.avatarUrl && !connection.avatarUrl.includes('unsplash.com') ? [connection.avatarUrl] : [])
+    ])
+  );
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4 overflow-y-auto">
-      <div
-        className="bg-[#140b07] border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh] shadow-2xl animate-in fade-in zoom-in-95 duration-150"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header with portrait and TEDx badge */}
-        <div className="relative bg-[#20110a] p-6 border-b border-white/10 flex items-start justify-between">
-          <div className="flex items-start gap-4">
-            <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-[#FF5C00] shadow-xl bg-[#0A0A0A] flex-shrink-0">
-              <img
-                src={connection.avatarUrl}
-                alt={connection.name}
-                className="w-full h-full object-cover"
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4 overflow-y-auto">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96, y: 15 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.96, y: 15 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          className="bg-[#120804] border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh] shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header with portrait and TEDx badge */}
+          <div className="relative bg-gradient-to-r from-[#220f06] to-[#150803] p-6 border-b border-white/10 flex items-start justify-between">
+            <div className="flex items-start gap-4">
+              <div className="relative group">
+                <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-[#FF5C00] shadow-xl bg-black flex-shrink-0">
+                  <img
+                    src={connection.avatarUrl}
+                    alt={connection.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsCameraOpen(true)}
+                  className="absolute -bottom-1 -right-1 p-1.5 bg-[#FF5C00] text-black rounded-lg shadow-md hover:bg-[#ff7a33] transition-colors"
+                  title="Snap new photo"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-xl font-bold font-serif-display text-[#fadcd2]">
+                    {connection.name}
+                  </h2>
+                  <span
+                    className={`text-[10px] px-2.5 py-0.5 rounded-full border font-bold uppercase tracking-wider ${
+                      relationshipColors[connection.relationship] || relationshipColors.lead
+                    }`}
+                  >
+                    {connection.relationship}
+                  </span>
+                </div>
+                <p className="text-sm text-[#FF5C00] font-medium mt-0.5">
+                  {connection.profession} • {connection.company}
+                </p>
+                <p className="text-xs text-[#e4beb1]/60 mt-1 flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-[#FF5C00]" />
+                  <span>Met at {connection.metTimestamp || '10:00 AM'} ({connection.eventContext})</span>
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="text-white/60 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Action Bar (WhatsApp, Call, Email, LinkedIn, Quick Message) */}
+          <div className="p-4 bg-[#180b06] border-b border-white/10 grid grid-cols-4 gap-2">
+            {connection.whatsapp || connection.phone ? (
+              <a
+                href={`https://wa.me/${(connection.whatsapp || connection.phone || '').replace(/[^0-9]/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-[#221008] hover:bg-[#32160c] text-[#fadcd2] border border-white/5 transition-colors"
+              >
+                <MessageSquare className="w-5 h-5 text-[#25D366]" />
+                <span className="text-[10px] font-semibold mt-1">WhatsApp</span>
+              </a>
+            ) : (
+              <button
+                disabled
+                className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 opacity-30 text-white cursor-not-allowed"
+              >
+                <MessageSquare className="w-5 h-5" />
+                <span className="text-[10px] font-semibold mt-1">WhatsApp</span>
+              </button>
+            )}
+
+            {connection.phone ? (
+              <a
+                href={`tel:${connection.phone}`}
+                className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-[#221008] hover:bg-[#32160c] text-[#fadcd2] border border-white/5 transition-colors"
+              >
+                <Phone className="w-5 h-5 text-[#FF5C00]" />
+                <span className="text-[10px] font-semibold mt-1">Call</span>
+              </a>
+            ) : (
+              <button
+                disabled
+                className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 opacity-30 text-white cursor-not-allowed"
+              >
+                <Phone className="w-5 h-5" />
+                <span className="text-[10px] font-semibold mt-1">Call</span>
+              </button>
+            )}
+
+            {connection.email ? (
+              <a
+                href={`mailto:${connection.email}?subject=Great%20meeting%20you%20at%20TEDxAkure%202026`}
+                className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-[#221008] hover:bg-[#32160c] text-[#fadcd2] border border-white/5 transition-colors"
+              >
+                <Mail className="w-5 h-5 text-[#ffb59a]" />
+                <span className="text-[10px] font-semibold mt-1">Email</span>
+              </a>
+            ) : (
+              <button
+                disabled
+                className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 opacity-30 text-white cursor-not-allowed"
+              >
+                <Mail className="w-5 h-5" />
+                <span className="text-[10px] font-semibold mt-1">Email</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => {
+                onClose();
+                onOpenQuickMessage(connection);
+              }}
+              className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-[#FF5C00] text-black font-bold hover:bg-[#ff7a33] transition-colors shadow-lg active:scale-95"
+            >
+              <Sparkles className="w-5 h-5" />
+              <span className="text-[10px] font-bold mt-1">AI Draft</span>
+            </button>
+          </div>
+
+          {/* Scrollable Body */}
+          <div className="p-6 overflow-y-auto space-y-6 flex-1">
+            {/* Photos & Badges Section */}
+            <div className="bg-[#180b06] border border-white/10 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#e4beb1] flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5 text-[#FF5C00]" />
+                    <span>Saved Photos & Badges ({allPhotos.length})</span>
+                  </h3>
+                  <p className="text-[11px] text-[#e4beb1]/60">
+                    Badge lanyard, selfie, or handshake snaps
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsCameraOpen(true)}
+                    className="p-1.5 rounded-lg bg-[#FF5C00]/10 hover:bg-[#FF5C00]/20 text-[#FF5C00] border border-[#FF5C00]/30 text-xs font-semibold flex items-center gap-1"
+                    title="Take Photo"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span className="text-[11px] hidden sm:inline">Camera</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[#fadcd2] border border-white/10 text-xs font-semibold flex items-center gap-1"
+                    title="Upload Photo"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-[#ffb59a]" />
+                    <span className="text-[11px] hidden sm:inline">Upload</span>
+                  </button>
+                </div>
+              </div>
+
+              {allPhotos.length > 0 ? (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 pt-1">
+                  {allPhotos.map((photoUrl, idx) => (
+                    <div
+                      key={idx}
+                      className="group relative rounded-xl overflow-hidden border border-white/10 aspect-square bg-black/50"
+                    >
+                      <img
+                        src={photoUrl}
+                        alt={`Photo ${idx + 1}`}
+                        className="w-full h-full object-cover cursor-pointer group-hover:scale-105 transition-transform"
+                        onClick={() => setSelectedPhotoPreview(photoUrl)}
+                      />
+
+                      {connection.avatarUrl === photoUrl && (
+                        <div className="absolute top-1 left-1 bg-[#FF5C00] text-black text-[8px] font-bold px-1.5 py-0.5 rounded shadow">
+                          Main
+                        </div>
+                      )}
+
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
+                        {connection.avatarUrl !== photoUrl && (
+                          <button
+                            onClick={() => handleSetPrimaryAvatar(photoUrl)}
+                            className="p-1.5 bg-[#FF5C00] text-black rounded-lg text-[9px] font-bold hover:bg-[#ff7a33]"
+                            title="Make Avatar"
+                          >
+                            <Star className="w-3.5 h-3.5 fill-current" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeletePhoto(idx)}
+                          className="p-1.5 bg-rose-500/80 text-white rounded-lg text-[9px] font-bold hover:bg-rose-600"
+                          title="Remove Photo"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="rounded-xl border border-dashed border-white/20 hover:border-[#FF5C00] flex flex-col items-center justify-center p-3 text-[#e4beb1]/60 hover:text-white transition-colors aspect-square"
+                  >
+                    <Plus className="w-5 h-5 text-[#FF5C00]" />
+                    <span className="text-[10px] mt-1 font-medium">Add Snap</span>
+                  </button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => setIsCameraOpen(true)}
+                  className="py-6 border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#FF5C00]/40 transition-colors bg-[#100603]"
+                >
+                  <Camera className="w-6 h-6 text-[#FF5C00] mb-1" />
+                  <p className="text-xs font-semibold text-[#fadcd2]">No photos saved yet</p>
+                  <p className="text-[10px] text-[#e4beb1]/50">Tap to snap badge or upload photo</p>
+                </div>
+              )}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
               />
             </div>
+
+            {/* Conversation Memory Section */}
+            <div className="bg-[#180b06] border border-white/10 rounded-2xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#FF5C00]" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#e4beb1]">
+                    Conversation Memory
+                  </h3>
+                </div>
+                <button
+                  onClick={handleAiRefreshSummary}
+                  disabled={isSummarizing}
+                  className="text-[11px] text-[#FF5C00] font-semibold hover:underline flex items-center gap-1 disabled:opacity-50"
+                >
+                  {isSummarizing ? (
+                    <span className="w-3 h-3 border border-[#FF5C00] border-t-transparent rounded-full animate-spin"></span>
+                  ) : (
+                    <Sparkles className="w-3 h-3" />
+                  )}
+                  Gemini Recall
+                </button>
+              </div>
+
+              <ul className="space-y-2">
+                {(connection.conversationMemory && connection.conversationMemory.length > 0
+                  ? connection.conversationMemory
+                  : [connection.notes || 'Met at TEDxAkure session.']
+                ).map((point, idx) => (
+                  <li key={idx} className="text-xs text-[#fadcd2] flex items-start gap-2 leading-relaxed">
+                    <span className="text-[#FF5C00] font-bold mt-0.5">•</span>
+                    <span>{point}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Raw Notes & Edit */}
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl font-bold font-serif-display text-[#fadcd2]">
-                  {connection.name}
-                </h2>
-                <span
-                  className={`text-[10px] px-2.5 py-0.5 rounded-full border font-bold uppercase tracking-wider ${
-                    relationshipColors[connection.relationship] || relationshipColors.lead
-                  }`}
-                >
-                  {connection.relationship}
-                </span>
-              </div>
-              <p className="text-sm text-[#FF5C00] font-medium mt-0.5">
-                {connection.profession} • {connection.company}
-              </p>
-              <p className="text-xs text-[#e4beb1]/60 mt-1 flex items-center gap-1">
-                <span className="material-symbols-outlined text-xs">schedule</span>
-                Met at {connection.metTimestamp || '10:00 AM'} ({connection.eventContext})
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="text-white/60 hover:text-white p-1 rounded-lg hover:bg-white/5"
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
-
-        {/* Action Bar (WhatsApp, Call, Email, LinkedIn, Quick Message) */}
-        <div className="p-4 bg-[#1a0c06] border-b border-white/10 grid grid-cols-4 gap-2">
-          {connection.whatsapp || connection.phone ? (
-            <a
-              href={`https://wa.me/${(connection.whatsapp || connection.phone || '').replace(/[^0-9]/g, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#28130a] hover:bg-[#381a0e] text-[#fadcd2] border border-white/5 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[#25D366] text-xl">chat</span>
-              <span className="text-[10px] font-semibold mt-1">WhatsApp</span>
-            </a>
-          ) : (
-            <button
-              disabled
-              className="flex flex-col items-center justify-center p-2 rounded-xl bg-white/5 opacity-40 text-white"
-            >
-              <span className="material-symbols-outlined text-xl">chat</span>
-              <span className="text-[10px] font-semibold mt-1">WhatsApp</span>
-            </button>
-          )}
-
-          {connection.phone ? (
-            <a
-              href={`tel:${connection.phone}`}
-              className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#28130a] hover:bg-[#381a0e] text-[#fadcd2] border border-white/5 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[#FF5C00] text-xl">call</span>
-              <span className="text-[10px] font-semibold mt-1">Call</span>
-            </a>
-          ) : (
-            <button
-              disabled
-              className="flex flex-col items-center justify-center p-2 rounded-xl bg-white/5 opacity-40 text-white"
-            >
-              <span className="material-symbols-outlined text-xl">call</span>
-              <span className="text-[10px] font-semibold mt-1">Call</span>
-            </button>
-          )}
-
-          {connection.email ? (
-            <a
-              href={`mailto:${connection.email}?subject=Great%20meeting%20you%20at%20TEDxAkure%202026`}
-              className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#28130a] hover:bg-[#381a0e] text-[#fadcd2] border border-white/5 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[#ffb59a] text-xl">mail</span>
-              <span className="text-[10px] font-semibold mt-1">Email</span>
-            </a>
-          ) : (
-            <button
-              disabled
-              className="flex flex-col items-center justify-center p-2 rounded-xl bg-white/5 opacity-40 text-white"
-            >
-              <span className="material-symbols-outlined text-xl">mail</span>
-              <span className="text-[10px] font-semibold mt-1">Email</span>
-            </button>
-          )}
-
-          <button
-            onClick={() => {
-              onClose();
-              onOpenQuickMessage(connection);
-            }}
-            className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#FF5C00] text-black font-bold hover:bg-[#ff7a33] transition-colors shadow-lg"
-          >
-            <span className="material-symbols-outlined text-xl font-bold">auto_fix_high</span>
-            <span className="text-[10px] font-bold mt-1">AI Draft</span>
-          </button>
-        </div>
-
-        {/* Scrollable Body */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1">
-          {/* Conversation Memory Section */}
-          <div className="bg-[#180b06] border border-white/10 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#FF5C00] text-lg">psychology</span>
+              <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-[#e4beb1]">
-                  Conversation Memory
+                  Notes & Follow-up State
                 </h3>
-              </div>
-              <button
-                onClick={handleAiRefreshSummary}
-                disabled={isSummarizing}
-                className="text-[11px] text-[#FF5C00] font-semibold hover:underline flex items-center gap-1 disabled:opacity-50"
-              >
-                {isSummarizing ? (
-                  <span className="w-3 h-3 border border-[#FF5C00] border-t-transparent rounded-full animate-spin"></span>
+                {!isEditing ? (
+                  <button
+                    onClick={handleStartEdit}
+                    className="text-xs text-[#FF5C00] font-semibold hover:underline"
+                  >
+                    Edit Note
+                  </button>
                 ) : (
-                  <span className="material-symbols-outlined text-xs">refresh</span>
+                  <button
+                    onClick={handleSaveEdit}
+                    className="text-xs text-[#25D366] font-bold hover:underline"
+                  >
+                    Save Changes
+                  </button>
                 )}
-                Gemini Recall
-              </button>
-            </div>
+              </div>
 
-            <ul className="space-y-2">
-              {(connection.conversationMemory && connection.conversationMemory.length > 0
-                ? connection.conversationMemory
-                : [connection.notes || 'Met at TEDxAkure session.']
-              ).map((point, idx) => (
-                <li key={idx} className="text-xs text-[#fadcd2] flex items-start gap-2 leading-relaxed">
-                  <span className="text-[#FF5C00] font-bold mt-0.5">•</span>
-                  <span>{point}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Raw Notes & Edit */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#e4beb1]">
-                Notes & Follow-up State
-              </h3>
-              {!isEditing ? (
-                <button
-                  onClick={handleStartEdit}
-                  className="text-xs text-[#FF5C00] font-semibold hover:underline"
-                >
-                  Edit Note
-                </button>
+              {isEditing ? (
+                <div className="space-y-3">
+                  <textarea
+                    rows={3}
+                    value={editedNotes}
+                    onChange={(e) => setEditedNotes(e.target.value)}
+                    className="w-full bg-[#0A0A0A] border border-white/20 rounded-xl p-3 text-xs text-[#fadcd2] focus:outline-none focus:border-[#FF5C00]"
+                  />
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs text-[#e4beb1]">Status:</label>
+                    <select
+                      value={editedStatus}
+                      onChange={(e) => setEditedStatus(e.target.value as any)}
+                      className="bg-[#0A0A0A] border border-white/20 rounded-lg px-3 py-1.5 text-xs text-[#fadcd2]"
+                    >
+                      <option value="today">Due Today</option>
+                      <option value="upcoming">Upcoming</option>
+                      <option value="overdue">Overdue</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
+                </div>
               ) : (
-                <button
-                  onClick={handleSaveEdit}
-                  className="text-xs text-[#25D366] font-bold hover:underline"
-                >
-                  Save Changes
-                </button>
+                <p className="text-xs text-[#e4beb1]/90 bg-[#140804] p-3.5 rounded-xl border border-white/5 leading-relaxed">
+                  {connection.notes || 'No raw notes recorded.'}
+                </p>
               )}
             </div>
 
-            {isEditing ? (
-              <div className="space-y-3">
-                <textarea
-                  rows={3}
-                  value={editedNotes}
-                  onChange={(e) => setEditedNotes(e.target.value)}
-                  className="w-full bg-[#0A0A0A] border border-white/20 rounded-xl p-3 text-xs text-[#fadcd2] focus:outline-none focus:border-[#FF5C00]"
-                />
-                <div className="flex items-center gap-3">
-                  <label className="text-xs text-[#e4beb1]">Status:</label>
-                  <select
-                    value={editedStatus}
-                    onChange={(e) => setEditedStatus(e.target.value as any)}
-                    className="bg-[#0A0A0A] border border-white/20 rounded-lg px-3 py-1.5 text-xs text-[#fadcd2]"
-                  >
-                    <option value="today">Due Today</option>
-                    <option value="upcoming">Upcoming</option>
-                    <option value="overdue">Overdue</option>
-                    <option value="completed">Completed</option>
-                  </select>
+            {/* Tags */}
+            {connection.tags && connection.tags.length > 0 && (
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[#e4beb1] mb-2">
+                  Context Tags
+                </h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {connection.tags.map((tag, i) => (
+                    <span
+                      key={i}
+                      className="text-[11px] px-2.5 py-1 rounded-lg bg-[#221008] text-[#ffb59a] border border-white/5 font-medium"
+                    >
+                      {tag}
+                    </span>
+                  ))}
                 </div>
               </div>
-            ) : (
-              <p className="text-xs text-[#e4beb1]/90 bg-[#100603] p-3 rounded-xl border border-white/5 leading-relaxed">
-                {connection.notes || 'No raw notes recorded.'}
-              </p>
             )}
-          </div>
 
-          {/* Tags */}
-          {connection.tags && connection.tags.length > 0 && (
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#e4beb1] mb-2">
-                Context Tags
-              </h3>
-              <div className="flex flex-wrap gap-1.5">
-                {connection.tags.map((tag, i) => (
-                  <span
-                    key={i}
-                    className="text-[11px] px-2.5 py-1 rounded-md bg-[#271812] text-[#ffb59a] border border-white/5 font-medium"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Related Moments */}
-          {relatedMoments.length > 0 && (
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#e4beb1] mb-2">
-                Tagged Moments ({relatedMoments.length})
-              </h3>
-              <div className="grid grid-cols-2 gap-2">
-                {relatedMoments.map((m) => (
-                  <div
-                    key={m.id}
-                    className="rounded-xl overflow-hidden bg-[#20110a] border border-white/10"
-                  >
-                    {m.mediaUrl ? (
-                      <img src={m.mediaUrl} alt={m.title} className="w-full h-24 object-cover" />
-                    ) : (
-                      <div className="w-full h-24 bg-[#32160c] flex items-center justify-center p-2 text-center text-[10px] text-[#e4beb1]">
-                        "{m.caption}"
+            {/* Related Moments */}
+            {relatedMoments.length > 0 && (
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[#e4beb1] mb-2">
+                  Tagged Moments ({relatedMoments.length})
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {relatedMoments.map((m) => (
+                    <div
+                      key={m.id}
+                      className="rounded-xl overflow-hidden bg-[#20110a] border border-white/10"
+                    >
+                      {m.mediaUrl ? (
+                        <img src={m.mediaUrl} alt={m.title} className="w-full h-24 object-cover" />
+                      ) : (
+                        <div className="w-full h-24 bg-[#32160c] flex items-center justify-center p-2 text-center text-[10px] text-[#e4beb1]">
+                          "{m.caption}"
+                        </div>
+                      )}
+                      <div className="p-2">
+                        <p className="text-[11px] font-bold text-[#fadcd2] truncate">{m.title}</p>
+                        <p className="text-[9px] text-[#e4beb1]/60">{m.timestamp}</p>
                       </div>
-                    )}
-                    <div className="p-2">
-                      <p className="text-[11px] font-bold text-[#fadcd2] truncate">{m.title}</p>
-                      <p className="text-[9px] text-[#e4beb1]/60">{m.timestamp}</p>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Delete Contact action */}
-          <div className="pt-4 border-t border-white/10 flex justify-between items-center">
-            <span className="text-[11px] text-[#e4beb1]/50">
-              Follow-up scheduled: {connection.followUpDate || 'None'}
-            </span>
+            {/* Delete Contact action */}
+            <div className="pt-4 border-t border-white/10 flex justify-between items-center">
+              <span className="text-[11px] text-[#e4beb1]/50">
+                Follow-up scheduled: {connection.followUpDate || 'None'}
+              </span>
+              <button
+                onClick={() => {
+                  if (confirm(`Remove ${connection.name} from connections?`)) {
+                    onDeleteConnection(connection.id);
+                    onClose();
+                  }
+                }}
+                className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 font-semibold"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Contact</span>
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Camera Capture Modal */}
+      <CameraCaptureModal
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onCaptureImage={handleAddPhoto}
+        mode="photo"
+        title={`Snap Photo with ${connection.name}`}
+      />
+
+      {/* Lightbox / Full Photo Preview Modal */}
+      {selectedPhotoPreview && (
+        <div
+          className="fixed inset-0 z-60 bg-black/90 backdrop-blur-lg flex items-center justify-center p-4"
+          onClick={() => setSelectedPhotoPreview(null)}
+        >
+          <div className="relative max-w-xl max-h-[85vh] overflow-hidden rounded-2xl border border-white/20">
+            <img
+              src={selectedPhotoPreview}
+              alt="Enlarged"
+              className="w-full h-full object-contain"
+            />
             <button
-              onClick={() => {
-                if (confirm(`Remove ${connection.name} from connections?`)) {
-                  onDeleteConnection(connection.id);
-                  onClose();
-                }
-              }}
-              className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 font-semibold"
+              onClick={() => setSelectedPhotoPreview(null)}
+              className="absolute top-3 right-3 p-2 bg-black/70 hover:bg-black text-white rounded-full"
             >
-              <span className="material-symbols-outlined text-sm">delete</span>
-              Delete Contact
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
+
