@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { compressImage } from '../services/imageCompression';
 
 interface CameraCaptureModalProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [compressionStats, setCompressionStats] = useState<{ savedPct: number; kb: number } | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [recordedVideoUrl, setRecordedVideoUrl] = useState<string | null>(null);
@@ -75,7 +78,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
   };
 
-  const takePhoto = () => {
+  const takePhoto = async () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
     const canvas = canvasRef.current || document.createElement('canvas');
@@ -84,9 +87,27 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      setCapturedImage(dataUrl);
+      const rawDataUrl = canvas.toDataURL('image/jpeg', 0.85);
       stopCamera();
+      
+      setIsCompressing(true);
+      try {
+        const compressed = await compressImage(rawDataUrl, {
+          maxWidth: 1200,
+          maxHeight: 1200,
+          quality: 0.78,
+          mimeType: 'image/jpeg',
+        });
+        setCapturedImage(compressed.dataUrl);
+        setCompressionStats({
+          savedPct: compressed.savedPercentage,
+          kb: Math.round(compressed.compressedSizeBytes / 1024),
+        });
+      } catch {
+        setCapturedImage(rawDataUrl);
+      } finally {
+        setIsCompressing(false);
+      }
     }
   };
 
@@ -127,17 +148,34 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setCapturedImage(reader.result as string);
-        stopCamera();
-      };
-      reader.readAsDataURL(file);
+      stopCamera();
+      setIsCompressing(true);
+      try {
+        const compressed = await compressImage(file, {
+          maxWidth: 1200,
+          maxHeight: 1200,
+          quality: 0.78,
+          mimeType: 'image/jpeg',
+        });
+        setCapturedImage(compressed.dataUrl);
+        setCompressionStats({
+          savedPct: compressed.savedPercentage,
+          kb: Math.round(compressed.compressedSizeBytes / 1024),
+        });
+      } catch {
+        const reader = new FileReader();
+        reader.onload = () => {
+          setCapturedImage(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } finally {
+        setIsCompressing(false);
+      }
     } else if (file.type.startsWith('video/')) {
       const videoUrl = URL.createObjectURL(file);
       setRecordedVideoUrl(videoUrl);
@@ -160,6 +198,8 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     setRecordedVideoUrl(null);
     setIsRecording(false);
     setRecordingSeconds(0);
+    setCompressionStats(null);
+    setIsCompressing(false);
     stopCamera();
   };
 
@@ -187,12 +227,26 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
 
         {/* Viewport */}
         <div className="relative bg-black flex-1 min-h-[300px] flex items-center justify-center overflow-hidden">
-          {capturedImage ? (
-            <img
-              src={capturedImage}
-              alt="Captured"
-              className="w-full h-full max-h-[60vh] object-contain"
-            />
+          {isCompressing ? (
+            <div className="p-8 text-center flex flex-col items-center justify-center space-y-3">
+              <div className="w-10 h-10 border-3 border-[#FF5C00] border-t-transparent rounded-full animate-spin" />
+              <p className="text-xs font-semibold text-[#fadcd2]">Compressing photo for fast upload...</p>
+              <p className="text-[10px] text-[#e4beb1]/60">Optimizing for conference Wi-Fi</p>
+            </div>
+          ) : capturedImage ? (
+            <div className="relative w-full h-full flex items-center justify-center">
+              <img
+                src={capturedImage}
+                alt="Captured"
+                className="w-full h-full max-h-[60vh] object-contain"
+              />
+              {compressionStats && (
+                <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-[#FF5C00]/40 text-[#fadcd2] text-[10px] font-semibold flex items-center gap-1.5 shadow-lg">
+                  <span className="w-2 h-2 rounded-full bg-[#25D366] animate-pulse" />
+                  <span>⚡ Compressed: {compressionStats.kb} KB ({compressionStats.savedPct}% smaller)</span>
+                </div>
+              )}
+            </div>
           ) : recordedVideoUrl ? (
             <video
               src={recordedVideoUrl}

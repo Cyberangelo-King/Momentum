@@ -15,6 +15,8 @@ import {
 } from './services/storage';
 import { loadSecuritySettings, saveSecuritySettings, setAppLockState } from './services/authService';
 import { calculateGamification } from './services/gamification';
+import { syncManager } from './services/syncManager';
+import { motion, AnimatePresence } from 'motion/react';
 
 import { Navigation, NavTab } from './components/Navigation';
 import { DashboardView } from './components/DashboardView';
@@ -38,8 +40,41 @@ import { TrashAndDemoModal } from './components/TrashAndDemoModal';
 import { ProfileEditModal } from './components/ProfileEditModal';
 import { GamificationModal } from './components/GamificationModal';
 
+/**
+ * Parses deep links or bookmarks from window.location pathname, query or hash
+ */
+const getTabFromUrl = (): NavTab => {
+  if (typeof window === 'undefined') return 'home';
+
+  // Normalize pathname, stripping leading and trailing slashes
+  const path = window.location.pathname.toLowerCase().replace(/^\/+|\/+$/g, '');
+  if (path === 'people' || path === 'connections') return 'people';
+  if (path === 'capture') return 'capture';
+  if (path === 'moments') return 'moments';
+  if (path === 'ideas' || path === 'insights') return 'ideas';
+  if (path === 'followups' || path === 'follow-ups') return 'followups';
+  if (path === 'recap' || path === 'summary') return 'recap';
+  if (path === 'export' || path === 'exports') return 'export';
+  if (path === 'more') return 'more';
+
+  // Check query parameter (?tab=ideas or ?tab=followups)
+  const params = new URLSearchParams(window.location.search);
+  const tabParam = params.get('tab')?.toLowerCase();
+  if (['home', 'people', 'capture', 'moments', 'ideas', 'followups', 'recap', 'export', 'more'].includes(tabParam || '')) {
+    return tabParam as NavTab;
+  }
+
+  // Check hash fragment (#ideas or #/ideas)
+  const hash = window.location.hash.toLowerCase().replace(/^[#/]+/, '');
+  if (['home', 'people', 'capture', 'moments', 'ideas', 'followups', 'recap', 'export', 'more'].includes(hash)) {
+    return hash as NavTab;
+  }
+
+  return 'home';
+};
+
 export const App: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<NavTab>('home');
+  const [currentTab, setCurrentTab] = useState<NavTab>(getTabFromUrl);
   const [connections, setConnections] = useState<Connection[]>(loadConnections);
   const [moments, setMoments] = useState<Moment[]>(loadMoments);
   const [ideas, setIdeas] = useState<Idea[]>(loadIdeas);
@@ -47,6 +82,10 @@ export const App: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile>(loadProfile);
   const [security, setSecurity] = useState<SecuritySettings>(loadSecuritySettings);
   const [isLocked, setIsLocked] = useState<boolean>(security.isLocked);
+
+  // Sync state tracking from SyncManager
+  const [syncState, setSyncState] = useState(syncManager.getState());
+  const [showSyncSuccessToast, setShowSyncSuccessToast] = useState(false);
 
   // Modals state
   const [isQuickConnectOpen, setIsQuickConnectOpen] = useState(false);
@@ -60,6 +99,40 @@ export const App: React.FC = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isGamificationOpen, setIsGamificationOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+  // Navigation tab handler that updates URL path history
+  const handleSelectTab = (tab: NavTab) => {
+    setCurrentTab(tab);
+    if (typeof window !== 'undefined') {
+      const targetPath = tab === 'home' ? '/' : `/${tab}`;
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState({ tab }, '', targetPath);
+      }
+    }
+  };
+
+  // Browser back/forward button popstate listener
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentTab(getTabFromUrl());
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Subscribe to SyncManager state updates (offline-first push to Supabase)
+  useEffect(() => {
+    let prevIsSyncing = false;
+    const unsubscribe = syncManager.subscribe((state) => {
+      if (prevIsSyncing && !state.isSyncing && !state.error) {
+        setShowSyncSuccessToast(true);
+        setTimeout(() => setShowSyncSuccessToast(false), 3000);
+      }
+      prevIsSyncing = state.isSyncing;
+      setSyncState(state);
+    });
+    return unsubscribe;
+  }, []);
 
   // Filter out trashed items from active tab views
   const activeConnections = connections.filter((c) => !c.inTrash);
@@ -211,7 +284,7 @@ export const App: React.FC = () => {
       {/* Navigation Layout */}
       <Navigation
         currentTab={currentTab}
-        onSelectTab={setCurrentTab}
+        onSelectTab={handleSelectTab}
         profile={profile}
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenQuickConnect={() => setIsQuickConnectOpen(true)}
@@ -251,10 +324,10 @@ export const App: React.FC = () => {
             sessions={sessions}
             profile={profile}
             onOpenQuickConnect={() => setIsQuickConnectOpen(true)}
-            onOpenCapture={() => setCurrentTab('capture')}
-            onOpenAddIdea={() => setCurrentTab('ideas')}
+            onOpenCapture={() => handleSelectTab('capture')}
+            onOpenAddIdea={() => handleSelectTab('ideas')}
             onSelectConnection={(c) => setSelectedConnection(c)}
-            onSelectTab={setCurrentTab}
+            onSelectTab={handleSelectTab}
             onOpenProfile={() => setIsProfileOpen(true)}
             onOpenGamification={() => setIsGamificationOpen(true)}
           />
@@ -285,7 +358,7 @@ export const App: React.FC = () => {
           <MomentsView
             moments={activeMoments}
             connections={activeConnections}
-            onOpenCapture={() => setCurrentTab('capture')}
+            onOpenCapture={() => handleSelectTab('capture')}
             onSelectConnection={(c) => setSelectedConnection(c)}
             onAddMoment={handleAddMoment}
           />
@@ -310,7 +383,7 @@ export const App: React.FC = () => {
             moments={activeMoments}
             ideas={activeIdeas}
             profile={profile}
-            onOpenExports={() => setCurrentTab('export')}
+            onOpenExports={() => handleSelectTab('export')}
             onOpenCollage={() => setIsCollageOpen(true)}
           />
         )}
@@ -589,9 +662,38 @@ export const App: React.FC = () => {
         moments={activeMoments}
         ideas={activeIdeas}
         onSelectConnection={(c) => setSelectedConnection(c)}
-        onSelectMoment={() => setCurrentTab('moments')}
-        onSelectIdea={() => setCurrentTab('ideas')}
+        onSelectMoment={() => handleSelectTab('moments')}
+        onSelectIdea={() => handleSelectTab('ideas')}
       />
+
+      {/* Persistent Non-Intrusive Syncing & Status Indicator */}
+      <AnimatePresence>
+        {syncState.isSyncing && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="fixed bottom-20 md:bottom-6 right-4 sm:right-8 z-40 px-4 py-2 rounded-full bg-[#180b06]/90 backdrop-blur-md border border-[#FF5C00]/50 shadow-2xl text-[#fadcd2] text-xs font-semibold flex items-center gap-2.5 select-none pointer-events-none"
+          >
+            <div className="w-3.5 h-3.5 border-2 border-[#FF5C00] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+            <span>
+              Syncing {syncState.pendingCount > 0 ? `(${syncState.pendingCount} pending)` : ''} to Supabase...
+            </span>
+          </motion.div>
+        )}
+
+        {!syncState.isSyncing && showSyncSuccessToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="fixed bottom-20 md:bottom-6 right-4 sm:right-8 z-40 px-4 py-2 rounded-full bg-[#0d2112]/90 backdrop-blur-md border border-[#25D366]/40 shadow-2xl text-[#c4f8d4] text-xs font-semibold flex items-center gap-2 select-none pointer-events-none"
+          >
+            <span className="text-[#25D366] font-bold text-sm leading-none">✓</span>
+            <span>Synced to Supabase</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

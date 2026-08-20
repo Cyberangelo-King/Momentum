@@ -1,6 +1,7 @@
 import { Connection, Moment, Idea, EventSession, UserProfile } from '../types';
 import { initialConnections, initialMoments, initialIdeas, initialSessions, initialProfile } from '../data/mockData';
 import { syncManager } from './syncManager';
+import { multiDeviceSync } from './multiDeviceSync';
 
 const STORAGE_KEYS = {
   CONNECTIONS: 'momentum_connections_v1',
@@ -30,6 +31,8 @@ export function saveConnections(connections: Connection[]): void {
     localStorage.setItem(STORAGE_KEYS.CONNECTIONS, JSON.stringify(connections));
     // Trigger queue sync via syncManager
     syncManager.flushQueue().catch(() => {});
+    // Trigger multi-device real-time sync broadcast
+    multiDeviceSync.pushState({ connections }).catch(() => {});
   } catch (e) {
     console.warn('Failed to save connections to storage', e);
   }
@@ -49,6 +52,7 @@ export function saveMoments(moments: Moment[]): void {
   try {
     localStorage.setItem(STORAGE_KEYS.MOMENTS, JSON.stringify(moments));
     syncManager.flushQueue().catch(() => {});
+    multiDeviceSync.pushState({ moments }).catch(() => {});
   } catch (e) {
     console.warn('Failed to save moments to storage', e);
   }
@@ -68,6 +72,7 @@ export function saveIdeas(ideas: Idea[]): void {
   try {
     localStorage.setItem(STORAGE_KEYS.IDEAS, JSON.stringify(ideas));
     syncManager.flushQueue().catch(() => {});
+    multiDeviceSync.pushState({ ideas }).catch(() => {});
   } catch (e) {
     console.warn('Failed to save ideas to storage', e);
   }
@@ -96,6 +101,7 @@ export function loadProfile(): UserProfile {
 export function saveProfile(profile: UserProfile): void {
   try {
     localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profile));
+    multiDeviceSync.pushState({ profile }).catch(() => {});
   } catch (e) {
     console.warn('Failed to save profile to storage', e);
   }

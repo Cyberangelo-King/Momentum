@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Connection, RelationshipType, PriorityLevel } from '../types';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { summarizeConnection } from '../services/aiService';
+import { compressImage } from '../services/imageCompression';
 import { Camera, Image as ImageIcon, Plus, Trash2, Bolt, Check, Sparkles, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -45,16 +46,27 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file: File) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (reader.result) {
-          const url = reader.result as string;
-          setPhotos((prev) => [...prev, url]);
-          if (!avatarUrl) setAvatarUrl(url);
-        }
-      };
-      reader.readAsDataURL(file);
+    Array.from(files).forEach(async (file: File) => {
+      try {
+        const compressed = await compressImage(file, {
+          maxWidth: 1200,
+          maxHeight: 1200,
+          quality: 0.78,
+          mimeType: 'image/jpeg',
+        });
+        setPhotos((prev) => [...prev, compressed.dataUrl]);
+        if (!avatarUrl) setAvatarUrl(compressed.dataUrl);
+      } catch {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (reader.result) {
+            const url = reader.result as string;
+            setPhotos((prev) => [...prev, url]);
+            if (!avatarUrl) setAvatarUrl(url);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
     });
   };
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Moment, Idea, Connection } from '../types';
 import { CameraCaptureModal } from './CameraCaptureModal';
+import { uploadAndCompressMedia } from '../services/imageCompression';
 
 interface CaptureHubViewProps {
   moments: Moment[];
@@ -22,6 +23,7 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [isAddingIdeaModal, setIsAddingIdeaModal] = useState(false);
+  const [isSavingMedia, setIsSavingMedia] = useState(false);
 
   // New Note state
   const [noteTitle, setNoteTitle] = useState('');
@@ -58,17 +60,33 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
     setMediaCaption('');
   };
 
-  const handleSaveMediaMoment = (e: React.FormEvent) => {
+  const handleSaveMediaMoment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pendingMedia) return;
+
+    setIsSavingMedia(true);
+    let finalMediaUrl = pendingMedia.url;
+    let finalThumbUrl = pendingMedia.url;
+
+    if (pendingMedia.type === 'photo') {
+      try {
+        const uploadResult = await uploadAndCompressMedia(pendingMedia.url, 'moments', 'tedx_moments');
+        if (uploadResult?.url) {
+          finalMediaUrl = uploadResult.url;
+          finalThumbUrl = uploadResult.url;
+        }
+      } catch (err) {
+        console.warn('Media upload fallback to dataUrl:', err);
+      }
+    }
 
     const newMoment: Moment = {
       id: `m_${Date.now()}`,
       type: pendingMedia.type,
       title: mediaTitle.trim() || 'TEDx Moment',
       caption: mediaCaption.trim() || 'Captured at TEDxAkure 2026',
-      mediaUrl: pendingMedia.url,
-      thumbnailUrl: pendingMedia.url,
+      mediaUrl: finalMediaUrl,
+      thumbnailUrl: finalThumbUrl,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       taggedPeopleIds: taggedPeople,
@@ -77,6 +95,7 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
     };
 
     onAddMoment(newMoment);
+    setIsSavingMedia(false);
     setPendingMedia(null);
     setTaggedPeople([]);
   };
@@ -415,15 +434,24 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setPendingMedia(null)}
-                  className="w-1/3 py-2.5 rounded-xl border border-white/10 text-xs font-semibold text-[#fadcd2]"
+                  disabled={isSavingMedia}
+                  className="w-1/3 py-2.5 rounded-xl border border-white/10 text-xs font-semibold text-[#fadcd2] disabled:opacity-50"
                 >
                   Discard
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33]"
+                  disabled={isSavingMedia}
+                  className="flex-1 py-2.5 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  Save to Moments
+                  {isSavingMedia ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                      <span>Optimizing & Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save to Moments</span>
+                  )}
                 </button>
               </div>
             </form>
