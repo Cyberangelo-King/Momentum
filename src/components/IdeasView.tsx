@@ -1,18 +1,23 @@
 import React, { useState, useMemo } from 'react';
 import { Idea } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Lightbulb, Plus, Search, Copy, Check, Sparkles, X, Quote } from 'lucide-react';
+import { Lightbulb, Plus, Search, Copy, Check, Sparkles, X, Quote, Trash2, CheckCircle2 } from 'lucide-react';
+import { DeleteConfirmationModal } from './DeleteConfirmationModal';
+import { triggerHaptic } from '../services/haptics';
 
 interface IdeasViewProps {
   ideas: Idea[];
   onAddIdea: (idea: Idea) => void;
+  onDeleteIdea?: (id: string) => void;
 }
 
-export const IdeasView: React.FC<IdeasViewProps> = ({ ideas, onAddIdea }) => {
+export const IdeasView: React.FC<IdeasViewProps> = ({ ideas, onAddIdea, onDeleteIdea }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [ideaToDelete, setIdeaToDelete] = useState<Idea | null>(null);
+  const [deleteToast, setDeleteToast] = useState<string | null>(null);
 
   // Form state
   const [quote, setQuote] = useState('');
@@ -71,6 +76,23 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ ideas, onAddIdea }) => {
     setIsAddModalOpen(false);
   };
 
+  const handleInitiateDelete = (idea: Idea, e: React.MouseEvent) => {
+    e.stopPropagation();
+    triggerHaptic('light');
+    setIdeaToDelete(idea);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!ideaToDelete) return;
+    const quoteSnippet = ideaToDelete.quote.slice(0, 30);
+    if (onDeleteIdea) {
+      onDeleteIdea(ideaToDelete.id);
+    }
+    setIdeaToDelete(null);
+    setDeleteToast(`Insight "${quoteSnippet}..." deleted.`);
+    setTimeout(() => setDeleteToast(null), 3500);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -78,6 +100,14 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ ideas, onAddIdea }) => {
       transition={{ duration: 0.25 }}
       className="w-full max-w-4xl mx-auto space-y-6 pb-28 md:pb-12"
     >
+      {/* Delete Feedback Toast */}
+      {deleteToast && (
+        <div className="fixed top-20 right-4 sm:right-8 z-50 p-4 bg-[#140b07] border border-rose-500/50 rounded-2xl shadow-2xl flex items-center gap-3 text-xs text-[#fadcd2] animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{deleteToast}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -184,18 +214,47 @@ export const IdeasView: React.FC<IdeasViewProps> = ({ ideas, onAddIdea }) => {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => handleCopyQuote(idea)}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-[#FF5C00] hover:text-black text-[#e4beb1] transition-all flex items-center justify-center"
-                  title="Copy Quote"
-                >
-                  {copiedId === idea.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={(e) => handleInitiateDelete(idea, e)}
+                    className="p-2 rounded-lg bg-white/5 hover:bg-rose-500/20 text-[#e4beb1] hover:text-rose-400 border border-white/5 hover:border-rose-500/30 transition-all flex items-center justify-center"
+                    title="Delete Insight"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleCopyQuote(idea)}
+                    className="p-2 rounded-lg bg-white/5 hover:bg-[#FF5C00] hover:text-black text-[#e4beb1] transition-all flex items-center justify-center"
+                    title="Copy Quote"
+                  >
+                    {copiedId === idea.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
               </div>
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {ideaToDelete && (
+        <DeleteConfirmationModal
+          isOpen={!!ideaToDelete}
+          onClose={() => setIdeaToDelete(null)}
+          onConfirm={handleConfirmDelete}
+          title="Delete this insight?"
+          itemName={`"${ideaToDelete.quote.slice(0, 50)}..."`}
+          itemType="idea"
+          description={`Permanently remove this speaker quote by ${ideaToDelete.speakerName} (${ideaToDelete.sessionTitle}) from your captured conference insights.`}
+          details={[
+            { label: 'Speaker', value: ideaToDelete.speakerName },
+            { label: 'Category', value: ideaToDelete.category },
+            { label: 'Session', value: ideaToDelete.sessionTitle },
+            { label: 'Stage', value: ideaToDelete.stageName },
+          ]}
+          warningMessage="This insight will be permanently deleted from local storage and your cloud database."
+        />
+      )}
 
       {/* Add Idea Modal */}
       {isAddModalOpen && (

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Moment, Idea } from '../types';
+import { LayoutGrid, X, Download } from 'lucide-react';
 
 interface CollageGeneratorModalProps {
   isOpen: boolean;
@@ -202,7 +203,7 @@ export const CollageGeneratorModal: React.FC<CollageGeneratorModalProps> = ({
         {/* Header */}
         <div className="p-4 bg-[#20110a] border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#FF5C00]">grid_view</span>
+            <LayoutGrid className="w-5 h-5 text-[#FF5C00]" />
             <h2 className="text-base font-bold font-serif-display text-[#fadcd2]">
               Photo Collage Studio
             </h2>
@@ -211,7 +212,7 @@ export const CollageGeneratorModal: React.FC<CollageGeneratorModalProps> = ({
             onClick={onClose}
             className="text-white/60 hover:text-white p-1 rounded-lg"
           >
-            <span className="material-symbols-outlined">close</span>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -315,7 +316,7 @@ export const CollageGeneratorModal: React.FC<CollageGeneratorModalProps> = ({
             disabled={isRendering}
             className="flex-1 py-2.5 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] flex items-center justify-center gap-2 shadow-lg"
           >
-            <span className="material-symbols-outlined text-base">download</span>
+            <Download className="w-4 h-4" />
             Download Collage (PNG)
           </button>
         </div>

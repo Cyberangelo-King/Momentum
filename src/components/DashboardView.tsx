@@ -4,6 +4,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip } from 'recharts';
 import { Connection, EventSession, Moment, Idea, UserProfile } from '../types';
 import { calculateGamification } from '../services/gamification';
 import { useBatteryStatus } from '../hooks/useBatteryStatus';
+import { OfflineUsageCard } from './OfflineUsageCard';
 import { 
   Trophy, 
   Sparkles, 
@@ -38,6 +39,7 @@ interface DashboardViewProps {
   onSelectTab: (tab: any) => void;
   onOpenProfile?: () => void;
   onOpenGamification?: () => void;
+  onOpenContingency?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -53,6 +55,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onSelectTab,
   onOpenProfile,
   onOpenGamification,
+  onOpenContingency,
 }) => {
   const [isBatteryBannerDismissed, setIsBatteryBannerDismissed] = useState(false);
   const battery = useBatteryStatus();
@@ -403,6 +406,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
+      {/* Offline Usage Statistics & Local Storage Summary */}
+      <OfflineUsageCard
+        connections={connections}
+        moments={moments}
+        ideas={ideas}
+        onOpenContingency={onOpenContingency}
+      />
+
       {/* Next Up Live Talk Card */}
       <div className="bg-[#140b07] border border-white/10 rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-5">
         <div className="flex items-center gap-4 w-full sm:w-auto">
@@ -606,6 +617,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Offline Usage Statistics & Storage Protection */}
+      <OfflineUsageCard
+        connections={connections}
+        moments={moments}
+        ideas={ideas}
+        onOpenContingency={onOpenContingency}
+      />
     </div>
   );
 };

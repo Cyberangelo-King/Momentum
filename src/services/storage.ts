@@ -11,6 +11,30 @@ const STORAGE_KEYS = {
   PROFILE: 'momentum_profile_v1',
 };
 
+// Resilient storage setter to handle QuotaExceededError or private browsing edge cases
+function safeStorageSet(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (err: any) {
+    console.warn(`Storage Contingency: Error setting ${key}, attempting space recovery`, err);
+    if (err && (err.name === 'QuotaExceededError' || err.code === 22)) {
+      try {
+        // Attempt recovery: Clear temporary keys / prune old logs
+        const tempKeys = Object.keys(localStorage).filter(
+          (k) => k.startsWith('temp_') || k.startsWith('cache_')
+        );
+        tempKeys.forEach((k) => localStorage.removeItem(k));
+        localStorage.setItem(key, value);
+        return true;
+      } catch (retryErr) {
+        console.error('Storage Contingency: Storage critical quota limit reached', retryErr);
+      }
+    }
+    return false;
+  }
+}
+
 // Tag initial mock data with isDemo: true so user can distinguish demo data vs their live event data
 const taggedMockConnections: Connection[] = initialConnections.map((c) => ({ ...c, isDemo: true }));
 const taggedMockMoments: Moment[] = initialMoments.map((m) => ({ ...m, isDemo: true }));
@@ -28,7 +52,7 @@ export function loadConnections(): Connection[] {
 
 export function saveConnections(connections: Connection[]): void {
   try {
-    localStorage.setItem(STORAGE_KEYS.CONNECTIONS, JSON.stringify(connections));
+    safeStorageSet(STORAGE_KEYS.CONNECTIONS, JSON.stringify(connections));
     // Trigger queue sync via syncManager
     syncManager.flushQueue().catch(() => {});
     // Trigger multi-device real-time sync broadcast
@@ -50,7 +74,7 @@ export function loadMoments(): Moment[] {
 
 export function saveMoments(moments: Moment[]): void {
   try {
-    localStorage.setItem(STORAGE_KEYS.MOMENTS, JSON.stringify(moments));
+    safeStorageSet(STORAGE_KEYS.MOMENTS, JSON.stringify(moments));
     syncManager.flushQueue().catch(() => {});
     multiDeviceSync.pushState({ moments }).catch(() => {});
   } catch (e) {
@@ -70,7 +94,7 @@ export function loadIdeas(): Idea[] {
 
 export function saveIdeas(ideas: Idea[]): void {
   try {
-    localStorage.setItem(STORAGE_KEYS.IDEAS, JSON.stringify(ideas));
+    safeStorageSet(STORAGE_KEYS.IDEAS, JSON.stringify(ideas));
     syncManager.flushQueue().catch(() => {});
     multiDeviceSync.pushState({ ideas }).catch(() => {});
   } catch (e) {
@@ -100,7 +124,7 @@ export function loadProfile(): UserProfile {
 
 export function saveProfile(profile: UserProfile): void {
   try {
-    localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profile));
+    safeStorageSet(STORAGE_KEYS.PROFILE, JSON.stringify(profile));
     multiDeviceSync.pushState({ profile }).catch(() => {});
   } catch (e) {
     console.warn('Failed to save profile to storage', e);
@@ -188,6 +212,87 @@ export function restoreAllDemoData(): void {
   saveConnections(connections);
   saveMoments(moments);
   saveIdeas(ideas);
+}
+
+/**
+ * Safely and permanently deletes a moment by ID:
+ * 1. Removes the moment from local storage
+ * 2. Unlinks the moment from any connections (prunes relatedMomentIds)
+ * 3. Enqueues a permanent deletion action in the sync manager for cloud synchronization
+ */
+export function permanentlyDeleteMoment(momentId: string): {
+  updatedMoments: Moment[];
+  updatedConnections: Connection[];
+} {
+  const currentMoments = loadMoments();
+  const currentConnections = loadConnections();
+
+  const updatedMoments = currentMoments.filter((m) => m.id !== momentId);
+  const updatedConnections = currentConnections.map((c) => {
+    if (c.relatedMomentIds && c.relatedMomentIds.includes(momentId)) {
+      return {
+        ...c,
+        relatedMomentIds: c.relatedMomentIds.filter((id) => id !== momentId),
+      };
+    }
+    return c;
+  });
+
+  saveMoments(updatedMoments);
+  saveConnections(updatedConnections);
+
+  // Safely queue the delete command so it persists offline and clears Supabase upon reconnect
+  syncManager.enqueue('moment', 'delete', { id: momentId });
+
+  return { updatedMoments, updatedConnections };
+}
+
+/**
+ * Safely and permanently deletes a connection by ID:
+ * 1. Removes the connection from local storage
+ * 2. Unlinks the connection from any moments (prunes taggedPeopleIds)
+ * 3. Enqueues a permanent deletion action in the sync manager
+ */
+export function permanentlyDeleteConnection(connectionId: string): {
+  updatedConnections: Connection[];
+  updatedMoments: Moment[];
+} {
+  const currentConnections = loadConnections();
+  const currentMoments = loadMoments();
+
+  const updatedConnections = currentConnections.filter((c) => c.id !== connectionId);
+  const updatedMoments = currentMoments.map((m) => {
+    if (m.taggedPeopleIds && m.taggedPeopleIds.includes(connectionId)) {
+      return {
+        ...m,
+        taggedPeopleIds: m.taggedPeopleIds.filter((id) => id !== connectionId),
+        taggedPeopleNames: m.taggedPeopleNames ? m.taggedPeopleNames.filter((name) => name !== updatedConnections.find((c) => c.id === connectionId)?.name) : undefined,
+      };
+    }
+    return m;
+  });
+
+  saveConnections(updatedConnections);
+  saveMoments(updatedMoments);
+
+  syncManager.enqueue('connection', 'delete', { id: connectionId });
+
+  return { updatedConnections, updatedMoments };
+}
+
+/**
+ * Safely and permanently deletes an idea by ID
+ */
+export function permanentlyDeleteIdea(ideaId: string): {
+  updatedIdeas: Idea[];
+} {
+  const currentIdeas = loadIdeas();
+  const updatedIdeas = currentIdeas.filter((i) => i.id !== ideaId);
+
+  saveIdeas(updatedIdeas);
+  syncManager.enqueue('idea', 'delete', { id: ideaId });
+
+  return { updatedIdeas };
 }
 
 // Reset data back to initial TEDxAkure 2026 conference state

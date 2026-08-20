@@ -2,6 +2,18 @@ import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { Connection, Moment, Idea, UserProfile } from '../types';
 import { generateDailyRecap, RecapResponse } from '../services/aiService';
+import { 
+  RotateCw, 
+  Flame, 
+  Sparkles, 
+  Share2, 
+  Copy, 
+  Check, 
+  FileText, 
+  LayoutGrid, 
+  ChevronRight, 
+  Star 
+} from 'lucide-react';
 
 interface RecapViewProps {
   connections: Connection[];
@@ -81,12 +93,10 @@ export const RecapView: React.FC<RecapViewProps> = ({
         <button
           onClick={loadRecap}
           disabled={isLoadingRecap}
-          className="p-2.5 rounded-xl bg-[#28130a] text-[#ffb59a] hover:bg-[#381a0e] border border-white/10 text-xs font-semibold flex items-center gap-1"
+          className="p-2.5 rounded-xl bg-[#28130a] text-[#ffb59a] hover:bg-[#381a0e] border border-white/10 text-xs font-semibold flex items-center gap-1.5"
           title="Regenerate Synthesis"
         >
-          <span className={`material-symbols-outlined text-sm ${isLoadingRecap ? 'animate-spin' : ''}`}>
-            refresh
-          </span>
+          <RotateCw className={`w-3.5 h-3.5 ${isLoadingRecap ? 'animate-spin' : ''}`} />
           <span className="hidden sm:inline">Refresh AI</span>
         </button>
       </div>
@@ -117,9 +127,7 @@ export const RecapView: React.FC<RecapViewProps> = ({
           </div>
 
           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#FF5C00] text-black flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-            <span className="material-symbols-outlined text-3xl sm:text-4xl font-bold">
-              local_fire_department
-            </span>
+            <Flame className="w-8 h-8 sm:w-10 sm:h-10 stroke-[2.5]" />
           </div>
         </div>
       </div>
@@ -170,7 +178,7 @@ export const RecapView: React.FC<RecapViewProps> = ({
       {/* AI Daily Synthesis Card */}
       <div className="bg-[#180b06] border border-white/10 rounded-2xl p-6 space-y-4 shadow-xl">
         <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[#FF5C00]">psychology</span>
+          <Sparkles className="w-4 h-4 text-[#FF5C00]" />
           <h3 className="text-xs font-bold uppercase tracking-wider text-[#e4beb1]">
             Gemini Daily Synthesis
           </h3>
@@ -209,7 +217,7 @@ export const RecapView: React.FC<RecapViewProps> = ({
       <div className="bg-[#140b07] border border-white/10 rounded-2xl p-5 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#0A66C2]">share</span>
+            <Share2 className="w-4 h-4 text-[#0A66C2]" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#e4beb1]">
               LinkedIn Event Reflection
             </h3>
@@ -217,11 +225,9 @@ export const RecapView: React.FC<RecapViewProps> = ({
 
           <button
             onClick={handleCopyPost}
-            className="px-3 py-1.5 rounded-lg bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] flex items-center gap-1 shadow"
+            className="px-3 py-1.5 rounded-lg bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] flex items-center gap-1.5 shadow"
           >
-            <span className="material-symbols-outlined text-sm">
-              {copiedPost ? 'check' : 'content_copy'}
-            </span>
+            {copiedPost ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
             {copiedPost ? 'Copied to Clipboard' : 'Copy Post'}
           </button>
         </div>
@@ -238,13 +244,13 @@ export const RecapView: React.FC<RecapViewProps> = ({
           className="p-4 rounded-2xl bg-[#28130a] hover:bg-[#381a0e] border border-white/10 flex items-center justify-between transition-colors text-left"
         >
           <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-2xl text-[#FF5C00]">picture_as_pdf</span>
+            <FileText className="w-6 h-6 text-[#FF5C00]" />
             <div>
               <h4 className="text-sm font-bold text-[#fadcd2]">Export Journal PDF</h4>
               <p className="text-[11px] text-[#e4beb1]/60">Full formatted conference archive</p>
             </div>
           </div>
-          <span className="material-symbols-outlined text-white/50">chevron_right</span>
+          <ChevronRight className="w-5 h-5 text-white/50" />
         </button>
 
         <button
@@ -252,13 +258,13 @@ export const RecapView: React.FC<RecapViewProps> = ({
           className="p-4 rounded-2xl bg-[#28130a] hover:bg-[#381a0e] border border-white/10 flex items-center justify-between transition-colors text-left"
         >
           <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-2xl text-[#ffb59a]">grid_view</span>
+            <LayoutGrid className="w-6 h-6 text-[#ffb59a]" />
             <div>
               <h4 className="text-sm font-bold text-[#fadcd2]">Photo Collage Generator</h4>
               <p className="text-[11px] text-[#e4beb1]/60">High-res shareable image</p>
             </div>
           </div>
-          <span className="material-symbols-outlined text-white/50">chevron_right</span>
+          <ChevronRight className="w-5 h-5 text-white/50" />
         </button>
       </div>
     </div>

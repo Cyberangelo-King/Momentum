@@ -1,7 +1,7 @@
 export type RelationshipType = 'peer' | 'mentor' | 'lead' | 'speaker';
 export type PriorityLevel = 'high' | 'medium' | 'low';
 export type FollowUpStatus = 'today' | 'upcoming' | 'overdue' | 'completed';
-export type MomentType = 'photo' | 'video' | 'note';
+export type MomentType = 'photo' | 'video' | 'note' | 'voice';
 
 export interface Connection {
   id: string;
@@ -28,6 +28,8 @@ export interface Connection {
   relatedMomentIds?: string[];
   lastFollowUpMessage?: string;
   isDemo?: boolean;
+  isOfflineCaptured?: boolean;
+  savedOfflineAt?: string;
   inTrash?: boolean;
   deletedAt?: string;
 }
@@ -39,12 +41,15 @@ export interface Moment {
   caption: string;
   mediaUrl: string;
   thumbnailUrl?: string;
+  audioDuration?: string;
   timestamp: string; // e.g. "10:45 AM"
   date: string;
   taggedPeopleIds: string[];
   taggedPeopleNames?: string[];
   location: string;
   isDemo?: boolean;
+  isOfflineCaptured?: boolean;
+  savedOfflineAt?: string;
   inTrash?: boolean;
   deletedAt?: string;
 }
@@ -62,6 +67,8 @@ export interface Idea {
   category: 'Keynote' | 'Workshop' | 'Fireside Chat' | 'Panel' | 'Design & UX' | 'Leadership' | 'Technology';
   tags: string[];
   isDemo?: boolean;
+  isOfflineCaptured?: boolean;
+  savedOfflineAt?: string;
   inTrash?: boolean;
   deletedAt?: string;
 }

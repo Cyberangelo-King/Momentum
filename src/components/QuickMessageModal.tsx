@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Connection } from '../types';
 import { generateQuickMessage } from '../services/aiService';
+import { 
+  Sparkles, 
+  X, 
+  MessageSquare, 
+  Linkedin, 
+  Mail, 
+  RefreshCw, 
+  Check, 
+  Copy, 
+  Send 
+} from 'lucide-react';
 
 interface QuickMessageModalProps {
   connection: Connection | null;
@@ -78,7 +89,7 @@ export const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
         <div className="p-4 bg-[#20110a] border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-[#FF5C00] text-black flex items-center justify-center font-bold">
-              <span className="material-symbols-outlined text-lg font-bold">auto_awesome</span>
+              <Sparkles className="w-4 h-4" />
             </div>
             <div>
               <h2 className="text-base font-bold font-serif-display text-[#fadcd2]">
@@ -91,7 +102,7 @@ export const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
             onClick={onClose}
             className="text-white/60 hover:text-white p-1 rounded-lg"
           >
-            <span className="material-symbols-outlined">close</span>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -110,9 +121,13 @@ export const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
                   : 'bg-[#26150e] text-[#e4beb1]/70 hover:text-white'
               }`}
             >
-              <span className="material-symbols-outlined text-sm">
-                {ch === 'whatsapp' ? 'chat' : ch === 'linkedin' ? 'badge' : 'mail'}
-              </span>
+              {ch === 'whatsapp' ? (
+                <MessageSquare className="w-3.5 h-3.5" />
+              ) : ch === 'linkedin' ? (
+                <Linkedin className="w-3.5 h-3.5" />
+              ) : (
+                <Mail className="w-3.5 h-3.5" />
+              )}
               {ch}
             </button>
           ))}
@@ -130,7 +145,7 @@ export const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
               disabled={isLoading}
               className="text-[#FF5C00] font-semibold hover:underline flex items-center gap-1"
             >
-              <span className="material-symbols-outlined text-xs">refresh</span>
+              <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
               Regenerate
             </button>
           </div>
@@ -162,9 +177,7 @@ export const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
             onClick={handleCopy}
             className="px-4 py-2.5 rounded-xl border border-white/20 text-[#fadcd2] font-semibold text-xs hover:bg-white/5 flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-base">
-              {copied ? 'check' : 'content_copy'}
-            </span>
+            {copied ? <Check className="w-4 h-4 text-[#25D366]" /> : <Copy className="w-4 h-4" />}
             {copied ? 'Copied!' : 'Copy Text'}
           </button>
 
@@ -172,7 +185,7 @@ export const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
             onClick={handleSendAndComplete}
             className="flex-1 py-2.5 px-4 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] transition-all flex items-center justify-center gap-2 shadow-lg"
           >
-            <span className="material-symbols-outlined text-base">send</span>
+            <Send className="w-4 h-4" />
             Launch {channel} & Mark Done
           </button>
         </div>

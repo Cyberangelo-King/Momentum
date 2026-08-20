@@ -3,7 +3,7 @@
  * Provides subtle tactile feedback for navigation, saving, deleting, and milestone achievements.
  */
 
-type HapticType = 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'delete' | 'milestone' | 'unlock';
+type HapticType = 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error' | 'delete' | 'milestone' | 'unlock';
 
 export const triggerHaptic = (type: HapticType = 'light'): void => {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') return;
@@ -28,7 +28,8 @@ export const triggerHaptic = (type: HapticType = 'light'): void => {
         navigator.vibrate([18, 40, 25]);
         break;
       case 'warning':
-        // Staccato alert for undo/warnings
+      case 'error':
+        // Staccato alert for errors/warnings
         navigator.vibrate([30, 40, 30]);
         break;
       case 'delete':
@@ -57,6 +58,7 @@ export const haptic = {
   success: () => triggerHaptic('success'),
   delete: () => triggerHaptic('delete'),
   warning: () => triggerHaptic('warning'),
+  error: () => triggerHaptic('error'),
   unlock: () => triggerHaptic('unlock'),
   milestone: () => triggerHaptic('milestone'),
 };

@@ -1,7 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Moment, Idea, Connection } from '../types';
 import { CameraCaptureModal } from './CameraCaptureModal';
+import { VoiceMemoModal } from './VoiceMemoModal';
 import { uploadAndCompressMedia } from '../services/imageCompression';
+import { 
+  SpeechTranscriber, 
+  isSpeechRecognitionSupported 
+} from '../services/speechService';
+import { 
+  Camera, 
+  Video, 
+  Lightbulb, 
+  PenLine, 
+  History, 
+  X, 
+  Clock, 
+  Sparkles, 
+  Tag, 
+  User, 
+  Mic, 
+  Volume2, 
+  Play, 
+  Pause,
+  RotateCcw,
+  ShieldCheck,
+  Radio
+} from 'lucide-react';
+import { triggerHaptic } from '../services/haptics';
 
 interface CaptureHubViewProps {
   moments: Moment[];
@@ -21,21 +46,30 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
 }) => {
   const [cameraMode, setCameraMode] = useState<'photo' | 'video' | 'both'>('photo');
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isVoiceMemoOpen, setIsVoiceMemoOpen] = useState(false);
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [isAddingIdeaModal, setIsAddingIdeaModal] = useState(false);
   const [isSavingMedia, setIsSavingMedia] = useState(false);
 
-  // New Note state
+  // Playing audio state for recent captures
+  const [playingMomentId, setPlayingMomentId] = useState<string | null>(null);
+  const activeAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // New Note state + Speech dictation
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
   const [noteLocation, setNoteLocation] = useState('Main Concourse');
+  const [isDictatingNote, setIsDictatingNote] = useState(false);
+  const noteTranscriberRef = useRef<SpeechTranscriber | null>(null);
 
-  // New Idea state
+  // New Idea state + Speech dictation
   const [ideaQuote, setIdeaQuote] = useState('');
   const [ideaTakeaway, setIdeaTakeaway] = useState('');
   const [ideaSpeaker, setIdeaSpeaker] = useState('');
   const [ideaSession, setIdeaSession] = useState('Keynote Hall');
   const [ideaCategory, setIdeaCategory] = useState<'Keynote' | 'Workshop' | 'Fireside Chat' | 'Design & UX' | 'Technology' | 'Leadership'>('Keynote');
+  const [isDictatingIdea, setIsDictatingIdea] = useState(false);
+  const ideaTranscriberRef = useRef<SpeechTranscriber | null>(null);
 
   // Photo / Video capture details modal
   const [pendingMedia, setPendingMedia] = useState<{ url: string; type: 'photo' | 'video' } | null>(null);
@@ -43,6 +77,22 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
   const [mediaCaption, setMediaCaption] = useState('');
   const [mediaLocation, setMediaLocation] = useState('Main Auditorium');
   const [taggedPeople, setTaggedPeople] = useState<string[]>([]);
+
+  const speechSupported = isSpeechRecognitionSupported();
+
+  useEffect(() => {
+    return () => {
+      if (activeAudioRef.current) {
+        activeAudioRef.current.pause();
+      }
+      if (noteTranscriberRef.current) {
+        noteTranscriberRef.current.abort();
+      }
+      if (ideaTranscriberRef.current) {
+        ideaTranscriberRef.current.abort();
+      }
+    };
+  }, []);
 
   const handleOpenPhotoCamera = () => {
     setCameraMode('photo');
@@ -100,9 +150,120 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
     setTaggedPeople([]);
   };
 
+  const handleSaveVoiceMoment = (data: {
+    title: string;
+    transcript: string;
+    audioDataUrl: string;
+    durationFormatted: string;
+    location: string;
+    taggedPeopleIds: string[];
+  }) => {
+    const newMoment: Moment = {
+      id: `m_${Date.now()}`,
+      type: 'voice',
+      title: data.title,
+      caption: data.transcript,
+      mediaUrl: data.audioDataUrl,
+      audioDuration: data.durationFormatted,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      taggedPeopleIds: data.taggedPeopleIds,
+      taggedPeopleNames: connections
+        .filter((c) => data.taggedPeopleIds.includes(c.id))
+        .map((c) => c.name),
+      location: data.location,
+    };
+
+    onAddMoment(newMoment);
+  };
+
+  const handleTogglePlayAudio = (moment: Moment) => {
+    if (playingMomentId === moment.id) {
+      if (activeAudioRef.current) {
+        activeAudioRef.current.pause();
+      }
+      setPlayingMomentId(null);
+    } else {
+      if (activeAudioRef.current) {
+        activeAudioRef.current.pause();
+      }
+      const audio = new Audio(moment.mediaUrl);
+      audio.onended = () => setPlayingMomentId(null);
+      audio.play().catch((err) => console.warn('Audio playback error:', err));
+      activeAudioRef.current = audio;
+      setPlayingMomentId(moment.id);
+    }
+  };
+
+  // Live Speech Dictation for Field Notes
+  const toggleNoteDictation = () => {
+    if (isDictatingNote) {
+      if (noteTranscriberRef.current) {
+        noteTranscriberRef.current.stop();
+        noteTranscriberRef.current = null;
+      }
+      setIsDictatingNote(false);
+      triggerHaptic('light');
+    } else {
+      if (!speechSupported) return;
+      triggerHaptic('medium');
+      const transcriber = new SpeechTranscriber({
+        onTranscript: (text) => {
+          setNoteContent((prev) => {
+            return text;
+          });
+        },
+        onEnd: () => {
+          setIsDictatingNote(false);
+        },
+      });
+      if (noteContent) {
+        transcriber.setInitialText(noteContent);
+      }
+      transcriber.start();
+      noteTranscriberRef.current = transcriber;
+      setIsDictatingNote(true);
+    }
+  };
+
+  // Live Speech Dictation for Talk Insights
+  const toggleIdeaDictation = () => {
+    if (isDictatingIdea) {
+      if (ideaTranscriberRef.current) {
+        ideaTranscriberRef.current.stop();
+        ideaTranscriberRef.current = null;
+      }
+      setIsDictatingIdea(false);
+      triggerHaptic('light');
+    } else {
+      if (!speechSupported) return;
+      triggerHaptic('medium');
+      const transcriber = new SpeechTranscriber({
+        onTranscript: (text) => {
+          setIdeaQuote(text);
+        },
+        onEnd: () => {
+          setIsDictatingIdea(false);
+        },
+      });
+      if (ideaQuote) {
+        transcriber.setInitialText(ideaQuote);
+      }
+      transcriber.start();
+      ideaTranscriberRef.current = transcriber;
+      setIsDictatingIdea(true);
+    }
+  };
+
   const handleSaveNote = (e: React.FormEvent) => {
     e.preventDefault();
     if (!noteContent.trim()) return;
+
+    if (noteTranscriberRef.current) {
+      noteTranscriberRef.current.stop();
+      noteTranscriberRef.current = null;
+      setIsDictatingNote(false);
+    }
 
     const newMoment: Moment = {
       id: `m_${Date.now()}`,
@@ -125,6 +286,12 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
   const handleSaveIdea = (e: React.FormEvent) => {
     e.preventDefault();
     if (!ideaQuote.trim()) return;
+
+    if (ideaTranscriberRef.current) {
+      ideaTranscriberRef.current.stop();
+      ideaTranscriberRef.current = null;
+      setIsDictatingIdea(false);
+    }
 
     const newIdea: Idea = {
       id: `i_${Date.now()}`,
@@ -168,19 +335,19 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
           Capture Hub
         </h1>
         <p className="text-xs text-[#e4beb1]/70 mt-1">
-          Collect photographs, video reflections, speaker quotes, and rapid thoughts in real-time.
+          Collect photographs, video reflections, Web Speech voice memos, and rapid insights with zero latency.
         </p>
       </div>
 
       {/* Bento Action Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {/* Photo Card */}
         <div
           onClick={handleOpenPhotoCamera}
           className="bg-[#180b06] hover:bg-[#26130b] border border-white/10 hover:border-[#FF5C00]/50 rounded-2xl p-4 cursor-pointer transition-all flex flex-col justify-between h-36 group"
         >
           <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center group-hover:scale-110 transition-transform">
-            <span className="material-symbols-outlined text-2xl">photo_camera</span>
+            <Camera className="w-5 h-5" />
           </div>
           <div>
             <h3 className="text-sm font-bold text-[#fadcd2]">Photo Snap</h3>
@@ -194,11 +361,33 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
           className="bg-[#180b06] hover:bg-[#26130b] border border-white/10 hover:border-[#FF5C00]/50 rounded-2xl p-4 cursor-pointer transition-all flex flex-col justify-between h-36 group"
         >
           <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center group-hover:scale-110 transition-transform">
-            <span className="material-symbols-outlined text-2xl">videocam</span>
+            <Video className="w-5 h-5" />
           </div>
           <div>
             <h3 className="text-sm font-bold text-[#fadcd2]">Short Video</h3>
             <p className="text-[10px] text-[#e4beb1]/60 mt-0.5">Record talk snippet</p>
+          </div>
+        </div>
+
+        {/* Voice Memo Card (Web Speech API) */}
+        <div
+          onClick={() => setIsVoiceMemoOpen(true)}
+          className="bg-[#1e0e07] hover:bg-[#2c150c] border border-[#FF5C00]/30 hover:border-[#FF5C00] rounded-2xl p-4 cursor-pointer transition-all flex flex-col justify-between h-36 group relative overflow-hidden shadow-lg"
+        >
+          <div className="flex items-center justify-between">
+            <div className="w-10 h-10 rounded-xl bg-[#FF5C00] text-black flex items-center justify-center group-hover:scale-110 transition-transform shadow-md">
+              <Mic className="w-5 h-5" />
+            </div>
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#FF5C00]/20 text-[#FF5C00] font-bold border border-[#FF5C00]/30">
+              SPEECH API
+            </span>
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-[#fadcd2] flex items-center gap-1">
+              <span>Voice Memo</span>
+              <Sparkles className="w-3 h-3 text-[#FF5C00]" />
+            </h3>
+            <p className="text-[10px] text-[#e4beb1]/70 mt-0.5">Auto-transcribe speech</p>
           </div>
         </div>
 
@@ -208,7 +397,7 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
           className="bg-[#180b06] hover:bg-[#26130b] border border-white/10 hover:border-[#FF5C00]/50 rounded-2xl p-4 cursor-pointer transition-all flex flex-col justify-between h-36 group"
         >
           <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center group-hover:scale-110 transition-transform">
-            <span className="material-symbols-outlined text-2xl">lightbulb</span>
+            <Lightbulb className="w-5 h-5" />
           </div>
           <div>
             <h3 className="text-sm font-bold text-[#fadcd2]">Talk Insight</h3>
@@ -219,10 +408,10 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
         {/* Rapid Note Card */}
         <div
           onClick={() => setIsAddingNote(true)}
-          className="bg-[#180b06] hover:bg-[#26130b] border border-white/10 hover:border-[#FF5C00]/50 rounded-2xl p-4 cursor-pointer transition-all flex flex-col justify-between h-36 group"
+          className="bg-[#180b06] hover:bg-[#26130b] border border-white/10 hover:border-[#FF5C00]/50 rounded-2xl p-4 cursor-pointer transition-all flex flex-col justify-between h-36 group col-span-2 sm:col-span-1"
         >
           <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center group-hover:scale-110 transition-transform">
-            <span className="material-symbols-outlined text-2xl">edit_note</span>
+            <PenLine className="w-5 h-5" />
           </div>
           <div>
             <h3 className="text-sm font-bold text-[#fadcd2]">Field Note</h3>
@@ -267,7 +456,7 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold uppercase tracking-wider text-[#e4beb1] flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#FF5C00] text-base">history</span>
+            <History className="w-4 h-4 text-[#FF5C00]" />
             Recent Captures ({moments.length})
           </h2>
         </div>
@@ -276,9 +465,72 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
           {moments.map((m) => (
             <div
               key={m.id}
-              className="bg-[#140b07] border border-white/10 rounded-2xl overflow-hidden shadow-md flex flex-col"
+              className="bg-[#140b07] border border-white/10 rounded-2xl overflow-hidden shadow-md flex flex-col justify-between"
             >
-              {m.mediaUrl ? (
+              {m.type === 'voice' ? (
+                /* Voice Memo Card Display */
+                <div className="bg-[#1c0e08] p-4 border-b border-white/5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2 py-0.5 rounded-full bg-[#FF5C00]/20 text-[#FF5C00] text-[10px] font-bold border border-[#FF5C00]/30 flex items-center gap-1">
+                      <Mic className="w-3 h-3" />
+                      VOICE MEMO
+                    </span>
+                    {m.audioDuration && (
+                      <span className="text-[11px] font-mono text-[#e4beb1]/70 font-semibold">
+                        {m.audioDuration}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Audio player button */}
+                  {m.mediaUrl && (
+                    <div className="flex items-center gap-3 p-2.5 bg-[#0e0603] rounded-xl border border-white/5">
+                      <button
+                        onClick={() => handleTogglePlayAudio(m)}
+                        className="w-9 h-9 rounded-lg bg-[#FF5C00] text-black flex items-center justify-center hover:bg-[#ff7a33] transition-transform active:scale-95 shrink-0"
+                        aria-label={playingMomentId === m.id ? 'Pause memo' : 'Play voice memo'}
+                      >
+                        {playingMomentId === m.id ? (
+                          <Pause className="w-4 h-4 fill-current" />
+                        ) : (
+                          <Play className="w-4 h-4 fill-current ml-0.5" />
+                        )}
+                      </button>
+                      <div className="flex-1 overflow-hidden">
+                        <div className="flex items-center gap-1 h-5">
+                          {[6, 12, 18, 14, 8, 16, 20, 12, 6, 14, 18, 10, 6].map((h, idx) => (
+                            <div
+                              key={idx}
+                              style={{ height: `${h}px` }}
+                              className={`w-1 rounded-full ${
+                                playingMomentId === m.id
+                                  ? 'bg-[#FF5C00] animate-pulse'
+                                  : 'bg-white/20'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-[#e4beb1]/60 truncate mt-0.5">
+                          {playingMomentId === m.id ? 'Playing audio stream...' : 'Tap to play audio'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Transcribed text */}
+                  {m.caption && (
+                    <div className="p-2.5 bg-[#25130b] rounded-xl border border-white/5">
+                      <p className="text-[10px] uppercase font-bold text-[#FF5C00] tracking-wider mb-0.5 flex items-center gap-1">
+                        <Sparkles className="w-2.5 h-2.5" />
+                        Transcript:
+                      </p>
+                      <p className="text-xs text-[#fadcd2] italic line-clamp-3 leading-relaxed">
+                        "{m.caption}"
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : m.mediaUrl ? (
                 <div className="relative h-44 bg-black overflow-hidden group">
                   {m.type === 'video' ? (
                     <video
@@ -312,7 +564,7 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                     <span>{m.timestamp}</span>
                   </div>
                   <h3 className="text-sm font-bold text-[#fadcd2]">{m.title}</h3>
-                  {m.caption && m.mediaUrl && (
+                  {m.type !== 'voice' && m.caption && m.mediaUrl && (
                     <p className="text-xs text-[#e4beb1]/80 mt-1 line-clamp-2 leading-relaxed">
                       {m.caption}
                     </p>
@@ -336,6 +588,14 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Voice Memo Modal */}
+      <VoiceMemoModal
+        isOpen={isVoiceMemoOpen}
+        connections={connections}
+        onClose={() => setIsVoiceMemoOpen(false)}
+        onSaveVoiceMoment={handleSaveVoiceMoment}
+      />
 
       {/* Live Camera Modal */}
       <CameraCaptureModal
@@ -365,9 +625,10 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
               </h2>
               <button
                 onClick={() => setPendingMedia(null)}
-                className="text-white/60 hover:text-white"
+                className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+                aria-label="Close dialog"
               >
-                <span className="material-symbols-outlined">close</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -471,10 +732,18 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                 Log Field Note
               </h2>
               <button
-                onClick={() => setIsAddingNote(false)}
-                className="text-white/60 hover:text-white"
+                onClick={() => {
+                  if (noteTranscriberRef.current) {
+                    noteTranscriberRef.current.stop();
+                    noteTranscriberRef.current = null;
+                  }
+                  setIsDictatingNote(false);
+                  setIsAddingNote(false);
+                }}
+                className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+                aria-label="Close dialog"
               >
-                <span className="material-symbols-outlined">close</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -491,16 +760,32 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#e4beb1] mb-1">
-                  Thought / Note *
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-[#e4beb1]">
+                    Thought / Note *
+                  </label>
+                  {speechSupported && (
+                    <button
+                      type="button"
+                      onClick={toggleNoteDictation}
+                      className={`text-[10px] px-2 py-0.5 rounded-lg font-semibold flex items-center gap-1 transition-all ${
+                        isDictatingNote
+                          ? 'bg-rose-600 text-white animate-pulse'
+                          : 'bg-[#FF5C00]/10 text-[#FF5C00] hover:bg-[#FF5C00]/20'
+                      }`}
+                    >
+                      <Mic className="w-3 h-3" />
+                      <span>{isDictatingNote ? 'Listening...' : 'Voice Dictate'}</span>
+                    </button>
+                  )}
+                </div>
                 <textarea
                   rows={4}
                   required
                   placeholder="The transition between states is where the UX magic happens..."
                   value={noteContent}
                   onChange={(e) => setNoteContent(e.target.value)}
-                  className="w-full bg-[#0d0603] border border-white/10 rounded-xl px-3 py-2 text-xs text-[#fadcd2] focus:border-[#FF5C00] resize-none"
+                  className="w-full bg-[#0d0603] border border-white/10 rounded-xl px-3 py-2 text-xs text-[#fadcd2] focus:border-[#FF5C00] resize-none leading-relaxed"
                 />
               </div>
 
@@ -517,7 +802,14 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
               <div className="flex gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsAddingNote(false)}
+                  onClick={() => {
+                    if (noteTranscriberRef.current) {
+                      noteTranscriberRef.current.stop();
+                      noteTranscriberRef.current = null;
+                    }
+                    setIsDictatingNote(false);
+                    setIsAddingNote(false);
+                  }}
                   className="w-1/3 py-2.5 rounded-xl border border-white/10 text-xs font-semibold text-[#fadcd2]"
                 >
                   Cancel
@@ -546,18 +838,42 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                 Save Talk Insight
               </h2>
               <button
-                onClick={() => setIsAddingIdeaModal(false)}
-                className="text-white/60 hover:text-white"
+                onClick={() => {
+                  if (ideaTranscriberRef.current) {
+                    ideaTranscriberRef.current.stop();
+                    ideaTranscriberRef.current = null;
+                  }
+                  setIsDictatingIdea(false);
+                  setIsAddingIdeaModal(false);
+                }}
+                className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+                aria-label="Close dialog"
               >
-                <span className="material-symbols-outlined">close</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSaveIdea} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-[#e4beb1] mb-1">
-                  Key Quote or Core Idea *
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-[#e4beb1]">
+                    Key Quote or Core Idea *
+                  </label>
+                  {speechSupported && (
+                    <button
+                      type="button"
+                      onClick={toggleIdeaDictation}
+                      className={`text-[10px] px-2 py-0.5 rounded-lg font-semibold flex items-center gap-1 transition-all ${
+                        isDictatingIdea
+                          ? 'bg-rose-600 text-white animate-pulse'
+                          : 'bg-[#FF5C00]/10 text-[#FF5C00] hover:bg-[#FF5C00]/20'
+                      }`}
+                    >
+                      <Mic className="w-3 h-3" />
+                      <span>{isDictatingIdea ? 'Listening...' : 'Voice Dictate'}</span>
+                    </button>
+                  )}
+                </div>
                 <textarea
                   rows={3}
                   required
@@ -610,7 +926,14 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
               <div className="flex gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsAddingIdeaModal(false)}
+                  onClick={() => {
+                    if (ideaTranscriberRef.current) {
+                      ideaTranscriberRef.current.stop();
+                      ideaTranscriberRef.current = null;
+                    }
+                    setIsDictatingIdea(false);
+                    setIsAddingIdeaModal(false);
+                  }}
                   className="w-1/3 py-2.5 rounded-xl border border-white/10 text-xs font-semibold text-[#fadcd2]"
                 >
                   Cancel

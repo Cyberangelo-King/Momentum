@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { Lock, Unlock, ShieldAlert, ArrowRight, KeyRound, Sparkles } from 'lucide-react';
+import { Lock, Unlock, ShieldAlert, ArrowRight, KeyRound, Sparkles, LogOut } from 'lucide-react';
 import { SecuritySettings, UserProfile } from '../types';
-import { verifyPinOrOwner, setAppLockState } from '../services/authService';
+import { verifySessionPin, setAppLockState } from '../services/authService';
 
 interface LockScreenOverlayProps {
   isLocked: boolean;
   security: SecuritySettings;
   profile: UserProfile;
   onUnlock: () => void;
+  onLogout?: () => void;
 }
 
 export const LockScreenOverlay: React.FC<LockScreenOverlayProps> = ({
@@ -15,6 +16,7 @@ export const LockScreenOverlay: React.FC<LockScreenOverlayProps> = ({
   security,
   profile,
   onUnlock,
+  onLogout,
 }) => {
   const [inputVal, setInputVal] = useState('');
   const [error, setError] = useState(false);
@@ -24,7 +26,7 @@ export const LockScreenOverlay: React.FC<LockScreenOverlayProps> = ({
 
   const handleUnlockSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (verifyPinOrOwner(inputVal, security)) {
+    if (verifySessionPin(inputVal, security)) {
       setAppLockState(false);
       onUnlock();
       setInputVal('');
@@ -37,23 +39,23 @@ export const LockScreenOverlay: React.FC<LockScreenOverlayProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0A0A0A] backdrop-blur-xl text-neutral-100 animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0A0A0A]/95 backdrop-blur-xl text-neutral-100 animate-fade-in">
       <div
-        className={`w-full max-w-sm bg-[#121212] border border-neutral-800 rounded-3xl p-8 shadow-2xl text-center space-y-6 ${
+        className={`w-full max-w-sm bg-[#120906] border border-white/10 rounded-3xl p-8 shadow-2xl text-center space-y-6 ${
           shake ? 'animate-bounce' : ''
         }`}
       >
         {/* Lock Graphic */}
-        <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#FF4D00]/20 to-[#E62B1E]/20 border border-[#FF4D00]/40 flex items-center justify-center text-[#FF6B26] shadow-lg shadow-[#FF4D00]/10">
+        <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#FF5C00]/20 to-[#E62B1E]/20 border border-[#FF5C00]/40 flex items-center justify-center text-[#FF5C00] shadow-lg shadow-[#FF5C00]/10">
           <Lock className="w-8 h-8" />
         </div>
 
         <div className="space-y-1.5">
-          <h2 className="text-xl font-bold tracking-tight text-white">Momentum Locked</h2>
-          <p className="text-xs text-neutral-400">
-            Exclusive workspace for <strong className="text-white">{profile.name}</strong>
+          <h2 className="text-xl font-bold tracking-tight text-white font-serif-display">Privacy Lock Active</h2>
+          <p className="text-xs text-[#e4beb1]/70">
+            Workspace for <strong className="text-white">{profile.name}</strong>
           </p>
-          <p className="text-[11px] font-mono text-neutral-500">{security.authorizedEmail}</p>
+          <p className="text-[11px] font-mono text-white/40">{security.authorizedEmail}</p>
         </div>
 
         {/* Input Form */}
@@ -66,34 +68,40 @@ export const LockScreenOverlay: React.FC<LockScreenOverlayProps> = ({
                 setInputVal(e.target.value);
                 setError(false);
               }}
-              placeholder="Enter PIN or Owner Email"
+              placeholder="Enter PIN Passcode"
               autoFocus
-              className={`w-full bg-neutral-900 border ${
-                error ? 'border-rose-500 text-rose-300' : 'border-neutral-700 text-white focus:border-[#FF4D00]'
-              } rounded-2xl px-4 py-3.5 text-center text-base tracking-widest placeholder-neutral-600 focus:outline-none transition-colors font-mono`}
+              className={`w-full bg-[#1c0d08] border ${
+                error ? 'border-rose-500 text-rose-300' : 'border-white/15 text-white focus:border-[#FF5C00]'
+              } rounded-2xl px-4 py-3.5 text-center text-base tracking-widest placeholder-white/20 focus:outline-none transition-colors font-mono`}
             />
             {error && (
               <p className="text-xs text-rose-400 font-medium">
-                Incorrect PIN. (Default: 2026 or use your email)
+                Incorrect PIN passcode.
               </p>
             )}
           </div>
 
           <button
             type="submit"
-            className="w-full py-3.5 bg-gradient-to-r from-[#FF4D00] to-[#E62B1E] hover:from-[#FF6B26] hover:to-[#FF4D00] text-white font-bold rounded-2xl text-sm transition-all shadow-lg shadow-[#FF4D00]/20 flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-gradient-to-r from-[#FF5C00] to-[#E62B1E] hover:from-[#ff7324] hover:to-[#FF5C00] text-black font-bold rounded-2xl text-sm transition-all shadow-lg shadow-[#FF5C00]/20 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
           >
             <Unlock className="w-4 h-4" />
             <span>Unlock Workspace</span>
           </button>
         </form>
 
-        {/* Quick hint for Angelo */}
-        <div className="pt-2 text-center">
-          <p className="text-[11px] text-neutral-500">
-            Default event PIN: <strong className="text-neutral-300 font-mono">2026</strong>
-          </p>
-        </div>
+        {/* Logout Option */}
+        {onLogout && (
+          <div className="pt-2 border-t border-white/5 text-center">
+            <button
+              onClick={onLogout}
+              className="text-xs text-white/40 hover:text-rose-400 flex items-center justify-center gap-1.5 mx-auto transition-colors cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Full Supabase Logout</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

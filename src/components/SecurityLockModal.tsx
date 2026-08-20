@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, Unlock, Shield, KeyRound, Check, AlertCircle, Eye, EyeOff, UserCheck, X } from 'lucide-react';
 import { SecuritySettings, UserProfile } from '../types';
-import { updatePin, verifyPinOrOwner, saveSecuritySettings } from '../services/authService';
+import { updateSessionPin, saveSecuritySettings, getOwnerEmail } from '../services/authService';
 
 interface SecurityLockModalProps {
   isOpen: boolean;
@@ -19,12 +19,12 @@ export const SecurityLockModal: React.FC<SecurityLockModalProps> = ({
   profile,
 }) => {
   const [activeTab, setActiveTab] = useState<'status' | 'changePin'>('status');
-  const [currentPinInput, setCurrentPinInput] = useState('');
   const [newPinInput, setNewPinInput] = useState('');
   const [confirmPinInput, setConfirmPinInput] = useState('');
   const [showPin, setShowPin] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const ownerEmail = getOwnerEmail();
 
   if (!isOpen) return null;
 
@@ -35,7 +35,7 @@ export const SecurityLockModal: React.FC<SecurityLockModalProps> = ({
     };
     saveSecuritySettings(updated);
     onSecurityUpdate(updated);
-    setSuccessMsg(updated.isLockEnabled ? 'Privacy lock enabled for Angelo' : 'Privacy lock disabled');
+    setSuccessMsg(updated.isLockEnabled ? 'Secondary screen privacy lock enabled' : 'Secondary screen privacy lock disabled');
     setTimeout(() => setSuccessMsg(null), 2500);
   };
 
@@ -54,11 +54,11 @@ export const SecurityLockModal: React.FC<SecurityLockModalProps> = ({
       return;
     }
 
-    const updated = updatePin(newPinInput);
+    const updated = updateSessionPin(newPinInput);
     if (updated) {
       const refreshed = { ...security, isLockEnabled: true };
       onSecurityUpdate(refreshed);
-      setSuccessMsg('Security PIN updated successfully!');
+      setSuccessMsg('Secondary PIN updated successfully!');
       setNewPinInput('');
       setConfirmPinInput('');
       setTimeout(() => {
@@ -72,74 +72,74 @@ export const SecurityLockModal: React.FC<SecurityLockModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-md bg-[#121212] border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden text-neutral-100 flex flex-col">
+      <div className="relative w-full max-w-md bg-[#120906] border border-white/10 rounded-2xl shadow-2xl overflow-hidden text-neutral-100 flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-neutral-800 bg-[#161616]">
+        <div className="flex items-center justify-between p-5 border-b border-white/10 bg-[#1a0c07]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-amber-500/20">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF5C00] to-[#E62B1E] flex items-center justify-center text-black shadow-lg shadow-[#FF5C00]/20 font-bold">
               <Shield className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                Privacy & Access Lock
+                Secondary Privacy Lock
               </h2>
-              <p className="text-xs text-neutral-400">Exclusive access for Angelo</p>
+              <p className="text-xs text-[#e4beb1]/70">Optional in-session screen shade</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-800 transition-colors"
+            className="p-2 text-white/40 hover:text-white rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="grid grid-cols-2 p-2 bg-[#0F0F0F] border-b border-neutral-800 gap-1">
+        <div className="grid grid-cols-2 p-2 bg-[#0c0503] border-b border-white/10 gap-1">
           <button
             onClick={() => {
               setActiveTab('status');
               setErrorMsg(null);
             }}
-            className={`py-2 px-3 text-xs font-semibold rounded-lg transition-all ${
+            className={`py-2 px-3 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               activeTab === 'status'
-                ? 'bg-neutral-800 text-white shadow-sm'
-                : 'text-neutral-400 hover:text-neutral-200'
+                ? 'bg-white/10 text-white shadow-sm'
+                : 'text-white/40 hover:text-white'
             }`}
           >
-            Access Security
+            Lock Status
           </button>
           <button
             onClick={() => {
               setActiveTab('changePin');
               setErrorMsg(null);
             }}
-            className={`py-2 px-3 text-xs font-semibold rounded-lg transition-all ${
+            className={`py-2 px-3 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               activeTab === 'changePin'
-                ? 'bg-neutral-800 text-white shadow-sm'
-                : 'text-neutral-400 hover:text-neutral-200'
+                ? 'bg-white/10 text-white shadow-sm'
+                : 'text-white/40 hover:text-white'
             }`}
           >
-            Update Passcode
+            Set Custom PIN
           </button>
         </div>
 
         {/* Modal Body */}
         <div className="p-6 space-y-5">
           {/* Owner verification banner */}
-          <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl flex items-center gap-3.5">
+          <div className="p-4 bg-[#1a0d08] border border-white/5 rounded-xl flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-full bg-emerald-950 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
               <UserCheck className="w-5 h-5" />
             </div>
             <div className="text-left flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-white uppercase tracking-wider">Authorized Owner</span>
+                <span className="text-xs font-bold text-white uppercase tracking-wider">Authenticated Owner</span>
                 <span className="text-[10px] px-1.5 py-0.2 bg-emerald-900/60 text-emerald-300 border border-emerald-500/30 rounded font-mono">
-                  Verified
+                  Supabase Verified
                 </span>
               </div>
-              <p className="text-sm font-semibold text-neutral-200">{profile.name} (Angelo)</p>
-              <p className="text-xs text-neutral-400 font-mono truncate">{security.authorizedEmail}</p>
+              <p className="text-sm font-semibold text-white">{profile.name}</p>
+              <p className="text-xs text-white/50 font-mono truncate">{ownerEmail}</p>
             </div>
           </div>
 
@@ -159,25 +159,25 @@ export const SecurityLockModal: React.FC<SecurityLockModalProps> = ({
 
           {activeTab === 'status' ? (
             <div className="space-y-4">
-              <div className="p-4 bg-neutral-900/80 border border-neutral-800 rounded-xl space-y-3">
+              <div className="p-4 bg-[#1a0d08] border border-white/5 rounded-xl space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <h4 className="text-sm font-semibold text-white flex items-center gap-1.5">
                       {security.isLockEnabled ? (
-                        <Lock className="w-4 h-4 text-amber-400" />
+                        <Lock className="w-4 h-4 text-[#FF5C00]" />
                       ) : (
-                        <Unlock className="w-4 h-4 text-neutral-400" />
+                        <Unlock className="w-4 h-4 text-white/40" />
                       )}
-                      Privacy Passcode Protection
+                      In-Session Screen Lock
                     </h4>
-                    <p className="text-xs text-neutral-400">
-                      Require PIN or email verification to view private notes & outreach
+                    <p className="text-xs text-[#e4beb1]/60">
+                      Quickly shade your screen with a PIN when stepping away
                     </p>
                   </div>
                   <button
                     onClick={handleToggleLock}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      security.isLockEnabled ? 'bg-[#FF4D00]' : 'bg-neutral-700'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                      security.isLockEnabled ? 'bg-[#FF5C00]' : 'bg-white/20'
                     }`}
                   >
                     <span
@@ -189,17 +189,17 @@ export const SecurityLockModal: React.FC<SecurityLockModalProps> = ({
                 </div>
               </div>
 
-              <div className="p-3 bg-neutral-950 border border-neutral-800/80 rounded-xl text-xs text-neutral-400 space-y-1.5">
-                <p className="font-semibold text-neutral-300">Default Recovery Credential:</p>
+              <div className="p-3 bg-[#0c0503] border border-white/5 rounded-xl text-xs text-[#e4beb1]/60 space-y-1.5">
+                <p className="font-semibold text-white">Security Model Note:</p>
                 <p>
-                  Your app can always be unlocked with your email: <strong className="text-white font-mono">{security.authorizedEmail}</strong> or default event PIN <strong className="text-[#FF6B26] font-mono">2026</strong>.
+                  Primary security is enforced by <strong className="text-white">Supabase Auth</strong>. Only your verified owner account ({ownerEmail}) can access Momentum.
                 </p>
               </div>
             </div>
           ) : (
             <form onSubmit={handleUpdatePinSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-neutral-300">New 4-Digit Passcode</label>
+                <label className="text-xs font-semibold text-[#e4beb1]">New 4-8 Digit PIN</label>
                 <div className="relative">
                   <input
                     type={showPin ? 'text' : 'password'}
@@ -207,12 +207,12 @@ export const SecurityLockModal: React.FC<SecurityLockModalProps> = ({
                     value={newPinInput}
                     onChange={(e) => setNewPinInput(e.target.value.replace(/\D/g, ''))}
                     placeholder="Enter new 4-8 digit PIN"
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#FF4D00]"
+                    className="w-full bg-[#1a0d08] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#FF5C00] font-mono"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPin(!showPin)}
-                    className="absolute right-3 top-2.5 text-neutral-400 hover:text-white"
+                    className="absolute right-3 top-2.5 text-white/40 hover:text-white"
                   >
                     {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -220,20 +220,20 @@ export const SecurityLockModal: React.FC<SecurityLockModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-neutral-300">Confirm Passcode</label>
+                <label className="text-xs font-semibold text-[#e4beb1]">Confirm PIN</label>
                 <input
                   type={showPin ? 'text' : 'password'}
                   maxLength={8}
                   value={confirmPinInput}
                   onChange={(e) => setConfirmPinInput(e.target.value.replace(/\D/g, ''))}
                   placeholder="Repeat new PIN"
-                  className="w-full bg-neutral-900 border border-neutral-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#FF4D00]"
+                  className="w-full bg-[#1a0d08] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#FF5C00] font-mono"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3 bg-gradient-to-r from-[#FF4D00] to-[#E62B1E] hover:from-[#FF6B26] hover:to-[#FF4D00] text-white font-semibold text-sm rounded-xl transition-all shadow-lg shadow-[#FF4D00]/20 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-gradient-to-r from-[#FF5C00] to-[#E62B1E] hover:from-[#ff7324] hover:to-[#FF5C00] text-black font-semibold text-sm rounded-xl transition-all shadow-lg shadow-[#FF5C00]/20 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
               >
                 <KeyRound className="w-4 h-4" />
                 <span>Save New PIN</span>
@@ -243,10 +243,10 @@ export const SecurityLockModal: React.FC<SecurityLockModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-neutral-800 bg-[#141414] text-center">
+        <div className="p-4 border-t border-white/10 bg-[#160a05] text-center">
           <button
             onClick={onClose}
-            className="w-full py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold rounded-xl transition-colors"
+            className="w-full py-2.5 bg-white/10 hover:bg-white/15 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer"
           >
             Close
           </button>

@@ -6,6 +6,18 @@ import {
   generatePersonalJournalPDF,
   exportMediaArchiveZIP,
 } from '../services/exportService';
+import { 
+  FileText, 
+  LayoutGrid, 
+  SlidersHorizontal, 
+  Table, 
+  Download, 
+  Archive, 
+  CheckCircle2, 
+  FileJson, 
+  AlertTriangle, 
+  RefreshCw 
+} from 'lucide-react';
 
 interface ExportsViewProps {
   connections: Connection[];
@@ -90,7 +102,7 @@ export const ExportsView: React.FC<ExportsViewProps> = ({
 
       {statusMessage && (
         <div className="p-3 bg-emerald-500/20 border border-emerald-500/30 rounded-xl text-xs font-semibold text-emerald-300 flex items-center gap-2 animate-in fade-in duration-200">
-          <span className="material-symbols-outlined text-base">check_circle</span>
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           {statusMessage}
         </div>
       )}
@@ -101,7 +113,7 @@ export const ExportsView: React.FC<ExportsViewProps> = ({
         <div className="bg-[#140b07] border border-white/10 hover:border-[#FF5C00]/40 rounded-2xl p-5 flex flex-col justify-between space-y-4 transition-all">
           <div className="space-y-2">
             <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/15 text-[#FF5C00] flex items-center justify-center">
-              <span className="material-symbols-outlined text-2xl">picture_as_pdf</span>
+              <FileText className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold font-serif-display text-[#fadcd2]">
               Personal Journal (PDF)
@@ -120,7 +132,7 @@ export const ExportsView: React.FC<ExportsViewProps> = ({
               <span>Compiling PDF ({pdfProgress}%)...</span>
             ) : (
               <>
-                <span className="material-symbols-outlined text-base">download</span>
+                <Download className="w-4 h-4" />
                 <span>Download PDF Report</span>
               </>
             )}
@@ -131,7 +143,7 @@ export const ExportsView: React.FC<ExportsViewProps> = ({
         <div className="bg-[#140b07] border border-white/10 hover:border-[#FF5C00]/40 rounded-2xl p-5 flex flex-col justify-between space-y-4 transition-all">
           <div className="space-y-2">
             <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/15 text-[#ffb59a] flex items-center justify-center">
-              <span className="material-symbols-outlined text-2xl">grid_view</span>
+              <LayoutGrid className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold font-serif-display text-[#fadcd2]">
               Social Photo Collage
@@ -145,7 +157,7 @@ export const ExportsView: React.FC<ExportsViewProps> = ({
             onClick={onOpenCollage}
             className="w-full py-2.5 rounded-xl bg-[#28130a] text-[#fadcd2] border border-white/15 hover:bg-[#381a0e] transition-all flex items-center justify-center gap-2 text-xs font-semibold"
           >
-            <span className="material-symbols-outlined text-base text-[#FF5C00]">tune</span>
+            <SlidersHorizontal className="w-4 h-4 text-[#FF5C00]" />
             <span>Launch Collage Studio</span>
           </button>
         </div>
@@ -154,7 +166,7 @@ export const ExportsView: React.FC<ExportsViewProps> = ({
         <div className="bg-[#140b07] border border-white/10 hover:border-[#FF5C00]/40 rounded-2xl p-5 flex flex-col justify-between space-y-4 transition-all">
           <div className="space-y-2">
             <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/15 text-[#25D366] flex items-center justify-center">
-              <span className="material-symbols-outlined text-2xl">table_chart</span>
+              <Table className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold font-serif-display text-[#fadcd2]">
               CRM Contact SpreadSheet (CSV)
@@ -168,7 +180,7 @@ export const ExportsView: React.FC<ExportsViewProps> = ({
             onClick={handleExportCSV}
             className="w-full py-2.5 rounded-xl bg-[#28130a] text-[#fadcd2] border border-white/15 hover:bg-[#381a0e] transition-all flex items-center justify-center gap-2 text-xs font-semibold"
           >
-            <span className="material-symbols-outlined text-base text-[#25D366]">file_download</span>
+            <Download className="w-4 h-4 text-[#25D366]" />
             <span>Download CSV</span>
           </button>
         </div>
@@ -177,7 +189,7 @@ export const ExportsView: React.FC<ExportsViewProps> = ({
         <div className="bg-[#140b07] border border-white/10 hover:border-[#FF5C00]/40 rounded-2xl p-5 flex flex-col justify-between space-y-4 transition-all">
           <div className="space-y-2">
             <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/15 text-blue-400 flex items-center justify-center">
-              <span className="material-symbols-outlined text-2xl">folder_zip</span>
+              <Archive className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold font-serif-display text-[#fadcd2]">
               Media Archive Package (ZIP)
@@ -196,7 +208,7 @@ export const ExportsView: React.FC<ExportsViewProps> = ({
               <span>Packaging ZIP ({zipProgress}%)...</span>
             ) : (
               <>
-                <span className="material-symbols-outlined text-base text-blue-400">download</span>
+                <Download className="w-4 h-4 text-blue-400" />
                 <span>Download Archive (ZIP)</span>
               </>
             )}

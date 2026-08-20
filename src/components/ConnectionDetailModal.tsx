@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Connection, Moment } from '../types';
 import { generateQuickMessage, summarizeConnection } from '../services/aiService';
 import { CameraCaptureModal } from './CameraCaptureModal';
+import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { 
   Camera, 
   Upload, 
@@ -43,6 +44,7 @@ export const ConnectionDetailModal: React.FC<ConnectionDetailModalProps> = ({
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [selectedPhotoPreview, setSelectedPhotoPreview] = useState<string | null>(null);
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   if (!connection) return null;
@@ -528,13 +530,9 @@ export const ConnectionDetailModal: React.FC<ConnectionDetailModalProps> = ({
                 Follow-up scheduled: {connection.followUpDate || 'None'}
               </span>
               <button
-                onClick={() => {
-                  if (confirm(`Remove ${connection.name} from connections?`)) {
-                    onDeleteConnection(connection.id);
-                    onClose();
-                  }
-                }}
-                className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 font-semibold"
+                type="button"
+                onClick={() => setIsConfirmDeleteOpen(true)}
+                className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1.5 font-semibold py-1.5 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete Contact</span>
@@ -543,6 +541,31 @@ export const ConnectionDetailModal: React.FC<ConnectionDetailModalProps> = ({
           </div>
         </motion.div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={isConfirmDeleteOpen}
+        onClose={() => setIsConfirmDeleteOpen(false)}
+        onConfirm={() => {
+          onDeleteConnection(connection.id);
+          setIsConfirmDeleteOpen(false);
+          onClose();
+        }}
+        title="Delete this connection?"
+        itemName={`${connection.name} (${connection.company || connection.profession})`}
+        itemType="connection"
+        description={`This will permanently remove ${connection.name} and all captured conversation notes from your device and cloud database. Any moments tagged with this person will remain safe in your timeline with this contact unlinked.`}
+        details={[
+          { label: 'Role / Company', value: `${connection.profession} • ${connection.company}` },
+          { label: 'Relationship', value: connection.relationship.toUpperCase() },
+          {
+            label: 'Tagged Moments',
+            value: relatedMoments.length ? `${relatedMoments.length} moment(s) unlinked` : 'None',
+          },
+          { label: 'Storage', value: 'Local Storage & Supabase' },
+        ]}
+        warningMessage="This action cannot be undone. All contact details and conversation memories will be permanently deleted."
+      />
 
       {/* Camera Capture Modal */}
       <CameraCaptureModal

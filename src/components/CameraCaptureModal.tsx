@@ -1,5 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { compressImage } from '../services/imageCompression';
+import { 
+  Camera, 
+  X, 
+  VideoOff, 
+  Upload, 
+  RefreshCw, 
+  Check, 
+  FolderOpen, 
+  Video, 
+  Square 
+} from 'lucide-react';
 
 interface CameraCaptureModalProps {
   isOpen: boolean;
@@ -211,7 +222,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
         {/* Header */}
         <div className="p-4 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#FF5C00]">photo_camera</span>
+            <Camera className="w-5 h-5 text-[#FF5C00]" />
             <h2 className="text-lg font-bold text-[#fadcd2]">{title}</h2>
           </div>
           <button
@@ -221,7 +232,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
             }}
             className="text-white/60 hover:text-white p-1 rounded-lg"
           >
-            <span className="material-symbols-outlined">close</span>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -258,15 +269,13 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
             <>
               {cameraError ? (
                 <div className="p-6 text-center text-[#e4beb1]/80 max-w-xs flex flex-col items-center">
-                  <span className="material-symbols-outlined text-4xl text-[#FF5C00] mb-2">
-                    videocam_off
-                  </span>
+                  <VideoOff className="w-10 h-10 text-[#FF5C00] mb-2" />
                   <p className="text-sm mb-4">{cameraError}</p>
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     className="px-4 py-2 bg-[#FF5C00] text-black font-semibold rounded-lg text-sm flex items-center gap-2"
                   >
-                    <span className="material-symbols-outlined text-sm">upload_file</span>
+                    <Upload className="w-4 h-4" />
                     Choose from Device
                   </button>
                 </div>
@@ -299,7 +308,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
               className="absolute top-4 right-4 bg-black/60 text-white p-2.5 rounded-full hover:bg-black/80 backdrop-blur-sm border border-white/20 transition-transform active:rotate-180 duration-300"
               title="Switch Camera"
             >
-              <span className="material-symbols-outlined text-xl">flip_camera_ios</span>
+              <RefreshCw className="w-5 h-5" />
             </button>
           )}
 
@@ -332,7 +341,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                 onClick={confirmCapture}
                 className="flex-1 px-4 py-2.5 rounded-lg bg-[#FF5C00] text-black font-bold text-sm hover:bg-[#ff7a33] transition-colors flex items-center justify-center gap-2"
               >
-                <span className="material-symbols-outlined text-base">check</span>
+                <Check className="w-4 h-4" />
                 Use This Capture
               </button>
             </>
@@ -343,7 +352,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                 className="p-3 rounded-xl bg-white/5 border border-white/10 text-[#fadcd2] hover:bg-white/10"
                 title="Upload Photo or Video"
               >
-                <span className="material-symbols-outlined">folder_open</span>
+                <FolderOpen className="w-5 h-5" />
               </button>
 
               {/* Photo snap */}
@@ -351,7 +360,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                 onClick={takePhoto}
                 className="flex-1 py-3 px-4 rounded-xl bg-[#FF5C00] text-black font-bold text-sm hover:bg-[#ff7a33] flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform"
               >
-                <span className="material-symbols-outlined">photo_camera</span>
+                <Camera className="w-5 h-5" />
                 Snap Photo
               </button>
 
@@ -366,9 +375,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                   }`}
                   title={isRecording ? 'Stop Recording' : 'Record Video Snippet'}
                 >
-                  <span className="material-symbols-outlined">
-                    {isRecording ? 'stop' : 'videocam'}
-                  </span>
+                  {isRecording ? <Square className="w-5 h-5 fill-current" /> : <Video className="w-5 h-5" />}
                 </button>
               )}
             </>

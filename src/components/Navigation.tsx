@@ -1,7 +1,25 @@
 import React from 'react';
 import { UserProfile, Connection, Moment, Idea, SecuritySettings } from '../types';
 import { SyncStatusBadge } from './SyncStatusBadge';
-import { QrCode, Shield, ShieldAlert, Lock, Trash2, Search, ExternalLink } from 'lucide-react';
+import { 
+  Home, 
+  Users, 
+  Camera, 
+  Sparkles, 
+  MoreHorizontal, 
+  Lightbulb, 
+  Clock, 
+  Flame, 
+  Download, 
+  QrCode, 
+  ShieldAlert, 
+  Shield,
+  Lock, 
+  Trash2, 
+  Search, 
+  ExternalLink,
+  LogOut
+} from 'lucide-react';
 import { triggerHaptic } from '../services/haptics';
 
 export type NavTab = 'home' | 'people' | 'capture' | 'moments' | 'more' | 'ideas' | 'followups' | 'recap' | 'export';
@@ -19,9 +37,11 @@ interface NavigationProps {
   onOpenPortfolio: () => void;
   onOpenSecurity: () => void;
   onOpenTrashModal: () => void;
+  onOpenContingencyHub?: () => void;
   security: SecuritySettings;
   onLockNow: () => void;
   onOpenProfile?: () => void;
+  onLogout?: () => void;
 }
 
 export const Navigation: React.FC<NavigationProps> = ({
@@ -36,9 +56,11 @@ export const Navigation: React.FC<NavigationProps> = ({
   onOpenPortfolio,
   onOpenSecurity,
   onOpenTrashModal,
+  onOpenContingencyHub,
   security,
   onLockNow,
   onOpenProfile,
+  onLogout,
 }) => {
   const handleTabClick = (tab: NavTab) => {
     triggerHaptic('light');
@@ -129,13 +151,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             currentTab === 'home' ? 'text-[#FF5C00] font-bold' : 'text-[#e4beb1]/70 hover:text-[#ffb59a]'
           }`}
         >
-          <span
-            className={`material-symbols-outlined text-2xl ${
-              currentTab === 'home' ? 'fill-1 scale-110' : ''
-            }`}
-          >
-            home
-          </span>
+          <Home className={`w-5 h-5 transition-transform ${currentTab === 'home' ? 'scale-110 stroke-[2.5]' : 'stroke-2'}`} />
           <span className="text-[11px] font-medium mt-1">Home</span>
         </button>
 
@@ -147,13 +163,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               : 'text-[#e4beb1]/70 hover:text-[#ffb59a]'
           }`}
         >
-          <span
-            className={`material-symbols-outlined text-2xl ${
-              currentTab === 'people' ? 'fill-1 scale-110' : ''
-            }`}
-          >
-            group
-          </span>
+          <Users className={`w-5 h-5 transition-transform ${currentTab === 'people' || currentTab === 'followups' ? 'scale-110 stroke-[2.5]' : 'stroke-2'}`} />
           <span className="text-[11px] font-medium mt-1">People</span>
           {overdueCount > 0 && (
             <span className="absolute top-1 right-2 w-2.5 h-2.5 rounded-full bg-[#FF5C00] animate-pulse"></span>
@@ -166,13 +176,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             currentTab === 'capture' ? 'text-[#FF5C00] font-bold' : 'text-[#e4beb1]/70 hover:text-[#ffb59a]'
           }`}
         >
-          <span
-            className={`material-symbols-outlined text-2xl ${
-              currentTab === 'capture' ? 'fill-1 scale-110' : ''
-            }`}
-          >
-            add_a_photo
-          </span>
+          <Camera className={`w-5 h-5 transition-transform ${currentTab === 'capture' ? 'scale-110 stroke-[2.5]' : 'stroke-2'}`} />
           <span className="text-[11px] font-medium mt-1">Capture</span>
         </button>
 
@@ -182,13 +186,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             currentTab === 'moments' ? 'text-[#FF5C00] font-bold' : 'text-[#e4beb1]/70 hover:text-[#ffb59a]'
           }`}
         >
-          <span
-            className={`material-symbols-outlined text-2xl ${
-              currentTab === 'moments' ? 'fill-1 scale-110' : ''
-            }`}
-          >
-            auto_awesome
-          </span>
+          <Sparkles className={`w-5 h-5 transition-transform ${currentTab === 'moments' ? 'scale-110 stroke-[2.5]' : 'stroke-2'}`} />
           <span className="text-[11px] font-medium mt-1">Moments</span>
         </button>
 
@@ -200,15 +198,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               : 'text-[#e4beb1]/70 hover:text-[#ffb59a]'
           }`}
         >
-          <span
-            className={`material-symbols-outlined text-2xl ${
-              currentTab === 'more' || currentTab === 'ideas' || currentTab === 'recap' || currentTab === 'export'
-                ? 'fill-1 scale-110'
-                : ''
-            }`}
-          >
-            more_horiz
-          </span>
+          <MoreHorizontal className={`w-5 h-5 transition-transform ${currentTab === 'more' || currentTab === 'ideas' || currentTab === 'recap' || currentTab === 'export' ? 'scale-110 stroke-[2.5]' : 'stroke-2'}`} />
           <span className="text-[11px] font-medium mt-1">More</span>
         </button>
       </nav>
@@ -266,9 +256,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                 : 'text-[#e4beb1] hover:text-white hover:bg-[#2c1c16]'
             }`}
           >
-            <span className={`material-symbols-outlined text-lg ${currentTab === 'home' ? 'fill-1' : ''}`}>
-              home
-            </span>
+            <Home className="w-4 h-4" />
             <span>Home</span>
           </button>
 
@@ -281,9 +269,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             }`}
           >
             <div className="flex items-center gap-3">
-              <span className={`material-symbols-outlined text-lg ${currentTab === 'people' ? 'fill-1' : ''}`}>
-                group
-              </span>
+              <Users className="w-4 h-4" />
               <span>People & CRM</span>
             </div>
             {overdueCount > 0 && (
@@ -301,9 +287,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                 : 'text-[#e4beb1] hover:text-white hover:bg-[#2c1c16]'
             }`}
           >
-            <span className={`material-symbols-outlined text-lg ${currentTab === 'capture' ? 'fill-1' : ''}`}>
-              add_a_photo
-            </span>
+            <Camera className="w-4 h-4" />
             <span>Capture Hub</span>
           </button>
 
@@ -315,9 +299,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                 : 'text-[#e4beb1] hover:text-white hover:bg-[#2c1c16]'
             }`}
           >
-            <span className={`material-symbols-outlined text-lg ${currentTab === 'moments' ? 'fill-1' : ''}`}>
-              auto_awesome
-            </span>
+            <Sparkles className="w-4 h-4" />
             <span>Moments Timeline</span>
           </button>
 
@@ -329,9 +311,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                 : 'text-[#e4beb1] hover:text-white hover:bg-[#2c1c16]'
             }`}
           >
-            <span className={`material-symbols-outlined text-lg ${currentTab === 'ideas' ? 'fill-1' : ''}`}>
-              lightbulb
-            </span>
+            <Lightbulb className="w-4 h-4" />
             <span>Talk Insights</span>
           </button>
 
@@ -343,9 +323,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                 : 'text-[#e4beb1] hover:text-white hover:bg-[#2c1c16]'
             }`}
           >
-            <span className={`material-symbols-outlined text-lg ${currentTab === 'followups' ? 'fill-1' : ''}`}>
-              schedule
-            </span>
+            <Clock className="w-4 h-4" />
             <span>Follow-ups Tracker</span>
           </button>
 
@@ -357,9 +335,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                 : 'text-[#e4beb1] hover:text-white hover:bg-[#2c1c16]'
             }`}
           >
-            <span className={`material-symbols-outlined text-lg ${currentTab === 'recap' ? 'fill-1' : ''}`}>
-              local_fire_department
-            </span>
+            <Flame className="w-4 h-4" />
             <span>Milestones & Recap</span>
           </button>
 
@@ -371,14 +347,25 @@ export const Navigation: React.FC<NavigationProps> = ({
                 : 'text-[#e4beb1] hover:text-white hover:bg-[#2c1c16]'
             }`}
           >
-            <span className={`material-symbols-outlined text-lg ${currentTab === 'export' ? 'fill-1' : ''}`}>
-              ios_share
-            </span>
+            <Download className="w-4 h-4" />
             <span>Export & PDF</span>
           </button>
 
           {/* Quick utility controls */}
           <div className="pt-3.5 mt-2 border-t border-white/10 space-y-1.5">
+            {onOpenContingencyHub && (
+              <button
+                onClick={() => {
+                  triggerHaptic('light');
+                  onOpenContingencyHub();
+                }}
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-[#FF5C00] hover:bg-[#FF5C00]/10 transition-colors text-left"
+              >
+                <ShieldAlert className="w-4 h-4 text-[#FF5C00]" />
+                <span>Contingency & Health</span>
+              </button>
+            )}
+
             <button
               onClick={() => {
                 triggerHaptic('light');
@@ -404,7 +391,7 @@ export const Navigation: React.FC<NavigationProps> = ({
         </nav>
 
         {/* User Badge Profile info */}
-        <div className="pt-3.5 border-t border-white/10 mt-auto">
+        <div className="pt-3.5 border-t border-white/10 mt-auto space-y-2">
           <div
             onClick={() => {
               triggerHaptic('light');
@@ -426,6 +413,23 @@ export const Navigation: React.FC<NavigationProps> = ({
               <p className="text-[10px] text-[#e4beb1]/60 truncate font-mono">{profile.email}</p>
             </div>
           </div>
+
+          {onLogout && (
+            <button
+              onClick={() => {
+                triggerHaptic('medium');
+                onLogout();
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-white/50 hover:text-rose-300 hover:bg-rose-950/30 transition-colors"
+              title="Sign out of Supabase workspace"
+            >
+              <span className="flex items-center gap-2">
+                <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                <span>Sign Out</span>
+              </span>
+              <span className="text-[10px] font-mono text-white/30">Owner Session</span>
+            </button>
+          )}
         </div>
       </aside>
     </>

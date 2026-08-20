@@ -220,50 +220,8 @@ app.get("/api/sync/stream", (req, res) => {
   });
 });
 
-// AUTH: Multi-device authentication and PIN verification
-const OWNER_EMAIL = "faithakinboyejo@gmail.com";
-const DEFAULT_PIN = "2026";
-
-app.post("/api/auth/login", (req, res) => {
-  const { email, pin } = req.body;
-  const cleanEmail = (email || "").trim().toLowerCase();
-  const cleanPin = (pin || "").trim();
-
-  // Verify credentials
-  const isEmailMatch = cleanEmail === OWNER_EMAIL || cleanEmail.length > 3;
-  const isPinMatch = cleanPin === DEFAULT_PIN || cleanPin.length >= 4;
-
-  if (isEmailMatch && isPinMatch) {
-    const sessionToken = `momentum_sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    return res.json({
-      success: true,
-      authenticated: true,
-      user: {
-        email: cleanEmail || OWNER_EMAIL,
-        name: "Angelo Faith",
-        role: "Event Owner / Host",
-      },
-      token: sessionToken,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    });
-  }
-
-  return res.status(401).json({
-    success: false,
-    message: "Invalid email or event PIN code. Default PIN is 2026.",
-  });
-});
-
-app.post("/api/auth/verify-pin", (req, res) => {
-  const { pin } = req.body;
-  const cleanPin = (pin || "").trim();
-
-  if (cleanPin === DEFAULT_PIN || cleanPin.length >= 4) {
-    return res.json({ success: true, valid: true });
-  }
-
-  return res.json({ success: true, valid: false, message: "Incorrect PIN code" });
-});
+// Multi-device SSE sync pool and endpoints
+const OWNER_EMAIL = (process.env.VITE_OWNER_EMAIL || "faithakinboyejo@gmail.com").trim().toLowerCase();
 
 // API: Generate personalized follow-up message
 app.post("/api/gemini/quick-message", async (req, res) => {

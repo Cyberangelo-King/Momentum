@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Connection, Moment, Idea } from '../types';
+import { Search, X, Video, Camera } from 'lucide-react';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -68,7 +69,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
       >
         {/* Search input header */}
         <div className="p-4 border-b border-white/10 flex items-center gap-3 bg-[#1e100a]">
-          <span className="material-symbols-outlined text-[#FF5C00] text-2xl">search</span>
+          <Search className="w-5 h-5 text-[#FF5C00]" />
           <input
             type="text"
             autoFocus
@@ -78,7 +79,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
             className="flex-1 bg-transparent text-sm text-[#fadcd2] focus:outline-none placeholder:text-[#e4beb1]/40"
           />
           <button onClick={onClose} className="text-white/60 hover:text-white p-1">
-            <span className="material-symbols-outlined text-lg">close</span>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -86,7 +87,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
         <div className="p-4 overflow-y-auto space-y-5 flex-1">
           {!query.trim() ? (
             <div className="py-12 text-center text-xs text-[#e4beb1]/50 space-y-2">
-              <span className="material-symbols-outlined text-3xl text-white/20">saved_search</span>
+              <Search className="w-8 h-8 text-white/20 mx-auto" />
               <p>Type to search your entire TEDxAkure memory OS</p>
             </div>
           ) : totalResults === 0 ? (
@@ -172,9 +173,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                         className="p-2.5 rounded-xl bg-[#20100a] hover:bg-[#2f170e] flex items-center justify-between cursor-pointer border border-white/5"
                       >
                         <div className="flex items-center gap-2.5">
-                          <span className="material-symbols-outlined text-sm text-[#FF5C00]">
-                            {m.type === 'video' ? 'videocam' : 'photo_camera'}
-                          </span>
+                          {m.type === 'video' ? (
+                            <Video className="w-4 h-4 text-[#FF5C00]" />
+                          ) : (
+                            <Camera className="w-4 h-4 text-[#FF5C00]" />
+                          )}
                           <div>
                             <p className="text-xs font-bold text-[#fadcd2]">{m.title}</p>
                             <p className="text-[10px] text-[#e4beb1]/60">{m.location}</p>

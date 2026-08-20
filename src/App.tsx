@@ -12,8 +12,11 @@ import {
   saveProfile,
   resetConferenceData,
   sendDemoDataToTrash,
+  permanentlyDeleteMoment,
+  permanentlyDeleteConnection,
+  permanentlyDeleteIdea,
 } from './services/storage';
-import { loadSecuritySettings, saveSecuritySettings, setAppLockState } from './services/authService';
+import { loadSecuritySettings, saveSecuritySettings, setAppLockState, getVerifiedOwnerSession, subscribeToAuthChanges, logoutOwner } from './services/authService';
 import { calculateGamification } from './services/gamification';
 import { syncManager } from './services/syncManager';
 import { motion, AnimatePresence } from 'motion/react';
@@ -27,6 +30,9 @@ import { IdeasView } from './components/IdeasView';
 import { FollowUpsView } from './components/FollowUpsView';
 import { RecapView } from './components/RecapView';
 import { ExportsView } from './components/ExportsView';
+import { LoginView } from './components/LoginView';
+import { AccessDeniedView } from './components/AccessDeniedView';
+import { AuthLoadingSplash } from './components/AuthLoadingSplash';
 
 import { QuickConnectModal } from './components/QuickConnectModal';
 import { ConnectionDetailModal } from './components/ConnectionDetailModal';
@@ -39,6 +45,22 @@ import { LockScreenOverlay } from './components/LockScreenOverlay';
 import { TrashAndDemoModal } from './components/TrashAndDemoModal';
 import { ProfileEditModal } from './components/ProfileEditModal';
 import { GamificationModal } from './components/GamificationModal';
+import { ContingencyHubModal } from './components/ContingencyHubModal';
+import { createEmergencySnapshot } from './services/contingencyService';
+import { 
+  ShieldCheck, 
+  ChevronRight, 
+  QrCode, 
+  Trash2, 
+  Lock, 
+  Lightbulb, 
+  Clock, 
+  Flame, 
+  Download, 
+  LayoutGrid, 
+  WifiOff,
+  LogOut
+} from 'lucide-react';
 
 /**
  * Parses deep links or bookmarks from window.location pathname, query or hash
@@ -74,6 +96,12 @@ const getTabFromUrl = (): NavTab => {
 };
 
 export const App: React.FC = () => {
+  // Primary Supabase Authentication & Single-Owner Gatekeeper
+  type AuthState = 'loading' | 'unauthenticated' | 'authenticated' | 'unauthorized';
+  const [authState, setAuthState] = useState<AuthState>('loading');
+  const [unauthorizedEmail, setUnauthorizedEmail] = useState<string | null>(null);
+  const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState<boolean>(false);
+
   const [currentTab, setCurrentTab] = useState<NavTab>(getTabFromUrl);
   const [connections, setConnections] = useState<Connection[]>(loadConnections);
   const [moments, setMoments] = useState<Moment[]>(loadMoments);
@@ -87,6 +115,63 @@ export const App: React.FC = () => {
   const [syncState, setSyncState] = useState(syncManager.getState());
   const [showSyncSuccessToast, setShowSyncSuccessToast] = useState(false);
 
+  // Supabase Auth session initial check and persistent listener
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkInitialSession() {
+      try {
+        const { session, user, isOwner } = await getVerifiedOwnerSession();
+        if (!isMounted) return;
+
+        if (session && isOwner) {
+          setAuthState('authenticated');
+          setUnauthorizedEmail(null);
+        } else if (session && !isOwner) {
+          setAuthState('unauthorized');
+          setUnauthorizedEmail(user?.email || null);
+        } else {
+          setAuthState('unauthenticated');
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        setAuthState('unauthenticated');
+      }
+    }
+
+    checkInitialSession();
+
+    const unsubscribe = subscribeToAuthChanges((event, session, isOwner) => {
+      if (!isMounted) return;
+
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
+        if (session && isOwner) {
+          setAuthState('authenticated');
+          setUnauthorizedEmail(null);
+        } else if (session && !isOwner) {
+          setAuthState('unauthorized');
+          setUnauthorizedEmail(session.user?.email || null);
+        } else {
+          setAuthState('unauthenticated');
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setAuthState('unauthenticated');
+        setUnauthorizedEmail(null);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    await logoutOwner();
+    setAuthState('unauthenticated');
+    setIsConfirmLogoutOpen(false);
+  };
+
   // Modals state
   const [isQuickConnectOpen, setIsQuickConnectOpen] = useState(false);
   const [selectedConnection, setSelectedConnection] = useState<Connection | null>(null);
@@ -98,7 +183,49 @@ export const App: React.FC = () => {
   const [isTrashModalOpen, setIsTrashModalOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isGamificationOpen, setIsGamificationOpen] = useState(false);
+  const [isContingencyOpen, setIsContingencyOpen] = useState(false);
+  const [isUltraPowerSaver, setIsUltraPowerSaver] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('momentum_ultra_power_saver') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+  // Power saver mode persistence
+  const handleToggleUltraPowerSaver = (enabled: boolean) => {
+    setIsUltraPowerSaver(enabled);
+    try {
+      localStorage.setItem('momentum_ultra_power_saver', enabled ? 'true' : 'false');
+    } catch {}
+  };
+
+  // Reload all storage state when restoring a contingency snapshot
+  const handleReloadFromStorage = () => {
+    setConnections(loadConnections());
+    setMoments(loadMoments());
+    setIdeas(loadIdeas());
+    setProfile(loadProfile());
+  };
+
+  // Automated 15-minute emergency snapshot timer
+  useEffect(() => {
+    // Take initial snapshot on boot after 5 seconds
+    const initialTimer = setTimeout(() => {
+      createEmergencySnapshot();
+    }, 5000);
+
+    // Then schedule recurring auto-snapshot every 15 minutes
+    const interval = setInterval(() => {
+      createEmergencySnapshot();
+    }, 15 * 60 * 1000);
+
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Navigation tab handler that updates URL path history
   const handleSelectTab = (tab: NavTab) => {
@@ -214,7 +341,11 @@ export const App: React.FC = () => {
 
   // Handlers
   const handleSaveConnection = (newConn: Connection) => {
-    setConnections((prev) => [newConn, ...prev]);
+    const isCurrentlyOffline = !isOnline || (typeof navigator !== 'undefined' && !navigator.onLine);
+    const itemToSave = isCurrentlyOffline 
+      ? { ...newConn, isOfflineCaptured: true, savedOfflineAt: new Date().toISOString() } 
+      : newConn;
+    setConnections((prev) => [itemToSave, ...prev]);
   };
 
   const handleUpdateConnection = (updated: Connection) => {
@@ -225,15 +356,36 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteConnection = (id: string) => {
-    setConnections((prev) => prev.filter((c) => c.id !== id));
+    const { updatedConnections, updatedMoments } = permanentlyDeleteConnection(id);
+    setConnections(updatedConnections);
+    setMoments(updatedMoments);
+  };
+
+  const handleDeleteMoment = (id: string) => {
+    const { updatedMoments, updatedConnections } = permanentlyDeleteMoment(id);
+    setMoments(updatedMoments);
+    setConnections(updatedConnections);
+  };
+
+  const handleDeleteIdea = (id: string) => {
+    const { updatedIdeas } = permanentlyDeleteIdea(id);
+    setIdeas(updatedIdeas);
   };
 
   const handleAddMoment = (newMoment: Moment) => {
-    setMoments((prev) => [newMoment, ...prev]);
+    const isCurrentlyOffline = !isOnline || (typeof navigator !== 'undefined' && !navigator.onLine);
+    const itemToSave = isCurrentlyOffline 
+      ? { ...newMoment, isOfflineCaptured: true, savedOfflineAt: new Date().toISOString() } 
+      : newMoment;
+    setMoments((prev) => [itemToSave, ...prev]);
   };
 
   const handleAddIdea = (newIdea: Idea) => {
-    setIdeas((prev) => [newIdea, ...prev]);
+    const isCurrentlyOffline = !isOnline || (typeof navigator !== 'undefined' && !navigator.onLine);
+    const itemToSave = isCurrentlyOffline 
+      ? { ...newIdea, isOfflineCaptured: true, savedOfflineAt: new Date().toISOString() } 
+      : newIdea;
+    setIdeas((prev) => [itemToSave, ...prev]);
   };
 
   const handleUpdateProfile = (updatedProfile: UserProfile) => {
@@ -279,8 +431,31 @@ export const App: React.FC = () => {
     (c) => c.followUpStatus === 'overdue' || c.followUpStatus === 'today'
   ).length;
 
+  // Supabase Auth Gatekeeper: Restrict entire UI to verified single owner
+  if (authState === 'loading') {
+    return <AuthLoadingSplash />;
+  }
+
+  if (authState === 'unauthorized') {
+    return (
+      <AccessDeniedView
+        unauthorizedEmail={unauthorizedEmail}
+        onReturnToLogin={() => setAuthState('unauthenticated')}
+      />
+    );
+  }
+
+  if (authState === 'unauthenticated') {
+    return (
+      <LoginView
+        onLoginSuccess={() => setAuthState('authenticated')}
+        unauthorizedAttemptEmail={unauthorizedEmail}
+      />
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-[#fadcd2] flex flex-col md:flex-row antialiased selection:bg-[#FF5C00] selection:text-black">
+    <div className={`min-h-screen bg-[#0A0A0A] text-[#fadcd2] flex flex-col md:flex-row antialiased selection:bg-[#FF5C00] selection:text-black ${isUltraPowerSaver ? 'ultra-power-saver' : ''}`}>
       {/* Navigation Layout */}
       <Navigation
         currentTab={currentTab}
@@ -295,9 +470,11 @@ export const App: React.FC = () => {
         onOpenPortfolio={() => setIsPortfolioOpen(true)}
         onOpenSecurity={() => setIsSecurityOpen(true)}
         onOpenTrashModal={() => setIsTrashModalOpen(true)}
+        onOpenContingencyHub={() => setIsContingencyOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
         security={security}
         onLockNow={handleLockApp}
+        onLogout={() => setIsConfirmLogoutOpen(true)}
       />
 
       {/* Main Content Viewport */}
@@ -306,7 +483,7 @@ export const App: React.FC = () => {
         {!isOnline && (
           <div className="mb-4 p-2.5 bg-[#28130a] border border-[#FF5C00]/40 rounded-xl text-xs text-[#ffb59a] flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-base text-[#FF5C00]">cloud_off</span>
+              <WifiOff className="w-4 h-4 text-[#FF5C00]" />
               <span>
                 <strong>Offline Mode Active:</strong> All changes, snaps & notes saved locally and will sync when reconnected.
               </span>
@@ -330,6 +507,7 @@ export const App: React.FC = () => {
             onSelectTab={handleSelectTab}
             onOpenProfile={() => setIsProfileOpen(true)}
             onOpenGamification={() => setIsGamificationOpen(true)}
+            onOpenContingency={() => setIsContingencyOpen(true)}
           />
         )}
 
@@ -361,11 +539,16 @@ export const App: React.FC = () => {
             onOpenCapture={() => handleSelectTab('capture')}
             onSelectConnection={(c) => setSelectedConnection(c)}
             onAddMoment={handleAddMoment}
+            onDeleteMoment={handleDeleteMoment}
           />
         )}
 
         {currentTab === 'ideas' && (
-          <IdeasView ideas={activeIdeas} onAddIdea={handleAddIdea} />
+          <IdeasView
+            ideas={activeIdeas}
+            onAddIdea={handleAddIdea}
+            onDeleteIdea={handleDeleteIdea}
+          />
         )}
 
         {currentTab === 'followups' && (
@@ -415,6 +598,27 @@ export const App: React.FC = () => {
 
             <div className="space-y-2">
               <button
+                onClick={() => setIsContingencyOpen(true)}
+                className="w-full p-4 rounded-2xl bg-gradient-to-r from-[#2c1206] to-[#1c0a04] hover:from-[#3a1808] hover:to-[#2c1206] border border-[#FF5C00]/40 flex items-center justify-between text-left transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/20 text-[#FF5C00] flex items-center justify-center font-bold text-lg flex-shrink-0">
+                    <ShieldCheck className="w-5 h-5 text-[#FF5C00]" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-white">Event Contingency & Health Hub</h3>
+                      <span className="text-[10px] px-2 py-0.2 rounded-full bg-[#25D366]/20 text-[#25D366] font-bold">
+                        Protected
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#ffb59a]/70">Zero-Wi-Fi safe, 1-click backups & power saver</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-white/40" />
+              </button>
+
+              <button
                 onClick={() => setIsProfileOpen(true)}
                 className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
               >
@@ -427,7 +631,7 @@ export const App: React.FC = () => {
                     <p className="text-xs text-[#e4beb1]/60">Change picture, headline, and bio</p>
                   </div>
                 </div>
-                <span className="material-symbols-outlined text-white/40">chevron_right</span>
+                <ChevronRight className="w-5 h-5 text-white/40" />
               </button>
 
               <button
@@ -443,7 +647,7 @@ export const App: React.FC = () => {
                     <p className="text-xs text-[#e4beb1]/60">Level {gamificationStats.level} • {gamificationStats.totalXp} XP</p>
                   </div>
                 </div>
-                <span className="material-symbols-outlined text-white/40">chevron_right</span>
+                <ChevronRight className="w-5 h-5 text-white/40" />
               </button>
 
               <button
@@ -451,13 +655,15 @@ export const App: React.FC = () => {
                 className="w-full p-4 rounded-2xl bg-gradient-to-r from-[#221008] to-[#170a04] hover:from-[#2e150b] hover:to-[#221008] border border-[#FF4D00]/30 flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-2xl text-[#FF5C00]">qr_code_2</span>
+                  <div className="w-10 h-10 rounded-xl bg-[#FF4D00]/10 text-[#FF5C00] flex items-center justify-center flex-shrink-0">
+                    <QrCode className="w-5 h-5 text-[#FF5C00]" />
+                  </div>
                   <div>
                     <h3 className="text-sm font-bold text-white">Angelo's Portfolio QR Code</h3>
                     <p className="text-xs text-[#FF8246]/80 font-mono">angelo-tedxakure-portfolio.netlify.app</p>
                   </div>
                 </div>
-                <span className="material-symbols-outlined text-white/40">chevron_right</span>
+                <ChevronRight className="w-5 h-5 text-white/40" />
               </button>
 
               <button
@@ -465,13 +671,15 @@ export const App: React.FC = () => {
                 className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-2xl text-rose-400">delete_sweep</span>
+                  <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center flex-shrink-0">
+                    <Trash2 className="w-5 h-5 text-rose-400" />
+                  </div>
                   <div>
                     <h3 className="text-sm font-bold text-[#fadcd2]">Demo Data & Clean Slate</h3>
                     <p className="text-xs text-[#e4beb1]/60">Wipe demo records or move to trash</p>
                   </div>
                 </div>
-                <span className="material-symbols-outlined text-white/40">chevron_right</span>
+                <ChevronRight className="w-5 h-5 text-white/40" />
               </button>
 
               <button
@@ -479,13 +687,15 @@ export const App: React.FC = () => {
                 className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-2xl text-amber-400">lock</span>
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center flex-shrink-0">
+                    <Lock className="w-5 h-5 text-amber-400" />
+                  </div>
                   <div>
                     <h3 className="text-sm font-bold text-[#fadcd2]">Privacy & Passcode Lock</h3>
                     <p className="text-xs text-[#e4beb1]/60">Restrict workspace to Angelo (faithakinboyejo@gmail.com)</p>
                   </div>
                 </div>
-                <span className="material-symbols-outlined text-white/40">chevron_right</span>
+                <ChevronRight className="w-5 h-5 text-white/40" />
               </button>
 
               <button
@@ -493,13 +703,15 @@ export const App: React.FC = () => {
                 className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-2xl text-[#FF5C00]">lightbulb</span>
+                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center flex-shrink-0">
+                    <Lightbulb className="w-5 h-5 text-[#FF5C00]" />
+                  </div>
                   <div>
                     <h3 className="text-sm font-bold text-[#fadcd2]">Talk Insights & Quotes</h3>
                     <p className="text-xs text-[#e4beb1]/60">Captured theses and speaker notes</p>
                   </div>
                 </div>
-                <span className="material-symbols-outlined text-white/40">chevron_right</span>
+                <ChevronRight className="w-5 h-5 text-white/40" />
               </button>
 
               <button
@@ -507,13 +719,15 @@ export const App: React.FC = () => {
                 className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-2xl text-[#FF5C00]">schedule</span>
+                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-5 h-5 text-[#FF5C00]" />
+                  </div>
                   <div>
                     <h3 className="text-sm font-bold text-[#fadcd2]">Follow-ups Tracker</h3>
                     <p className="text-xs text-[#e4beb1]/60">Overdue, today, and upcoming messages</p>
                   </div>
                 </div>
-                <span className="material-symbols-outlined text-white/40">chevron_right</span>
+                <ChevronRight className="w-5 h-5 text-white/40" />
               </button>
 
               <button
@@ -521,15 +735,15 @@ export const App: React.FC = () => {
                 className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-2xl text-[#FF5C00]">
-                    local_fire_department
-                  </span>
+                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center flex-shrink-0">
+                    <Flame className="w-5 h-5 text-[#FF5C00]" />
+                  </div>
                   <div>
                     <h3 className="text-sm font-bold text-[#fadcd2]">Milestones & AI Recap</h3>
                     <p className="text-xs text-[#e4beb1]/60">50-Goal celebration and LinkedIn post</p>
                   </div>
                 </div>
-                <span className="material-symbols-outlined text-white/40">chevron_right</span>
+                <ChevronRight className="w-5 h-5 text-white/40" />
               </button>
 
               <button
@@ -537,13 +751,15 @@ export const App: React.FC = () => {
                 className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-2xl text-[#FF5C00]">ios_share</span>
+                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center flex-shrink-0">
+                    <Download className="w-5 h-5 text-[#FF5C00]" />
+                  </div>
                   <div>
                     <h3 className="text-sm font-bold text-[#fadcd2]">Export CSV, JSON & PDF</h3>
                     <p className="text-xs text-[#e4beb1]/60">Download complete conference memory</p>
                   </div>
                 </div>
-                <span className="material-symbols-outlined text-white/40">chevron_right</span>
+                <ChevronRight className="w-5 h-5 text-white/40" />
               </button>
 
               <button
@@ -551,13 +767,31 @@ export const App: React.FC = () => {
                 className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-2xl text-[#ffb59a]">grid_view</span>
+                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#ffb59a] flex items-center justify-center flex-shrink-0">
+                    <LayoutGrid className="w-5 h-5 text-[#ffb59a]" />
+                  </div>
                   <div>
                     <h3 className="text-sm font-bold text-[#fadcd2]">Photo Collage Generator</h3>
                     <p className="text-xs text-[#e4beb1]/60">Social media multi-photo creator</p>
                   </div>
                 </div>
-                <span className="material-symbols-outlined text-white/40">chevron_right</span>
+                <ChevronRight className="w-5 h-5 text-white/40" />
+              </button>
+
+              <button
+                onClick={() => setIsConfirmLogoutOpen(true)}
+                className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-rose-950/20 border border-white/10 hover:border-rose-500/40 flex items-center justify-between text-left transition-colors mt-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center flex-shrink-0">
+                    <LogOut className="w-5 h-5 text-rose-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#fadcd2]">Sign Out of Momentum</h3>
+                    <p className="text-xs text-[#e4beb1]/60">Terminate active Supabase session</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-white/40" />
               </button>
             </div>
           </div>
@@ -601,6 +835,7 @@ export const App: React.FC = () => {
         security={security}
         profile={profile}
         onUnlock={handleUnlockApp}
+        onLogout={() => setIsConfirmLogoutOpen(true)}
       />
 
       {/* Clean Slate & Demo Data Modal */}
@@ -666,6 +901,16 @@ export const App: React.FC = () => {
         onSelectIdea={() => handleSelectTab('ideas')}
       />
 
+      {/* Contingency, Backup & Health Hub Modal */}
+      <ContingencyHubModal
+        isOpen={isContingencyOpen}
+        onClose={() => setIsContingencyOpen(false)}
+        connections={activeConnections}
+        isUltraPowerSaver={isUltraPowerSaver}
+        onToggleUltraPowerSaver={handleToggleUltraPowerSaver}
+        onReloadData={handleReloadFromStorage}
+      />
+
       {/* Persistent Non-Intrusive Syncing & Status Indicator */}
       <AnimatePresence>
         {syncState.isSyncing && (
@@ -694,6 +939,41 @@ export const App: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Logout Confirmation Modal */}
+      {isConfirmLogoutOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-sm bg-[#120906] border border-white/10 rounded-3xl p-6 sm:p-7 shadow-2xl text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-rose-950/80 border border-rose-500/40 text-rose-400 flex items-center justify-center mx-auto shadow-lg shadow-rose-950/50">
+              <LogOut className="w-6 h-6 stroke-[2.2]" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-bold text-white font-serif-display">Sign Out of Momentum?</h3>
+              <p className="text-xs text-[#e4beb1]/70 leading-relaxed">
+                This will end your active Supabase session on this device. You will need to enter your password to sign back in.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsConfirmLogoutOpen(false)}
+                className="py-3 px-4 bg-white/10 hover:bg-white/15 text-white text-xs font-semibold rounded-2xl transition-colors cursor-pointer active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="py-3 px-4 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-2xl transition-colors shadow-lg shadow-rose-600/20 cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
