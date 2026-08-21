@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Moment, Idea, Connection } from '../types';
+import { Moment, Idea, Connection, Note } from '../types';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { VoiceMemoModal } from './VoiceMemoModal';
 import { uploadAndCompressMedia } from '../services/imageCompression';
@@ -21,10 +21,11 @@ import {
   Mic, 
   Volume2, 
   Play, 
-  Pause,
-  RotateCcw,
-  ShieldCheck,
-  Radio
+  Pause, 
+  RotateCcw, 
+  ShieldCheck, 
+  Radio,
+  FileText
 } from 'lucide-react';
 import { triggerHaptic } from '../services/haptics';
 
@@ -34,6 +35,7 @@ interface CaptureHubViewProps {
   connections: Connection[];
   onAddMoment: (moment: Moment) => void;
   onAddIdea: (idea: Idea) => void;
+  onAddNote?: (note: Note) => void;
   onSelectMoment?: (moment: Moment) => void;
 }
 
@@ -43,6 +45,7 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
   connections,
   onAddMoment,
   onAddIdea,
+  onAddNote,
 }) => {
   const [cameraMode, setCameraMode] = useState<'photo' | 'video' | 'both'>('photo');
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -595,6 +598,28 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
         connections={connections}
         onClose={() => setIsVoiceMemoOpen(false)}
         onSaveVoiceMoment={handleSaveVoiceMoment}
+        onConvertToNote={(noteData) => {
+          if (onAddNote) {
+            const newNote: Note = {
+              id: `note_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+              title: noteData.title || 'Spoken Field Reflection',
+              content: noteData.transcript || '',
+              category: 'Talk',
+              location: noteData.location || 'Capture Hub',
+              keyTakeaways: [],
+              actionItems: [],
+              generatedQuestions: [],
+              audioDataUrl: noteData.audioDataUrl,
+              audioDurationFormatted: noteData.durationFormatted,
+              tags: ['Voice Memo', 'Spoken Reflection'],
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+            onAddNote(newNote);
+          }
+        }}
       />
 
       {/* Live Camera Modal */}

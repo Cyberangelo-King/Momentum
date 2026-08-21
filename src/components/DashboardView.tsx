@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip } from 'recharts';
-import { Connection, EventSession, Moment, Idea, UserProfile } from '../types';
+import { Connection, EventSession, Moment, Idea, UserProfile, Note } from '../types';
 import { calculateGamification } from '../services/gamification';
 import { useBatteryStatus } from '../hooks/useBatteryStatus';
 import { OfflineUsageCard } from './OfflineUsageCard';
@@ -21,7 +21,8 @@ import {
   Flame,
   BatteryWarning,
   Zap,
-  X
+  X,
+  FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { triggerHaptic } from '../services/haptics';
@@ -30,6 +31,7 @@ interface DashboardViewProps {
   connections: Connection[];
   moments: Moment[];
   ideas: Idea[];
+  notes?: Note[];
   sessions: EventSession[];
   profile: UserProfile;
   onOpenQuickConnect: () => void;
@@ -46,6 +48,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   connections,
   moments,
   ideas,
+  notes = [],
   sessions,
   profile,
   onOpenQuickConnect,
@@ -356,6 +359,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               >
                 <Lightbulb className="w-4 h-4 text-[#ffb59a]" />
                 <span>Log Insight</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  triggerHaptic('light');
+                  onSelectTab('notes');
+                }}
+                className="px-4 py-3 rounded-2xl bg-[#221008] text-[#fadcd2] border border-white/10 font-semibold text-xs hover:bg-[#32160c] transition-colors flex items-center gap-2 min-h-[48px] active:scale-95"
+              >
+                <FileText className="w-4 h-4 text-[#FF5C00]" />
+                <span>Smart Notes & Q&A</span>
               </button>
             </div>
           </div>

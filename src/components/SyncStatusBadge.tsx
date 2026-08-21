@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Cloud, CloudOff, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
-import { SyncState, Connection, Moment, Idea } from '../types';
+import { SyncState, Connection, Moment, Idea, Note } from '../types';
 import { syncManager } from '../services/syncManager';
 import { isSupabaseConfigured } from '../services/supabaseClient';
 
@@ -8,12 +8,14 @@ interface SyncStatusBadgeProps {
   connections: Connection[];
   moments: Moment[];
   ideas: Idea[];
+  notes?: Note[];
 }
 
 export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({
   connections,
   moments,
   ideas,
+  notes,
 }) => {
   const [syncState, setSyncState] = useState<SyncState>(syncManager.getState());
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({
 
   const handleManualSync = async () => {
     if (syncState.isSyncing) return;
-    const res = await syncManager.syncAllNow(connections, moments, ideas);
+    const res = await syncManager.syncAllNow(connections, moments, ideas, notes);
     setFeedback(res.message);
     setTimeout(() => setFeedback(null), 3000);
   };

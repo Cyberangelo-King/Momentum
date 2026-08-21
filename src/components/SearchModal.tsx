@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Connection, Moment, Idea } from '../types';
-import { Search, X, Video, Camera } from 'lucide-react';
+import { Connection, Moment, Idea, Note } from '../types';
+import { Search, X, Video, Camera, FileText } from 'lucide-react';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -8,9 +8,11 @@ interface SearchModalProps {
   connections: Connection[];
   moments: Moment[];
   ideas: Idea[];
+  notes?: Note[];
   onSelectConnection: (c: Connection) => void;
   onSelectMoment: (m: Moment) => void;
   onSelectIdea: (i: Idea) => void;
+  onSelectNote?: (n: Note) => void;
 }
 
 export const SearchModal: React.FC<SearchModalProps> = ({
@@ -19,14 +21,16 @@ export const SearchModal: React.FC<SearchModalProps> = ({
   connections,
   moments,
   ideas,
+  notes = [],
   onSelectConnection,
   onSelectMoment,
   onSelectIdea,
+  onSelectNote,
 }) => {
   const [query, setQuery] = useState('');
 
   const results = useMemo(() => {
-    if (!query.trim()) return { connections: [], moments: [], ideas: [] };
+    if (!query.trim()) return { connections: [], moments: [], ideas: [], notes: [] };
     const q = query.toLowerCase();
 
     return {
@@ -50,13 +54,22 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           i.sessionTitle.toLowerCase().includes(q) ||
           (i.takeaway && i.takeaway.toLowerCase().includes(q))
       ),
+      notes: notes.filter(
+        (n) =>
+          !n.inTrash &&
+          (n.title.toLowerCase().includes(q) ||
+            n.content.toLowerCase().includes(q) ||
+            (n.speaker && n.speaker.toLowerCase().includes(q)) ||
+            (n.location && n.location.toLowerCase().includes(q)) ||
+            (n.tags && n.tags.some((t) => t.toLowerCase().includes(q))))
+      ),
     };
-  }, [query, connections, moments, ideas]);
+  }, [query, connections, moments, ideas, notes]);
 
   if (!isOpen) return null;
 
   const totalResults =
-    results.connections.length + results.moments.length + results.ideas.length;
+    results.connections.length + results.moments.length + results.ideas.length + results.notes.length;
 
   return (
     <div
@@ -124,6 +137,38 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                           </div>
                         </div>
                         <span className="text-[10px] text-[#FF5C00] font-semibold">{c.relationship}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Smart Notes Section */}
+              {results.notes.length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-[10px] font-bold text-[#FF5C00] uppercase tracking-wider">
+                    Smart Notes ({results.notes.length})
+                  </span>
+                  <div className="space-y-1.5">
+                    {results.notes.map((n) => (
+                      <div
+                        key={n.id}
+                        onClick={() => {
+                          onClose();
+                          if (onSelectNote) onSelectNote(n);
+                        }}
+                        className="p-2.5 rounded-xl bg-[#20100a] hover:bg-[#2f170e] cursor-pointer border border-white/5 space-y-1"
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-bold text-[#fadcd2] flex items-center gap-1.5">
+                            <FileText className="w-3.5 h-3.5 text-[#FF5C00]" />
+                            <span>{n.title}</span>
+                          </p>
+                          <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-[#FF5C00]/20 text-[#FF8246]">
+                            {n.category}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#e4beb1]/70 line-clamp-1">{n.content}</p>
                       </div>
                     ))}
                   </div>

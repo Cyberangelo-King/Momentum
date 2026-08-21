@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserProfile, Connection, Moment, Idea, SecuritySettings } from '../types';
+import { UserProfile, Connection, Moment, Idea, SecuritySettings, Note } from '../types';
 import { SyncStatusBadge } from './SyncStatusBadge';
 import { 
   Home, 
@@ -18,11 +18,12 @@ import {
   Trash2, 
   Search, 
   ExternalLink,
-  LogOut
+  LogOut,
+  FileText
 } from 'lucide-react';
 import { triggerHaptic } from '../services/haptics';
 
-export type NavTab = 'home' | 'people' | 'capture' | 'moments' | 'more' | 'ideas' | 'followups' | 'recap' | 'export';
+export type NavTab = 'home' | 'people' | 'capture' | 'moments' | 'notes' | 'more' | 'ideas' | 'followups' | 'recap' | 'export';
 
 interface NavigationProps {
   currentTab: NavTab;
@@ -34,6 +35,7 @@ interface NavigationProps {
   connections: Connection[];
   moments: Moment[];
   ideas: Idea[];
+  notes?: Note[];
   onOpenPortfolio: () => void;
   onOpenSecurity: () => void;
   onOpenTrashModal: () => void;
@@ -53,6 +55,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   connections,
   moments,
   ideas,
+  notes = [],
   onOpenPortfolio,
   onOpenSecurity,
   onOpenTrashModal,
@@ -221,6 +224,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             connections={connections}
             moments={moments}
             ideas={ideas}
+            notes={notes}
           />
         </div>
 
@@ -277,6 +281,18 @@ export const Navigation: React.FC<NavigationProps> = ({
                 {overdueCount}
               </span>
             )}
+          </button>
+
+          <button
+            onClick={() => handleTabClick('notes')}
+            className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold transition-all text-left ${
+              currentTab === 'notes'
+                ? 'bg-[#FF5C00] text-black font-bold shadow-md'
+                : 'text-[#e4beb1] hover:text-white hover:bg-[#2c1c16]'
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            <span>Smart Notes & Q&A</span>
           </button>
 
           <button

@@ -1,4 +1,4 @@
-import { Connection, Moment, Idea, EventSession, UserProfile } from '../types';
+import { Connection, Moment, Idea, EventSession, UserProfile, Note } from '../types';
 
 export const initialProfile: UserProfile = {
   name: 'Angelo',
@@ -385,3 +385,92 @@ export const initialIdeas: Idea[] = [
     tags: ['#FrontierTech', '#Infrastructure', '#Momentum'],
   }
 ];
+
+export const initialNotes: Note[] = [
+  {
+    id: 'n1',
+    title: 'The Future of Lagos Tech: Decentralized Infrastructure',
+    content: `## Core Thesis\nWest Africa is skipping the centralized monolithic infrastructure era and moving straight into distributed, edge-native infrastructure powered by local micro-grids and localized AI compute.\n\n## Key Insights & Arguments\n- The energy bottleneck is being solved not by national grid expansion, but by localized solar micro-utilities integrated with digital payment rails.\n- Local developer hubs in Akure, Ibadan, and Enugu are matching tier-1 Lagos output because broadband access and AI leverage level the field.\n- "Offline-first" is not a graceful degradation; it is a core architectural competitive advantage for software built for the next billion users.\n\n## Memorable Quotes & Frameworks\n> "Build software that expects the internet to blink, but never allows the user's focus to flicker." — Dr. Amina Yusuf\n\n## Executive Summary\nDr. Amina Yusuf outlined how regional technology centers across Nigeria are decentralizing the tech economy away from single-city centralization, creating resilient localized clusters.`,
+    category: 'Keynote',
+    speakerName: 'Dr. Amina Yusuf',
+    speakerRole: 'Director of African Frontier Tech',
+    sessionTitle: 'The Future of Lagos Tech',
+    stageName: 'Main Stage',
+    keyTakeaways: [
+      'Offline-first architecture is a primary moat for emerging market software.',
+      'Regional hubs outside Lagos (Akure, Ibadan) represent the fastest-growing developer density.',
+      'Localized energy infrastructure directly correlates with local software output.'
+    ],
+    actionItems: [
+      { id: 'na1', text: 'Audit Momentum offline storage architecture against edge-native principles', done: true },
+      { id: 'na2', text: 'Read Dr. Yusuf whitepaper on decentralized African cloud compute', done: false },
+      { id: 'na3', text: 'Reach out to Dr. Yusuf via WhatsApp regarding TEDxAkure follow-up deck', done: false }
+    ],
+    generatedQuestions: [
+      {
+        id: 'nq1',
+        question: 'What is the single biggest operational tradeoff you had to make when prioritizing edge compute over centralized cloud in your pilot deployments?',
+        angle: 'Execution Playbook',
+        whyItWorks: 'Bypasses high-level theory and gets straight to real infrastructure hurdles.',
+        followUpHook: 'How did latency constraints impact your unit economics?',
+        asked: true,
+        speakerAnswerNotes: 'Dr. Yusuf highlighted that local caching reduced bandwidth costs by 64% while maintaining 99.9% uptime.'
+      },
+      {
+        id: 'nq2',
+        question: 'If you could change one regulatory policy in Nigeria tomorrow to accelerate regional tech hubs, what would it be?',
+        angle: 'Ecosystem Scale',
+        whyItWorks: 'Taps directly into ecosystem-level transformation and leadership perspective.',
+        followUpHook: 'How can independent founders help lobby for that change?'
+      }
+    ],
+    tags: ['#Infrastructure', '#EdgeCompute', '#OfflineFirst', '#TEDxAkure'],
+    isPinned: true,
+    timestamp: '10:45 AM',
+    date: 'Aug 19, 2026',
+    createdAt: '2026-08-19T10:45:00.000Z',
+    updatedAt: '2026-08-19T11:10:00.000Z',
+  },
+  {
+    id: 'n2',
+    title: 'Designing for Intent & Friction: Studio Axis Playbook',
+    content: `## Core Thesis\nFast and frictionless interfaces often lead to thoughtless user habits. Strategic micro-friction creates intentionality, memorability, and genuine user trust.\n\n## Key Insights & Arguments\n- When every action is frictionless, no action feels meaningful. The human brain craves tactile resistance before making irreversible commitments.\n- Strategic friction examples: Haptic confirmation pulses, deliberate 200ms hold-to-confirm interactions, and mindful review states.\n- In high-stakes environments (e.g., event networking, personal CRM, finance), users actually report higher satisfaction when given a deliberate moment of clarity.\n\n## Memorable Framework\n*The Intent Gradient: Casual Browse (Zero Friction) → Critical Decision (Deliberate Tactile Pause)*\n\n## Executive Summary\nSarah Chen demonstrated how Studio Axis intentionally designs micro-delays to cultivate user focus and pride in crafted actions.`,
+    category: 'Workshop',
+    speakerName: 'Sarah Chen',
+    speakerRole: 'Head of Product Design, Studio Axis',
+    sessionTitle: 'Designing for Intent',
+    stageName: 'Workshop Studio B',
+    keyTakeaways: [
+      'Micro-friction elevates high-value actions into memorable user rituals.',
+      'Hold-to-confirm haptics reduce user regret and error rates by over 40%.',
+      'Design should optimize for user clarity rather than unthinking velocity.'
+    ],
+    actionItems: [
+      { id: 'na4', text: 'Implement hold-to-lock tactile gesture in Momentum security settings', done: true },
+      { id: 'na5', text: 'Review connection save interaction to ensure intentional contact tagging', done: false }
+    ],
+    generatedQuestions: [
+      {
+        id: 'nq3',
+        question: 'How do you convince growth-focused stakeholders that adding deliberate friction won\'t hurt conversion rates?',
+        angle: 'Execution Playbook',
+        whyItWorks: 'Addresses the fundamental tension between growth metrics and meaningful UX.',
+        followUpHook: 'What qualitative metrics do you present alongside standard funnel drop-offs?'
+      },
+      {
+        id: 'nq4',
+        question: 'Sarah, what is your favourite example of physical world product friction that digital designers overlook?',
+        angle: '1-on-1 Opener',
+        whyItWorks: 'Great conversational opener to discuss design philosophy during coffee networking.',
+        followUpHook: 'I\'d love to show you how we designed tactile haptics inside Momentum.'
+      }
+    ],
+    tags: ['#ProductDesign', '#MicroInteractions', '#UX', '#Haptics'],
+    isPinned: false,
+    timestamp: '01:30 PM',
+    date: 'Aug 19, 2026',
+    createdAt: '2026-08-19T13:30:00.000Z',
+    updatedAt: '2026-08-19T14:05:00.000Z',
+  }
+];
+

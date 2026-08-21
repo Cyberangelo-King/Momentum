@@ -1,5 +1,5 @@
-import { Connection, Moment, Idea, UserProfile } from '../types';
-import { loadConnections, loadMoments, loadIdeas, loadProfile } from './storage';
+import { Connection, Moment, Idea, UserProfile, Note } from '../types';
+import { loadConnections, loadMoments, loadIdeas, loadProfile, loadNotes } from './storage';
 
 export interface StorageSnapshot {
   id: string;
@@ -8,10 +8,12 @@ export interface StorageSnapshot {
   connectionsCount: number;
   momentsCount: number;
   ideasCount: number;
+  notesCount?: number;
   data: {
     connections: Connection[];
     moments: Moment[];
     ideas: Idea[];
+    notes?: Note[];
     profile: UserProfile;
   };
 }
@@ -26,6 +28,7 @@ export function createEmergencySnapshot(): StorageSnapshot {
   const connections = loadConnections();
   const moments = loadMoments();
   const ideas = loadIdeas();
+  const notes = loadNotes();
   const profile = loadProfile();
 
   const snapshot: StorageSnapshot = {
@@ -35,10 +38,12 @@ export function createEmergencySnapshot(): StorageSnapshot {
     connectionsCount: connections.length,
     momentsCount: moments.length,
     ideasCount: ideas.length,
+    notesCount: notes.length,
     data: {
       connections,
       moments,
       ideas,
+      notes,
       profile,
     },
   };
@@ -77,6 +82,9 @@ export function restoreFromSnapshot(snapshot: StorageSnapshot): void {
     localStorage.setItem('momentum_connections_v1', JSON.stringify(snapshot.data.connections));
     localStorage.setItem('momentum_moments_v1', JSON.stringify(snapshot.data.moments));
     localStorage.setItem('momentum_ideas_v1', JSON.stringify(snapshot.data.ideas));
+    if (snapshot.data.notes) {
+      localStorage.setItem('momentum_notes_v1', JSON.stringify(snapshot.data.notes));
+    }
     localStorage.setItem('momentum_profile_v1', JSON.stringify(snapshot.data.profile));
   } catch (err) {
     console.error('Contingency: Failed to restore snapshot', err);
@@ -91,6 +99,7 @@ export function downloadEmergencyBackup(): void {
   const connections = loadConnections();
   const moments = loadMoments();
   const ideas = loadIdeas();
+  const notes = loadNotes();
   const profile = loadProfile();
 
   const backupData = {
@@ -101,11 +110,13 @@ export function downloadEmergencyBackup(): void {
       connections: connections.length,
       moments: moments.length,
       ideas: ideas.length,
+      notes: notes.length,
     },
     data: {
       connections,
       moments,
       ideas,
+      notes,
     },
   };
 

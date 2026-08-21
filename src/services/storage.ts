@@ -1,5 +1,5 @@
-import { Connection, Moment, Idea, EventSession, UserProfile } from '../types';
-import { initialConnections, initialMoments, initialIdeas, initialSessions, initialProfile } from '../data/mockData';
+import { Connection, Moment, Idea, EventSession, UserProfile, Note } from '../types';
+import { initialConnections, initialMoments, initialIdeas, initialSessions, initialProfile, initialNotes } from '../data/mockData';
 import { syncManager } from './syncManager';
 import { multiDeviceSync } from './multiDeviceSync';
 
@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   CONNECTIONS: 'momentum_connections_v1',
   MOMENTS: 'momentum_moments_v1',
   IDEAS: 'momentum_ideas_v1',
+  NOTES: 'momentum_notes_v1',
   SESSIONS: 'momentum_sessions_v1',
   PROFILE: 'momentum_profile_v1',
 };
@@ -39,6 +40,7 @@ function safeStorageSet(key: string, value: string): boolean {
 const taggedMockConnections: Connection[] = initialConnections.map((c) => ({ ...c, isDemo: true }));
 const taggedMockMoments: Moment[] = initialMoments.map((m) => ({ ...m, isDemo: true }));
 const taggedMockIdeas: Idea[] = initialIdeas.map((i) => ({ ...i, isDemo: true }));
+const taggedMockNotes: Note[] = initialNotes.map((n) => ({ ...n, isDemo: true }));
 
 export function loadConnections(): Connection[] {
   try {
@@ -102,6 +104,33 @@ export function saveIdeas(ideas: Idea[]): void {
   }
 }
 
+export function loadNotes(): Note[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.NOTES);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.warn('Failed to load notes from storage', e);
+  }
+  return taggedMockNotes;
+}
+
+export function saveNotes(notes: Note[]): void {
+  try {
+    safeStorageSet(STORAGE_KEYS.NOTES, JSON.stringify(notes));
+    syncManager.flushQueue().catch(() => {});
+    multiDeviceSync.pushState({ notes }).catch(() => {});
+  } catch (e) {
+    console.warn('Failed to save notes to storage', e);
+  }
+}
+
+export function permanentlyDeleteNote(noteId: string): { updatedNotes: Note[] } {
+  const currentNotes = loadNotes();
+  const updatedNotes = currentNotes.filter((n) => n.id !== noteId);
+  saveNotes(updatedNotes);
+  return { updatedNotes };
+}
+
 export function loadSessions(): EventSession[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.SESSIONS);
@@ -138,14 +167,17 @@ export function sendDemoDataToTrash(): {
   connectionsCount: number;
   momentsCount: number;
   ideasCount: number;
+  notesCount: number;
 } {
   const connections = loadConnections();
   const moments = loadMoments();
   const ideas = loadIdeas();
+  const notes = loadNotes();
 
   let cCount = 0;
   let mCount = 0;
   let iCount = 0;
+  let nCount = 0;
 
   const updatedConnections = connections.map((c) => {
     if (c.isDemo) {
@@ -171,11 +203,20 @@ export function sendDemoDataToTrash(): {
     return i;
   });
 
+  const updatedNotes = notes.map((n) => {
+    if (n.isDemo) {
+      nCount++;
+      return { ...n, inTrash: true, deletedAt: new Date().toISOString() };
+    }
+    return n;
+  });
+
   saveConnections(updatedConnections);
   saveMoments(updatedMoments);
   saveIdeas(updatedIdeas);
+  saveNotes(updatedNotes);
 
-  return { connectionsCount: cCount, momentsCount: mCount, ideasCount: iCount };
+  return { connectionsCount: cCount, momentsCount: mCount, ideasCount: iCount, notesCount: nCount };
 }
 
 /**
@@ -185,19 +226,23 @@ export function permanentlyDeleteDemoData(): {
   deletedConnections: number;
   deletedMoments: number;
   deletedIdeas: number;
+  deletedNotes: number;
 } {
   const connections = loadConnections().filter((c) => !c.isDemo);
   const moments = loadMoments().filter((m) => !m.isDemo);
   const ideas = loadIdeas().filter((i) => !i.isDemo);
+  const notes = loadNotes().filter((n) => !n.isDemo);
 
   saveConnections(connections);
   saveMoments(moments);
   saveIdeas(ideas);
+  saveNotes(notes);
 
   return {
     deletedConnections: initialConnections.length,
     deletedMoments: initialMoments.length,
     deletedIdeas: initialIdeas.length,
+    deletedNotes: initialNotes.length,
   };
 }
 
@@ -208,10 +253,12 @@ export function restoreAllDemoData(): void {
   const connections = loadConnections().map((c) => (c.isDemo ? { ...c, inTrash: false, deletedAt: undefined } : c));
   const moments = loadMoments().map((m) => (m.isDemo ? { ...m, inTrash: false, deletedAt: undefined } : m));
   const ideas = loadIdeas().map((i) => (i.isDemo ? { ...i, inTrash: false, deletedAt: undefined } : i));
+  const notes = loadNotes().map((n) => (n.isDemo ? { ...n, inTrash: false, deletedAt: undefined } : n));
 
   saveConnections(connections);
   saveMoments(moments);
   saveIdeas(ideas);
+  saveNotes(notes);
 }
 
 /**
@@ -300,6 +347,7 @@ export function resetConferenceData(): void {
   localStorage.removeItem(STORAGE_KEYS.CONNECTIONS);
   localStorage.removeItem(STORAGE_KEYS.MOMENTS);
   localStorage.removeItem(STORAGE_KEYS.IDEAS);
+  localStorage.removeItem(STORAGE_KEYS.NOTES);
   localStorage.removeItem(STORAGE_KEYS.SESSIONS);
   localStorage.removeItem(STORAGE_KEYS.PROFILE);
 }

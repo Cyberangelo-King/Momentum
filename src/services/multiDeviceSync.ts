@@ -3,7 +3,7 @@
  * Ensures changes made on any phone, tablet, or desktop are instantly updated on all other devices.
  */
 
-import { Connection, Moment, Idea, UserProfile, SecuritySettings } from '../types';
+import { Connection, Moment, Idea, UserProfile, SecuritySettings, Note } from '../types';
 
 export interface MultiDeviceSyncState {
   deviceId: string;
@@ -20,6 +20,7 @@ type SyncCallback = (data: {
   connections?: Connection[];
   moments?: Moment[];
   ideas?: Idea[];
+  notes?: Note[];
   profile?: UserProfile;
   security?: SecuritySettings;
 }) => void;
@@ -165,6 +166,7 @@ class MultiDeviceSyncEngine {
     connections?: Connection[];
     moments?: Moment[];
     ideas?: Idea[];
+    notes?: Note[];
     profile?: UserProfile;
     security?: SecuritySettings;
   } | null> {
@@ -185,7 +187,7 @@ class MultiDeviceSyncEngine {
         this.error = null;
 
         // Notify listeners if valid data present
-        if (data.data.connections || data.data.moments || data.data.ideas || data.data.profile) {
+        if (data.data.connections || data.data.moments || data.data.ideas || data.data.notes || data.data.profile) {
           this.listeners.forEach((fn) => fn(data.data));
         }
 
@@ -207,6 +209,7 @@ class MultiDeviceSyncEngine {
     connections?: Connection[];
     moments?: Moment[];
     ideas?: Idea[];
+    notes?: Note[];
     profile?: UserProfile;
     security?: SecuritySettings;
   }): Promise<boolean> {

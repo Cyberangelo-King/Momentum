@@ -1,5 +1,5 @@
 import { getSupabaseClient, isSupabaseConfigured } from './supabaseClient';
-import { Connection, Moment, Idea, SyncQueueItem, SyncState } from '../types';
+import { Connection, Moment, Idea, Note, SyncQueueItem, SyncState } from '../types';
 import { syncConnectionsToSupabase, syncMomentsToSupabase, syncIdeasToSupabase } from './supabaseSync';
 
 const QUEUE_STORAGE_KEY = 'momentum_offline_queue_v1';
@@ -95,7 +95,7 @@ class SyncManager {
    * Enqueue an entity for syncing to Supabase.
    * Deduplicates queue by replacing any existing pending item with the same ID.
    */
-  public enqueue(entityType: 'connection' | 'moment' | 'idea', action: 'upsert' | 'delete', payload: any): void {
+  public enqueue(entityType: 'connection' | 'moment' | 'idea' | 'note', action: 'upsert' | 'delete', payload: any): void {
     const queue = this.getQueue();
     const itemId = payload.id;
 
@@ -104,7 +104,7 @@ class SyncManager {
 
     filtered.push({
       id: itemId,
-      entityType,
+      entityType: entityType as any,
       action,
       payload,
       queuedAt: new Date().toISOString(),
@@ -192,7 +192,7 @@ class SyncManager {
   /**
    * Manual Force Sync triggered by user button in UI
    */
-  public async syncAllNow(connections: Connection[], moments: Moment[], ideas: Idea[]): Promise<{ success: boolean; message: string }> {
+  public async syncAllNow(connections: Connection[], moments: Moment[], ideas: Idea[], notes?: Note[]): Promise<{ success: boolean; message: string }> {
     if (!this.isOnline) {
       return { success: false, message: 'You are currently offline. Changes are saved locally and will sync when reconnected.' };
     }

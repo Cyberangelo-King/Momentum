@@ -182,6 +182,7 @@ export interface VoiceRecordingResult {
   dataUrl: string;
   durationSeconds: number;
   durationFormatted: string;
+  mimeType?: string;
 }
 
 export class VoiceRecorderSession {
@@ -296,6 +297,7 @@ export class VoiceRecorderSession {
               dataUrl,
               durationSeconds,
               durationFormatted,
+              mimeType: this.mediaRecorder?.mimeType || 'audio/webm',
             });
           };
           reader.onerror = () => {

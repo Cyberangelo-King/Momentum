@@ -73,10 +73,80 @@ export interface Idea {
   deletedAt?: string;
 }
 
+export type NoteCategory =
+  | 'Keynote'
+  | 'Fireside Chat'
+  | 'Workshop'
+  | 'Networking'
+  | 'Brainstorm'
+  | 'Personal Reflection'
+  | 'Quick Jot'
+  | 'Talk'
+  | 'Panel'
+  | 'Strategy'
+  | 'General';
+
+export interface NoteActionItem {
+  id: string;
+  text: string;
+  done: boolean;
+  completed?: boolean;
+  priority?: 'high' | 'medium' | 'low';
+  assignee?: string;
+}
+
+export interface SpeakerQuestionItem {
+  id: string;
+  question: string;
+  angle?: string;
+  whyItWorks?: string;
+  followUpHook?: string;
+  context?: string;
+  targetAngle?: string;
+  followUpAngle?: string;
+  asked?: boolean;
+  speakerAnswerNotes?: string;
+}
+
+export interface Note {
+  id: string;
+  title: string;
+  content: string; // Structured text or Markdown
+  category: NoteCategory;
+  speakerName?: string;
+  speaker?: string; // alias
+  speakerRole?: string;
+  sessionTitle?: string;
+  sessionId?: string;
+  stageName?: string;
+  location?: string;
+  summary?: string;
+  keyTakeaways: string[];
+  actionItems: NoteActionItem[];
+  generatedQuestions: SpeakerQuestionItem[];
+  suggestedQuestions?: Array<string | SpeakerQuestionItem>;
+  audioAttachmentUrl?: string;
+  audioDataUrl?: string;
+  audioDuration?: string;
+  audioDurationFormatted?: string;
+  tags: string[];
+  isPinned?: boolean;
+  timestamp: string; // e.g. "11:20 AM"
+  date: string; // e.g. "Aug 20, 2026"
+  createdAt: string;
+  updatedAt: string;
+  isDemo?: boolean;
+  isOfflineCaptured?: boolean;
+  savedOfflineAt?: string;
+  inTrash?: boolean;
+  deletedAt?: string;
+}
+
 export interface EventSession {
   id: string;
   title: string;
   speaker: string;
+  speakerName?: string; // alias
   speakerRole: string;
   timeStr: string;
   stage: string;
@@ -99,7 +169,7 @@ export interface UserProfile {
 
 export interface SyncQueueItem {
   id: string;
-  entityType: 'connection' | 'moment' | 'idea';
+  entityType: 'connection' | 'moment' | 'idea' | 'note';
   action: 'upsert' | 'delete';
   payload: any;
   queuedAt: string;

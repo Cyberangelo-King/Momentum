@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Trash2, RotateCcw, AlertTriangle, Check, Sparkles, X, Database, ShieldAlert } from 'lucide-react';
-import { Connection, Moment, Idea } from '../types';
+import { Connection, Moment, Idea, Note } from '../types';
 import { sendDemoDataToTrash, permanentlyDeleteDemoData, restoreAllDemoData } from '../services/storage';
 
 interface TrashAndDemoModalProps {
@@ -9,7 +9,8 @@ interface TrashAndDemoModalProps {
   connections: Connection[];
   moments: Moment[];
   ideas: Idea[];
-  onDataRefresh: (newConn: Connection[], newMoments: Moment[], newIdeas: Idea[]) => void;
+  notes?: Note[];
+  onDataRefresh: (newConn: Connection[], newMoments: Moment[], newIdeas: Idea[], newNotes?: Note[]) => void;
 }
 
 export const TrashAndDemoModal: React.FC<TrashAndDemoModalProps> = ({
@@ -18,6 +19,7 @@ export const TrashAndDemoModal: React.FC<TrashAndDemoModalProps> = ({
   connections,
   moments,
   ideas,
+  notes = [],
   onDataRefresh,
 }) => {
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
@@ -28,20 +30,23 @@ export const TrashAndDemoModal: React.FC<TrashAndDemoModalProps> = ({
   const demoConnectionsCount = connections.filter((c) => c.isDemo && !c.inTrash).length;
   const demoMomentsCount = moments.filter((m) => m.isDemo && !m.inTrash).length;
   const demoIdeasCount = ideas.filter((i) => i.isDemo && !i.inTrash).length;
-  const totalDemoActive = demoConnectionsCount + demoMomentsCount + demoIdeasCount;
+  const demoNotesCount = notes.filter((n) => n.isDemo && !n.inTrash).length;
+  const totalDemoActive = demoConnectionsCount + demoMomentsCount + demoIdeasCount + demoNotesCount;
 
   const trashedConnectionsCount = connections.filter((c) => c.inTrash).length;
   const trashedMomentsCount = moments.filter((m) => m.inTrash).length;
   const trashedIdeasCount = ideas.filter((i) => i.inTrash).length;
-  const totalTrashed = trashedConnectionsCount + trashedMomentsCount + trashedIdeasCount;
+  const trashedNotesCount = notes.filter((n) => n.inTrash).length;
+  const totalTrashed = trashedConnectionsCount + trashedMomentsCount + trashedIdeasCount + trashedNotesCount;
 
   const handleSendDemoToTrash = () => {
-    const res = sendDemoDataToTrash();
+    sendDemoDataToTrash();
     const updatedConn = connections.map((c) => (c.isDemo ? { ...c, inTrash: true } : c));
     const updatedMoments = moments.map((m) => (m.isDemo ? { ...m, inTrash: true } : m));
     const updatedIdeas = ideas.map((i) => (i.isDemo ? { ...i, inTrash: true } : i));
+    const updatedNotes = notes.map((n) => (n.isDemo ? { ...n, inTrash: true } : n));
 
-    onDataRefresh(updatedConn, updatedMoments, updatedIdeas);
+    onDataRefresh(updatedConn, updatedMoments, updatedIdeas, updatedNotes);
     setSuccessNotice(`Moved ${totalDemoActive} demo sample items to Trash Bin.`);
     setTimeout(() => setSuccessNotice(null), 3000);
   };
@@ -51,8 +56,9 @@ export const TrashAndDemoModal: React.FC<TrashAndDemoModalProps> = ({
     const updatedConn = connections.map((c) => (c.isDemo ? { ...c, inTrash: false } : c));
     const updatedMoments = moments.map((m) => (m.isDemo ? { ...m, inTrash: false } : m));
     const updatedIdeas = ideas.map((i) => (i.isDemo ? { ...i, inTrash: false } : i));
+    const updatedNotes = notes.map((n) => (n.isDemo ? { ...n, inTrash: false } : n));
 
-    onDataRefresh(updatedConn, updatedMoments, updatedIdeas);
+    onDataRefresh(updatedConn, updatedMoments, updatedIdeas, updatedNotes);
     setSuccessNotice('Restored all demo records.');
     setTimeout(() => setSuccessNotice(null), 3000);
   };
@@ -62,18 +68,20 @@ export const TrashAndDemoModal: React.FC<TrashAndDemoModalProps> = ({
     const cleanConn = connections.filter((c) => !c.isDemo);
     const cleanMoments = moments.filter((m) => !m.isDemo);
     const cleanIdeas = ideas.filter((i) => !i.isDemo);
+    const cleanNotes = notes.filter((n) => !n.isDemo);
 
-    onDataRefresh(cleanConn, cleanMoments, cleanIdeas);
+    onDataRefresh(cleanConn, cleanMoments, cleanIdeas, cleanNotes);
     setConfirmDeleteAll(false);
     setSuccessNotice('Permanently deleted all demo records. Clean slate ready for TEDxAkure 2026!');
     setTimeout(() => setSuccessNotice(null), 3000);
   };
 
   const handleClearAllData = () => {
-    onDataRefresh([], [], []);
+    onDataRefresh([], [], [], []);
     localStorage.setItem('momentum_connections_v1', JSON.stringify([]));
     localStorage.setItem('momentum_moments_v1', JSON.stringify([]));
     localStorage.setItem('momentum_ideas_v1', JSON.stringify([]));
+    localStorage.setItem('momentum_notes_v1', JSON.stringify([]));
     setConfirmDeleteAll(false);
     setSuccessNotice('All data wiped clean. Your workspace is 100% fresh!');
     setTimeout(() => setSuccessNotice(null), 3000);
