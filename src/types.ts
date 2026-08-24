@@ -107,6 +107,19 @@ export interface PostEventReflection {
   source: 'gemini' | 'offline-synthesis';
 }
 
+export interface NfcExchangeLog {
+  id: string;
+  timestamp: string; // ISO 8601 string
+  timeFormatted?: string; // e.g. "2:45 PM"
+  dateFormatted?: string; // e.g. "Aug 24, 2026"
+  eventId?: string;
+  eventName?: string;
+  type: 'bump' | 'tag_read' | 'virtual_beam';
+  serialNumber?: string;
+  deviceType?: string;
+  notes?: string;
+}
+
 export interface Connection {
   id: string;
   eventId?: string; // Scoped to active event or global
@@ -138,6 +151,10 @@ export interface Connection {
   savedOfflineAt?: string;
   inTrash?: boolean;
   deletedAt?: string;
+  // Web-NFC Bump & Hardware Exchange metadata
+  isNfcCaptured?: boolean;
+  nfcTimestamp?: string;
+  nfcExchangeHistory?: NfcExchangeLog[];
 }
 
 export interface Moment {
