@@ -1,9 +1,12 @@
-import { Connection, Moment, Idea, EventSession, UserProfile, Note } from '../types';
+import { Connection, Moment, Idea, EventSession, UserProfile, Note, EventConfig, EventTemplatePreset } from '../types';
 import { initialConnections, initialMoments, initialIdeas, initialSessions, initialProfile, initialNotes } from '../data/mockData';
+import { defaultTedxAkureEvent, eventTemplatePresets } from '../data/eventTemplates';
 import { syncManager } from './syncManager';
 import { multiDeviceSync } from './multiDeviceSync';
 
 const STORAGE_KEYS = {
+  EVENTS_CATALOG: 'momentum_events_catalog_v1',
+  ACTIVE_EVENT_ID: 'momentum_active_event_id_v1',
   CONNECTIONS: 'momentum_connections_v1',
   MOMENTS: 'momentum_moments_v1',
   IDEAS: 'momentum_ideas_v1',
@@ -36,16 +39,210 @@ function safeStorageSet(key: string, value: string): boolean {
   }
 }
 
-// Tag initial mock data with isDemo: true so user can distinguish demo data vs their live event data
-const taggedMockConnections: Connection[] = initialConnections.map((c) => ({ ...c, isDemo: true }));
-const taggedMockMoments: Moment[] = initialMoments.map((m) => ({ ...m, isDemo: true }));
-const taggedMockIdeas: Idea[] = initialIdeas.map((i) => ({ ...i, isDemo: true }));
-const taggedMockNotes: Note[] = initialNotes.map((n) => ({ ...n, isDemo: true }));
+// Tag initial mock data with isDemo: true and default event ID
+const taggedMockConnections: Connection[] = initialConnections.map((c) => ({
+  ...c,
+  isDemo: true,
+  eventId: defaultTedxAkureEvent.id,
+}));
+const taggedMockMoments: Moment[] = initialMoments.map((m) => ({
+  ...m,
+  isDemo: true,
+  eventId: defaultTedxAkureEvent.id,
+}));
+const taggedMockIdeas: Idea[] = initialIdeas.map((i) => ({
+  ...i,
+  isDemo: true,
+  eventId: defaultTedxAkureEvent.id,
+}));
+const taggedMockNotes: Note[] = initialNotes.map((n) => ({
+  ...n,
+  isDemo: true,
+  eventId: defaultTedxAkureEvent.id,
+}));
+
+// ==========================================
+// EVENT MANAGEMENT & MULTI-EVENT STORAGE
+// ==========================================
+
+export function loadEvents(): EventConfig[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.EVENTS_CATALOG);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load events catalog from storage', e);
+  }
+  // Initialize with default TEDxAkure 2026 event
+  const initialCatalog = [defaultTedxAkureEvent];
+  saveEvents(initialCatalog);
+  return initialCatalog;
+}
+
+export function saveEvents(events: EventConfig[]): void {
+  try {
+    safeStorageSet(STORAGE_KEYS.EVENTS_CATALOG, JSON.stringify(events));
+  } catch (e) {
+    console.warn('Failed to save events catalog to storage', e);
+  }
+}
+
+export function loadActiveEventId(): string {
+  try {
+    const activeId = localStorage.getItem(STORAGE_KEYS.ACTIVE_EVENT_ID);
+    if (activeId) return activeId;
+  } catch (e) {
+    console.warn('Failed to load active event ID', e);
+  }
+  return defaultTedxAkureEvent.id;
+}
+
+export function saveActiveEventId(eventId: string): void {
+  try {
+    safeStorageSet(STORAGE_KEYS.ACTIVE_EVENT_ID, eventId);
+  } catch (e) {
+    console.warn('Failed to save active event ID', e);
+  }
+}
+
+export function getActiveEvent(): EventConfig {
+  const events = loadEvents();
+  const activeId = loadActiveEventId();
+  const found = events.find((e) => e.id === activeId);
+  if (found) return found;
+  if (events.length > 0) {
+    saveActiveEventId(events[0].id);
+    return events[0];
+  }
+  return defaultTedxAkureEvent;
+}
+
+export const loadEventsCatalog = loadEvents;
+export const saveEventsCatalog = saveEvents;
+export const loadActiveEventConfig = getActiveEvent;
+
+export function createEventFromPreset(preset: EventTemplatePreset, customOverrides?: Partial<EventConfig>): EventConfig {
+  const newId = `event-${preset.eventType}-${Date.now().toString(36)}`;
+  const newEvent: EventConfig = {
+    id: newId,
+    name: customOverrides?.name || preset.title,
+    year: customOverrides?.year || new Date().getFullYear().toString(),
+    tagline: customOverrides?.tagline || preset.sampleTagline,
+    themeDescription: customOverrides?.themeDescription || preset.sampleThemeDescription,
+    eventType: preset.eventType,
+    startDate: customOverrides?.startDate || new Date().toISOString().split('T')[0],
+    endDate: customOverrides?.endDate,
+    location: customOverrides?.location || preset.sampleLocation,
+    venue: customOverrides?.venue || preset.sampleLocation,
+    city: customOverrides?.city || 'Global',
+    country: customOverrides?.country || '',
+    targetConnections: customOverrides?.targetConnections || preset.defaultTarget,
+    stages: customOverrides?.stages || preset.sampleStages,
+    branding: {
+      themeKey: preset.themeKey,
+      primaryColor: preset.primaryColor,
+      accentColor: preset.accentColor,
+      badgeBgColor: `${preset.primaryColor}25`,
+      badgeTextColor: preset.primaryColor,
+      bannerGradient: `from-[${preset.primaryColor}33] via-[#1a0c06] to-[#0a0a0a]`,
+      taglineColor: '#fadcd2',
+    },
+    sessions: preset.sampleSessions.map((s, idx) => ({
+      ...s,
+      id: `s-${newId}-${idx + 1}`,
+    })),
+    customIcebreakers: preset.sampleIcebreakers,
+    isArchived: false,
+    isCustom: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  const allEvents = loadEvents();
+  const updatedEvents = [newEvent, ...allEvents];
+  saveEvents(updatedEvents);
+  saveActiveEventId(newEvent.id);
+  return newEvent;
+}
+
+export function createCustomEvent(eventData: Omit<EventConfig, 'id' | 'createdAt' | 'updatedAt'>): EventConfig {
+  const newId = `event-${Date.now().toString(36)}`;
+  const newEvent: EventConfig = {
+    ...eventData,
+    id: newId,
+    isCustom: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  const allEvents = loadEvents();
+  const updatedEvents = [newEvent, ...allEvents];
+  saveEvents(updatedEvents);
+  saveActiveEventId(newEvent.id);
+  return newEvent;
+}
+
+export function updateEvent(updatedEvent: EventConfig): EventConfig[] {
+  const allEvents = loadEvents();
+  const updatedList = allEvents.map((e) =>
+    e.id === updatedEvent.id ? { ...updatedEvent, updatedAt: new Date().toISOString() } : e
+  );
+  saveEvents(updatedList);
+  return updatedList;
+}
+
+export function deleteEvent(eventId: string): { updatedEvents: EventConfig[]; newActiveEvent: EventConfig } {
+  const allEvents = loadEvents();
+  const filtered = allEvents.filter((e) => e.id !== eventId);
+  const finalList = filtered.length > 0 ? filtered : [defaultTedxAkureEvent];
+  saveEvents(finalList);
+
+  const activeId = loadActiveEventId();
+  let newActive = finalList[0];
+  if (activeId === eventId) {
+    saveActiveEventId(newActive.id);
+  } else {
+    newActive = finalList.find((e) => e.id === activeId) || finalList[0];
+  }
+
+  return { updatedEvents: finalList, newActiveEvent: newActive };
+}
+
+export function duplicateEvent(eventId: string): EventConfig {
+  const allEvents = loadEvents();
+  const source = allEvents.find((e) => e.id === eventId) || defaultTedxAkureEvent;
+  const newId = `event-copy-${Date.now().toString(36)}`;
+
+  const duplicated: EventConfig = {
+    ...source,
+    id: newId,
+    name: `${source.name} (Copy)`,
+    sessions: source.sessions.map((s, i) => ({ ...s, id: `s-${newId}-${i + 1}` })),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  const updatedList = [duplicated, ...allEvents];
+  saveEvents(updatedList);
+  saveActiveEventId(duplicated.id);
+  return duplicated;
+}
+
+// ==========================================
+// CONNECTIONS, MOMENTS, IDEAS, NOTES
+// ==========================================
 
 export function loadConnections(): Connection[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.CONNECTIONS);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed: Connection[] = JSON.parse(raw);
+      return parsed;
+    }
   } catch (e) {
     console.warn('Failed to load connections from storage', e);
   }
@@ -67,7 +264,10 @@ export function saveConnections(connections: Connection[]): void {
 export function loadMoments(): Moment[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.MOMENTS);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed: Moment[] = JSON.parse(raw);
+      return parsed;
+    }
   } catch (e) {
     console.warn('Failed to load moments from storage', e);
   }
@@ -87,7 +287,10 @@ export function saveMoments(moments: Moment[]): void {
 export function loadIdeas(): Idea[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.IDEAS);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed: Idea[] = JSON.parse(raw);
+      return parsed;
+    }
   } catch (e) {
     console.warn('Failed to load ideas from storage', e);
   }
@@ -107,7 +310,10 @@ export function saveIdeas(ideas: Idea[]): void {
 export function loadNotes(): Note[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.NOTES);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed: Note[] = JSON.parse(raw);
+      return parsed;
+    }
   } catch (e) {
     console.warn('Failed to load notes from storage', e);
   }
@@ -132,6 +338,10 @@ export function permanentlyDeleteNote(noteId: string): { updatedNotes: Note[] } 
 }
 
 export function loadSessions(): EventSession[] {
+  const activeEvent = getActiveEvent();
+  if (activeEvent && activeEvent.sessions && activeEvent.sessions.length > 0) {
+    return activeEvent.sessions;
+  }
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.SESSIONS);
     if (raw) return JSON.parse(raw);
@@ -158,6 +368,110 @@ export function saveProfile(profile: UserProfile): void {
   } catch (e) {
     console.warn('Failed to save profile to storage', e);
   }
+}
+
+// ==========================================
+// CROSS-EVENT SEARCH & INTELLIGENCE
+// ==========================================
+
+export interface UniversalSearchResult {
+  connections: Array<Connection & { eventName?: string }>;
+  notes: Array<Note & { eventName?: string }>;
+  moments: Array<Moment & { eventName?: string }>;
+  ideas: Array<Idea & { eventName?: string }>;
+}
+
+export function searchAcrossAllEvents(query: string): UniversalSearchResult {
+  const q = query.toLowerCase().trim();
+  if (!q) {
+    return { connections: [], notes: [], moments: [], ideas: [] };
+  }
+
+  const events = loadEvents();
+  const eventMap = new Map<string, string>();
+  events.forEach((e) => eventMap.set(e.id, e.name));
+
+  const allConnections = loadConnections().filter((c) => !c.inTrash);
+  const allNotes = loadNotes().filter((n) => !n.inTrash);
+  const allMoments = loadMoments().filter((m) => !m.inTrash);
+  const allIdeas = loadIdeas().filter((i) => !i.inTrash);
+
+  const matchedConnections = allConnections
+    .filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.company.toLowerCase().includes(q) ||
+        c.profession.toLowerCase().includes(q) ||
+        c.notes.toLowerCase().includes(q) ||
+        c.tags.some((t) => t.toLowerCase().includes(q))
+    )
+    .map((c) => ({
+      ...c,
+      eventName: c.eventId ? eventMap.get(c.eventId) || 'General' : 'TEDxAkure 2026',
+    }));
+
+  const matchedNotes = allNotes
+    .filter(
+      (n) =>
+        n.title.toLowerCase().includes(q) ||
+        n.content.toLowerCase().includes(q) ||
+        (n.summary && n.summary.toLowerCase().includes(q)) ||
+        (n.speakerName && n.speakerName.toLowerCase().includes(q)) ||
+        (n.speaker && n.speaker.toLowerCase().includes(q)) ||
+        n.tags.some((t) => t.toLowerCase().includes(q))
+    )
+    .map((n) => ({
+      ...n,
+      eventName: n.eventId ? eventMap.get(n.eventId) || 'General' : 'TEDxAkure 2026',
+    }));
+
+  const matchedMoments = allMoments
+    .filter(
+      (m) =>
+        m.title.toLowerCase().includes(q) ||
+        m.caption.toLowerCase().includes(q) ||
+        (m.speakerName && m.speakerName.toLowerCase().includes(q))
+    )
+    .map((m) => ({
+      ...m,
+      eventName: m.eventId ? eventMap.get(m.eventId) || 'General' : 'TEDxAkure 2026',
+    }));
+
+  const matchedIdeas = allIdeas
+    .filter(
+      (i) =>
+        i.quote.toLowerCase().includes(q) ||
+        i.speakerName.toLowerCase().includes(q) ||
+        (i.takeaway && i.takeaway.toLowerCase().includes(q))
+    )
+    .map((i) => ({
+      ...i,
+      eventName: i.eventId ? eventMap.get(i.eventId) || 'General' : 'TEDxAkure 2026',
+    }));
+
+  return {
+    connections: matchedConnections,
+    notes: matchedNotes,
+    moments: matchedMoments,
+    ideas: matchedIdeas,
+  };
+}
+
+export function getMultiEventStats() {
+  const events = loadEvents();
+  const connections = loadConnections().filter((c) => !c.inTrash);
+  const moments = loadMoments().filter((m) => !m.inTrash);
+  const ideas = loadIdeas().filter((i) => !i.inTrash);
+  const notes = loadNotes().filter((n) => !n.inTrash);
+
+  return {
+    totalEvents: events.length,
+    activeEvents: events.filter((e) => !e.isArchived).length,
+    totalConnections: connections.length,
+    totalMoments: moments.length,
+    totalIdeas: ideas.length,
+    totalNotes: notes.length,
+  };
 }
 
 /**
@@ -262,10 +576,7 @@ export function restoreAllDemoData(): void {
 }
 
 /**
- * Safely and permanently deletes a moment by ID:
- * 1. Removes the moment from local storage
- * 2. Unlinks the moment from any connections (prunes relatedMomentIds)
- * 3. Enqueues a permanent deletion action in the sync manager for cloud synchronization
+ * Safely and permanently deletes a moment by ID
  */
 export function permanentlyDeleteMoment(momentId: string): {
   updatedMoments: Moment[];
@@ -287,18 +598,13 @@ export function permanentlyDeleteMoment(momentId: string): {
 
   saveMoments(updatedMoments);
   saveConnections(updatedConnections);
-
-  // Safely queue the delete command so it persists offline and clears Supabase upon reconnect
   syncManager.enqueue('moment', 'delete', { id: momentId });
 
   return { updatedMoments, updatedConnections };
 }
 
 /**
- * Safely and permanently deletes a connection by ID:
- * 1. Removes the connection from local storage
- * 2. Unlinks the connection from any moments (prunes taggedPeopleIds)
- * 3. Enqueues a permanent deletion action in the sync manager
+ * Safely and permanently deletes a connection by ID
  */
 export function permanentlyDeleteConnection(connectionId: string): {
   updatedConnections: Connection[];
@@ -321,7 +627,6 @@ export function permanentlyDeleteConnection(connectionId: string): {
 
   saveConnections(updatedConnections);
   saveMoments(updatedMoments);
-
   syncManager.enqueue('connection', 'delete', { id: connectionId });
 
   return { updatedConnections, updatedMoments };
@@ -342,8 +647,10 @@ export function permanentlyDeleteIdea(ideaId: string): {
   return { updatedIdeas };
 }
 
-// Reset data back to initial TEDxAkure 2026 conference state
+// Reset data back to initial state
 export function resetConferenceData(): void {
+  localStorage.removeItem(STORAGE_KEYS.EVENTS_CATALOG);
+  localStorage.removeItem(STORAGE_KEYS.ACTIVE_EVENT_ID);
   localStorage.removeItem(STORAGE_KEYS.CONNECTIONS);
   localStorage.removeItem(STORAGE_KEYS.MOMENTS);
   localStorage.removeItem(STORAGE_KEYS.IDEAS);

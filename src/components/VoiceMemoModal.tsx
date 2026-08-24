@@ -7,6 +7,7 @@ import {
   VoiceRecordingResult 
 } from '../services/speechService';
 import { transcribeAudioWithGemini, refineTranscriptWithGemini } from '../services/aiService';
+import { globalTranscriptionEngine } from '../services/transcriptionEngine';
 import { 
   Mic, 
   Square, 
@@ -201,14 +202,17 @@ export const VoiceMemoModal: React.FC<VoiceMemoModalProps> = ({
   const triggerGeminiTranscription = async (dataUrl: string, mimeType?: string) => {
     setIsTranscribingWithGemini(true);
     try {
-      const response = await transcribeAudioWithGemini(
+      const response = await globalTranscriptionEngine.processAudio(
         dataUrl,
-        mimeType || 'audio/webm',
-        `TEDxAkure 2026 Talk Reflection at ${memoLocation}`
+        transcript,
+        {
+          sessionTitle: memoTitle,
+          mimeType: mimeType || 'audio/webm',
+        }
       );
 
-      if (response && response.transcript && response.transcript.trim()) {
-        setTranscript(response.transcript);
+      if (response && response.structuredTranscript) {
+        setTranscript(response.structuredTranscript);
         if (response.title && response.title !== 'Voice Note') {
           setMemoTitle(response.title);
         }

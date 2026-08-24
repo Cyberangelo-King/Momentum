@@ -85,6 +85,12 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// Helper for security & safe input string sanitization
+function sanitizeText(input: any, maxLength: number = 5000): string {
+  if (typeof input !== "string") return "";
+  return input.trim().slice(0, maxLength);
+}
+
 // ==========================================
 // REAL-TIME MULTI-DEVICE DATA SYNC & AUTH ENGINE
 // ==========================================
@@ -387,7 +393,7 @@ Return a JSON object with:
 // ==========================================
 
 app.post("/api/gemini/transcribe-audio", async (req, res) => {
-  const { audioData, mimeType, context } = req.body;
+  const { audioData, mimeType, context, sessionTitle, speakerName } = req.body;
 
   if (!audioData) {
     return res.status(400).json({ error: "audioData is required" });
@@ -409,27 +415,40 @@ app.post("/api/gemini/transcribe-audio", async (req, res) => {
 
   try {
     const prompt = `You are the precision audio transcription and intelligence engine of Momentum OS at TEDxAkure 2026.
-Listen carefully to the provided spoken audio. Transcribe it with 100% verbatim accuracy, proper punctuation, sentence capitalization, and domain-aware spelling.
+Listen carefully to the provided spoken audio.
+
+1. Transcribe the raw spoken audio with 100% verbatim accuracy.
+2. Also provide a cleaned, punctuated structured transcript with logical paragraphs and timestamped segment estimates.
+3. Extract core ideas, actionable takeaways, and unanswered questions provoked by the recording.
 
 Domain Context:
 - Conference: TEDxAkure 2026 (Akure, Ondo State, Nigeria)
-- Themes: Technology, African innovation, fintech, engineering, UX design, startup ecosystems, pan-African infrastructure, leadership.
-${context ? `Additional user/speaker context: ${context}` : ""}
+- Themes: Technology, African innovation, fintech, engineering, UX design, startup ecosystems, infrastructure, leadership.
+- Session: ${sanitizeText(sessionTitle) || "Conference Session"}
+- Speaker: ${sanitizeText(speakerName) || "Speaker"}
+${context ? `Additional user/speaker context: ${sanitizeText(context)}` : ""}
 
 Return a JSON object with:
-1. "transcript": Full, punctuated, pristine transcript of everything spoken.
-2. "title": A crisp, punchy 3-6 word title summarizing the spoken thought.
-3. "keyPoints": Array of 2-4 key bullet points summarizing core insights.
-4. "suggestedTags": Array of 3-4 hashtags (e.g. ["#TEDxAkure", "#TechInnovation", "#StartupGrowth"]).
-5. "speakersDetected": Estimated number of speakers (number).`;
+1. "rawTranscript": Exact verbatim unedited transcript of spoken words.
+2. "structuredTranscript": Cleaned, punctuated, paragraph-structured transcript.
+3. "title": A punchy 3-6 word title summarizing the audio reflection.
+4. "keyPoints": Array of 2-4 core takeaway bullet points.
+5. "actionItems": Array of objects [{"id": "a1", "text": "...", "done": false}].
+6. "suggestedTags": Array of 3-4 hashtags (e.g. ["#TEDxAkure", "#AfricanInnovation"]).
+7. "segments": Array of estimated timestamped segments [{"id": "s1", "startOffsetSec": 0, "timestampFormatted": "00:00", "speakerLabel": "${sanitizeText(speakerName) || "Speaker"}", "text": "..."}].`;
 
     const ai = getGemini();
     if (!ai) {
+      const defaultText = "Voice memo captured successfully at TEDxAkure 2026.";
       return res.json({
-        transcript: "Voice memo captured successfully at TEDxAkure 2026.",
+        rawTranscript: defaultText,
+        structuredTranscript: defaultText,
+        transcript: defaultText,
         title: "Voice Reflection",
         keyPoints: ["Spoken moment captured at TEDxAkure 2026."],
+        actionItems: [],
         suggestedTags: ["#TEDxAkure", "#VoiceMemo"],
+        segments: [{ id: "seg_1", startOffsetSec: 0, timestampFormatted: "00:00", text: defaultText }],
         speakersDetected: 1,
         source: "offline-fallback",
       });
@@ -472,18 +491,23 @@ Return a JSON object with:
         }
       } catch (err: any) {
         console.warn(`Transcription attempt with ${model} error:`, err?.message || err);
-        // Continue to fallback candidate
       }
     }
 
     if (resultText) {
       try {
         const parsed = JSON.parse(resultText);
+        const raw = parsed.rawTranscript || parsed.transcript || "Spoken recording captured.";
+        const structured = parsed.structuredTranscript || parsed.transcript || raw;
         return res.json({
-          transcript: parsed.transcript || "Transcribed audio note.",
+          rawTranscript: raw,
+          structuredTranscript: structured,
+          transcript: structured,
           title: parsed.title || "Voice Note",
           keyPoints: parsed.keyPoints || ["Key takeaway from voice reflection."],
+          actionItems: parsed.actionItems || [],
           suggestedTags: parsed.suggestedTags || ["#TEDxAkure"],
+          segments: parsed.segments || [{ id: "seg_1", startOffsetSec: 0, timestampFormatted: "00:00", text: raw }],
           speakersDetected: parsed.speakersDetected || 1,
           source: "gemini",
         });
@@ -492,24 +516,338 @@ Return a JSON object with:
       }
     }
 
+    const fallbackTxt = "Voice memo captured at TEDxAkure 2026.";
     return res.json({
-      transcript: "Voice memo captured at TEDxAkure 2026.",
+      rawTranscript: fallbackTxt,
+      structuredTranscript: fallbackTxt,
+      transcript: fallbackTxt,
       title: "Spoken Memo",
       keyPoints: ["Live event reflection."],
+      actionItems: [],
       suggestedTags: ["#TEDxAkure"],
+      segments: [{ id: "seg_1", startOffsetSec: 0, timestampFormatted: "00:00", text: fallbackTxt }],
       speakersDetected: 1,
       source: "offline-fallback",
     });
   } catch (err) {
     console.error("Transcribe audio error:", err);
+    const fallbackTxt = "Voice memo captured at TEDxAkure 2026.";
     return res.json({
-      transcript: "Voice memo captured at TEDxAkure 2026.",
+      rawTranscript: fallbackTxt,
+      structuredTranscript: fallbackTxt,
+      transcript: fallbackTxt,
       title: "Spoken Memo",
       keyPoints: ["Live event reflection."],
+      actionItems: [],
       suggestedTags: ["#TEDxAkure"],
+      segments: [{ id: "seg_1", startOffsetSec: 0, timestampFormatted: "00:00", text: fallbackTxt }],
       speakersDetected: 1,
       source: "offline-fallback",
     });
+  }
+});
+
+// ==========================================
+// BEFORE STAGE: SPEAKER BRIEFINGS & PREPARATION DOSSIER
+// ==========================================
+
+app.post("/api/gemini/speaker-briefing", async (req, res) => {
+  const { speakerName, speakerRole, speakerBio, sessionTitle, stage, topics } = req.body;
+
+  const safeSpeaker = sanitizeText(speakerName, 100) || "Featured Speaker";
+  const safeRole = sanitizeText(speakerRole, 200) || "Thought Leader";
+  const safeTitle = sanitizeText(sessionTitle, 200) || "TEDxAkure Session";
+
+  try {
+    const prompt = `You are the Executive Intelligence Officer for an attendee at TEDxAkure 2026.
+Generate a high-leverage "BEFORE" stage briefing dossier for a speaker session so the attendee enters the room deeply prepared.
+
+Speaker & Session Details:
+- Speaker Name: ${safeSpeaker}
+- Role / Background: ${safeRole}
+- Session Title: ${safeTitle}
+- Stage / Location: ${sanitizeText(stage, 100) || "Main Stage"}
+- Speaker Bio Context: ${sanitizeText(speakerBio, 500) || "Leading African technology and ecosystem innovator."}
+- Known Topics: ${Array.isArray(topics) ? topics.join(", ") : "Innovation, Scaling, Leadership"}
+
+Return a JSON object with:
+1. "whyItMatters": 2-3 sentences explaining the strategic importance of this talk and why an ambitious attendee MUST pay attention.
+2. "coreThemes": Array of 3-4 key themes and ideas expected in this talk.
+3. "recommendedAngles": Array of 3 strategic angles to observe (e.g. "Operational Tradeoffs", "Pan-African Expansion", "Technical Bottlenecks").
+4. "preGeneratedQuestions": Array of 3-4 brilliant, memorable questions to prepare BEFORE the talk:
+   [
+     {
+       "id": "q1",
+       "question": "Question text to ask during Q&A or networking",
+       "angle": "Provocative / Deep Dive" | "Practical Playbook" | "Ecosystem Impact",
+       "whyItWorks": "Why this question stands out",
+       "followUpHook": "Follow up conversational hook"
+     }
+   ]`;
+
+    const text = await generateWithFallback(prompt, { responseMimeType: "application/json" });
+
+    if (text) {
+      try {
+        const parsed = JSON.parse(text);
+        return res.json({
+          speakerName: safeSpeaker,
+          speakerRole: safeRole,
+          whyItMatters: parsed.whyItMatters || `${safeSpeaker}'s session on "${safeTitle}" explores crucial frontiers in African technology and ecosystem infrastructure.`,
+          coreThemes: parsed.coreThemes || ["Ecosystem Scale", "Engineering Resilience", "Sustainable Growth"],
+          recommendedAngles: parsed.recommendedAngles || ["Operational Playbooks", "Regional Bottlenecks", "Zero-to-One Strategy"],
+          preGeneratedQuestions: parsed.preGeneratedQuestions || [
+            {
+              id: `q_pre_${Date.now()}_1`,
+              question: `In scaling your thesis on "${safeTitle}", what was the most counterintuitive operational hurdle you navigated in West Africa?`,
+              angle: "Practical Playbook",
+              whyItWorks: "Directly addresses real execution realities rather than surface theory.",
+              followUpHook: "How did that shape your current roadmap?",
+            },
+          ],
+          source: "gemini",
+        });
+      } catch {
+        // parsing fallback
+      }
+    }
+
+    return res.json({
+      speakerName: safeSpeaker,
+      speakerRole: safeRole,
+      whyItMatters: `${safeSpeaker} is a key voice at TEDxAkure 2026. This session offers high-value insights into regional technological development and strategic innovation.`,
+      coreThemes: ["Regional Innovation", "Ecosystem Scaling", "Strategic Leadership"],
+      recommendedAngles: ["Execution Realities", "Regional Advantage", "Talent & Infrastructure"],
+      preGeneratedQuestions: [
+        {
+          id: `q_pre_${Date.now()}_1`,
+          question: `What is the single biggest misconception founders have when tackling "${safeTitle}" in emerging markets?`,
+          angle: "Provocative / Deep Dive",
+          whyItWorks: "Invites the speaker to bust prevalent myths.",
+          followUpHook: "What early signals tell you a team gets it right?",
+        },
+      ],
+      source: "offline-dossier",
+    });
+  } catch (err) {
+    console.error("Speaker briefing error:", err);
+    return res.json({
+      speakerName: safeSpeaker,
+      speakerRole: safeRole,
+      whyItMatters: `${safeSpeaker}'s session is a highlighted event on the schedule.`,
+      coreThemes: ["Innovation", "Leadership"],
+      recommendedAngles: ["Execution", "Strategy"],
+      preGeneratedQuestions: [],
+      source: "offline-dossier",
+    });
+  }
+});
+
+// ==========================================
+// UNDERSTAND STAGE: EXTRACT INSIGHTS, CONTRARIAN TAKEAWAYS & UNANSWERED QUESTIONS
+// ==========================================
+
+app.post("/api/gemini/extract-insights", async (req, res) => {
+  const { content, rawTranscript, speakerName, sessionTitle, category } = req.body;
+
+  const safeContent = sanitizeText(content, 10000) || sanitizeText(rawTranscript, 10000);
+  if (!safeContent) {
+    return res.status(400).json({ error: "Content or transcript is required" });
+  }
+
+  try {
+    const prompt = `You are the Chief Synthesis Editor of Momentum OS for TEDxAkure 2026.
+Analyze this user note and/or raw speech transcript from a conference session.
+Strictly distinguish between VERBATIM SOURCE facts and your AI SYNTHESIS.
+
+Session Context:
+- Session: ${sanitizeText(sessionTitle) || "TEDxAkure Talk"}
+- Speaker: ${sanitizeText(speakerName) || "Speaker"}
+- Category: ${sanitizeText(category) || "Keynote"}
+
+Input Material:
+"""
+${safeContent}
+"""
+
+Return a JSON object with:
+1. "coreTheses": Array of 2-3 core theses or mental models presented.
+2. "standoutTakeaways": Array of 3-5 punchy, memorable takeaway bullet points.
+3. "contrarianInsights": Array of 2-3 insights that challenge common assumptions or shift worldviews.
+4. "unansweredQuestions": Array of 2-3 provocative questions the talk raises or leaves open for deeper research.
+5. "actionItems": Array of specific, actionable commitments [{"id": "a1", "text": "Specific next action step", "priority": "high"|"medium"|"low", "done": false}].
+6. "structuredSummary": A concise 2-paragraph executive synthesis.`;
+
+    const text = await generateWithFallback(prompt, { responseMimeType: "application/json" });
+
+    if (text) {
+      try {
+        const parsed = JSON.parse(text);
+        return res.json({
+          coreTheses: parsed.coreTheses || [],
+          standoutTakeaways: parsed.standoutTakeaways || [],
+          contrarianInsights: parsed.contrarianInsights || [],
+          unansweredQuestions: parsed.unansweredQuestions || [],
+          actionItems: parsed.actionItems || [],
+          structuredSummary: parsed.structuredSummary || "Executive synthesis generated.",
+          source: "gemini",
+        });
+      } catch {
+        // parsing fallback
+      }
+    }
+
+    return res.json({
+      coreTheses: ["Innovation thrives when tailored to regional market constraints."],
+      standoutTakeaways: [safeContent.slice(0, 120)],
+      contrarianInsights: ["Friction and operational hurdles can serve as powerful defensibility moats."],
+      unansweredQuestions: ["How will edge infrastructure evolve to support this in secondary African cities?"],
+      actionItems: [{ id: `a_${Date.now()}`, text: `Synthesize insights from ${speakerName || "the talk"}`, done: false, priority: "medium" }],
+      structuredSummary: "Session notes logged and synthesized.",
+      source: "offline-fallback",
+    });
+  } catch (err) {
+    console.error("Extract insights error:", err);
+    return res.status(500).json({ error: "Failed to extract insights" });
+  }
+});
+
+// ==========================================
+// REFLECT STAGE: 5-PILLAR POST-EVENT REVIEW SYNTHESIS
+// ==========================================
+
+app.post("/api/gemini/post-event-review", async (req, res) => {
+  const { connections, moments, ideas, notes, sessions, profile } = req.body;
+
+  const attendeeName = profile?.name || "Attendee";
+  const connectionsArr = Array.isArray(connections) ? connections : [];
+  const notesArr = Array.isArray(notes) ? notes : [];
+  const ideasArr = Array.isArray(ideas) ? ideas : [];
+  const sessionsArr = Array.isArray(sessions) ? sessions : [];
+
+  const connectionsSummary = connectionsArr.slice(0, 15).map(c => `${c.name} (${c.company || 'N/A'}, ${c.profession || 'Leader'}) - Notes: ${c.notes || 'Met at conference'}`).join("\n");
+  const notesSummary = notesArr.slice(0, 10).map(n => `Session: ${n.sessionTitle || n.title} by ${n.speakerName || 'Speaker'} - Content: ${n.content?.slice(0, 150)}...`).join("\n");
+  const ideasSummary = ideasArr.slice(0, 10).map(i => `Quote by ${i.speakerName}: "${i.quote}" - Takeaway: ${i.takeaway || ''}`).join("\n");
+
+  try {
+    const prompt = `You are the Chief Reflection Architect for Momentum OS at TEDxAkure 2026.
+Synthesize the attendee's comprehensive conference experience into the authoritative 5-Pillar Reflection Framework:
+
+1. WHAT HAPPENED: Chronological journey of sessions attended, people met (${connectionsArr.length} connections), and moments captured.
+2. WHAT I LEARNED: Cross-speaker thematic synthesis, master ideas, and standout quotes.
+3. WHAT CHANGED MY THINKING: Contrarian insights, surprise revelations, and worldview shifts.
+4. WHAT I SHOULD DO NEXT: Prioritized action item matrix categorized by timeframe (Immediate 24h, This Week, Long-term Strategic).
+5. WHO/WHAT TO FOLLOW UP WITH: Key individuals with personalized outreach rationale and recommended communication channel (WhatsApp/LinkedIn/Email).
+
+Attendee: ${attendeeName}
+Conference: TEDxAkure 2026
+
+Attendee's Data:
+- Connections Met (${connectionsArr.length}):
+${connectionsSummary || "Multiple leaders, founders, and designers."}
+
+- Session Notes (${notesArr.length}):
+${notesSummary || "Keynotes on African tech infrastructure, intent-driven design, and AI."}
+
+- Captured Ideas & Quotes (${ideasArr.length}):
+${ideasSummary || "Quotes on momentum and execution."}
+
+Return a JSON object conforming strictly to:
+{
+  "whatHappened": {
+    "totalSessionsAttended": ${sessionsArr.length || 3},
+    "totalConnectionsMet": ${connectionsArr.length},
+    "sessionsSummary": ["Array of 3-4 bullet points summarizing session attendance"],
+    "timelineHighlights": ["Array of 3-4 key timestamped event milestones"]
+  },
+  "whatILearned": {
+    "coreTheses": ["Array of 3 core synthesized theses"],
+    "synthesizedConcepts": ["Array of 3 conceptual frameworks"],
+    "standoutQuotes": [{"quote": "...", "speaker": "...", "sessionTitle": "..."}]
+  },
+  "whatChangedMyThinking": {
+    "contrarianInsights": ["Array of 2-3 counter-intuitive takeaways"],
+    "worldviewShifts": ["Array of 2-3 shifts in perspective"]
+  },
+  "whatIShouldDoNext": {
+    "immediate24h": [{"id": "act_24h_1", "text": "...", "priority": "high", "done": false}],
+    "thisWeek": [{"id": "act_wk_1", "text": "...", "priority": "medium", "done": false}],
+    "strategicGoals": ["Array of 2 strategic initiatives"]
+  },
+  "whoToFollowUpWith": {
+    "keyPeople": [
+      {
+        "name": "...",
+        "company": "...",
+        "reason": "...",
+        "recommendedChannel": "whatsapp" | "linkedin" | "email",
+        "draftText": "..."
+      }
+    ]
+  },
+  "executiveSummary": "A compelling 2-paragraph master reflection for the attendee's personal archive.",
+  "linkedInRecapPost": "A standout, inspiring LinkedIn recap post celebrating reaching the 50-connection milestone at TEDxAkure 2026."
+}`;
+
+    const text = await generateWithFallback(prompt, { responseMimeType: "application/json" });
+
+    if (text) {
+      try {
+        const parsed = JSON.parse(text);
+        return res.json({
+          ...parsed,
+          generatedAt: new Date().toISOString(),
+          source: "gemini",
+        });
+      } catch {
+        // parsing fallback
+      }
+    }
+
+    // High quality fallback
+    return res.json({
+      whatHappened: {
+        totalSessionsAttended: sessionsArr.length || 3,
+        totalConnectionsMet: connectionsArr.length,
+        sessionsSummary: ["Attended keynotes on regional technology, intentional design, and African AI infrastructure."],
+        timelineHighlights: ["Opening keynote kick-off", "VIP Networking breakfast", "Afternoon deep-dive panel"],
+      },
+      whatILearned: {
+        coreTheses: ["African tech infrastructure scales best when designed around local economic mechanics."],
+        synthesizedConcepts: ["Strategic friction in product design creates lasting user intent."],
+        standoutQuotes: ideasArr.slice(0, 2).map(i => ({ quote: i.quote, speaker: i.speakerName, sessionTitle: i.sessionTitle })),
+      },
+      whatChangedMyThinking: {
+        contrarianInsights: ["Constraint is not a disadvantage; it is the primary catalyst for zero-to-one product design."],
+        worldviewShifts: ["Secondary tech hubs like Akure represent the real grassroots momentum of African innovation."],
+      },
+      whatIShouldDoNext: {
+        immediate24h: [
+          { id: `act_1`, text: "Send personalized WhatsApp follow-ups to top 5 connections", priority: "high", done: false },
+          { id: `act_2`, text: "Organize raw audio transcripts into clean Smart Notes", priority: "medium", done: false }
+        ],
+        thisWeek: [
+          { id: `act_3`, text: "Schedule 3 virtual follow-up syncs with prospective collaborators", priority: "medium", done: false }
+        ],
+        strategicGoals: ["Integrate TEDxAkure insights into Q4 product strategy."],
+      },
+      whoToFollowUpWith: {
+        keyPeople: connectionsArr.slice(0, 3).map(c => ({
+          name: c.name,
+          company: c.company || "Innovator",
+          reason: `Follow up on our chat regarding ${c.notes ? c.notes.slice(0, 40) : 'collaboration'}`,
+          recommendedChannel: "whatsapp" as const,
+          draftText: `Hi ${c.name.split(' ')[0]}, wonderful meeting you at TEDxAkure 2026 today! Let's keep the conversation going.`
+        })),
+      },
+      executiveSummary: `TEDxAkure 2026 marked a pivotal milestone of connection, learning, and momentum. Reaching ${connectionsArr.length} meaningful connections and capturing pivotal keynote insights, this event has transformed strategic thinking across ecosystem development and product execution.`,
+      linkedInRecapPost: `I came to TEDxAkure 2026 with a goal to connect deeply and turn inspiration into action.\n\nToday I established ${connectionsArr.length} high-value connections, documented keynotes from world-class African innovators, and synthesized crucial takeaways on tech resilience.\n\nAfrica's tech momentum is unstoppable. Special thanks to everyone I spoke with today!\n\n#TEDxAkure #Momentum #AfricanTech #Innovation #Networking`,
+      generatedAt: new Date().toISOString(),
+      source: "offline-synthesis",
+    });
+  } catch (err) {
+    console.error("Post event review error:", err);
+    return res.status(500).json({ error: "Failed to generate post-event review" });
   }
 });
 
@@ -762,6 +1100,397 @@ Return a JSON object with:
       source: "offline-fallback",
     });
   }
+});
+
+// ==========================================
+// UNIVERSAL EVENT INTELLIGENCE ENDPOINTS
+// ==========================================
+
+// Parse raw schedule text or agenda table into structured EventSession items
+app.post("/api/events/parse-agenda", async (req, res) => {
+  const { rawText, eventName, defaultStage } = req.body;
+
+  if (!rawText || !rawText.trim()) {
+    return res.status(400).json({ error: "rawText is required" });
+  }
+
+  try {
+    const prompt = `You are the AI Conference Agenda Parser for Momentum Universal Event OS.
+Parse the following unstructured conference schedule, agenda list, or speaker timetable into an array of clean, structured session objects.
+
+Event Context: ${eventName || "Conference / Summit"}
+Default Stage: ${defaultStage || "Main Stage"}
+
+Raw Text:
+"""
+${rawText}
+"""
+
+Return a JSON object containing:
+1. "sessions": Array of objects:
+   - "id": unique string e.g. "s-gen-1"
+   - "title": session / talk title
+   - "speaker": speaker full name (or "Panel / Keynote" if unspecified)
+   - "speakerRole": speaker role / company / designation
+   - "timeStr": time string e.g. "9:30 AM" or "In 15 mins"
+   - "stage": stage name or track (e.g. "Main Stage", "Track A", "Workshop Studio")
+   - "status": "upcoming" | "live" | "completed"
+   - "description": 1-2 sentence description of what the talk covers
+   - "heroImage": an appropriate relevant Unsplash image URL (e.g. https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop&q=80)
+   - "topics": array of 2-3 topic tags
+2. "detectedStages": Array of unique stage/track names detected in the text.`;
+
+    const text = await generateWithFallback(prompt, { responseMimeType: "application/json" });
+
+    if (text) {
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed.sessions && Array.isArray(parsed.sessions) && parsed.sessions.length > 0) {
+          return res.json({
+            sessions: parsed.sessions,
+            detectedStages: parsed.detectedStages || [defaultStage || "Main Stage"],
+            source: "gemini",
+          });
+        }
+      } catch (err) {
+        console.warn("JSON parse error in parse-agenda:", err);
+      }
+    }
+
+    // Fallback simple line-by-line parsing
+    const lines = rawText.split("\n").map((l: string) => l.trim()).filter((l: string) => l.length > 3);
+    const fallbackSessions = lines.slice(0, 6).map((line: string, idx: number) => ({
+      id: `s-manual-${Date.now()}-${idx + 1}`,
+      title: line.replace(/^\d+[:.]\s*/, "").slice(0, 60),
+      speaker: "Keynote Speaker",
+      speakerRole: "Industry Leader",
+      timeStr: `${9 + idx}:00 AM`,
+      stage: defaultStage || "Main Stage",
+      status: "upcoming" as const,
+      description: line,
+      heroImage: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop&q=80",
+      topics: ["General", "Keynote"],
+    }));
+
+    return res.json({
+      sessions: fallbackSessions,
+      detectedStages: [defaultStage || "Main Stage"],
+      source: "offline-fallback",
+    });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to parse agenda", sessions: [] });
+  }
+});
+
+// Generate event-tailored conversation icebreakers
+app.post("/api/events/suggest-icebreakers", async (req, res) => {
+  const { eventName, eventType, themeDescription, location } = req.body;
+
+  try {
+    const prompt = `You are a world-class executive networking strategist for Momentum Universal Event OS.
+Generate 5 sharp, high-conviction, non-generic conversation icebreaker questions tailored specifically for attendees at:
+
+- Event: ${eventName || "Tech Conference"}
+- Type: ${eventType || "Conference / Summit"}
+- Theme: ${themeDescription || "Technology & Innovation"}
+- Location: ${location || "Global"}
+
+The questions must:
+- Avoid boring clichés ("What do you do?", "Nice weather huh?")
+- Sound like questions a smart, ambitious peer would ask in a hallway or after a keynote
+- Spark authentic intellectual rapport in under 30 seconds
+
+Return a JSON object:
+{
+  "icebreakers": ["Question 1", "Question 2", "Question 3", "Question 4", "Question 5"]
+}`;
+
+    const text = await generateWithFallback(prompt, { responseMimeType: "application/json" });
+
+    if (text) {
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed.icebreakers && Array.isArray(parsed.icebreakers)) {
+          return res.json({ icebreakers: parsed.icebreakers, source: "gemini" });
+        }
+      } catch {}
+    }
+
+    return res.json({
+      icebreakers: [
+        `What is the most contrarian take you've heard so far at ${eventName || "the event"}?`,
+        "What is the single hardest operational bottleneck your team is navigating this quarter?",
+        "If you could fast-forward 24 months, what does a breakout win look like for your project?",
+        "Which session on the agenda today are you most curious to challenge or unpack?",
+        "What brought you to this event specifically over all others this year?",
+      ],
+      source: "offline-fallback",
+    });
+  } catch {
+    return res.json({
+      icebreakers: [
+        "What is the most exciting milestone your team shipped recently?",
+        "Which talk on today's agenda are you most looking forward to?",
+      ],
+      source: "offline-fallback",
+    });
+  }
+});
+
+// ==========================================
+// 1000000X AI SUITE: WARM INTRO MATCHMAKER, PITCH SIMULATOR, BATCH OUTREACH & EVENT ROI
+// ==========================================
+
+// 1. AI Warm Intro Matchmaker: Synergistic Pairings
+app.post("/api/gemini/warm-intro-matchmaker", async (req, res) => {
+  const { connections, eventName } = req.body;
+  const list = Array.isArray(connections) ? connections : [];
+
+  if (list.length < 2) {
+    return res.json({ recommendations: [], source: "offline-fallback" });
+  }
+
+  try {
+    const contactsSummary = list.map(c => `ID: ${c.id} | Name: ${c.name} | Role: ${c.profession} at ${c.company} | Tags: ${(c.tags || []).join(", ")} | Notes: ${c.notes || ""}`).join("\n");
+
+    const prompt = `You are the Superconnector AI for Momentum Event OS at "${eventName || "Global Conference"}".
+Analyze this attendee list of ${list.length} connections. Identify up to 3 synergistic pairs where introducing Person A to Person B creates immense mutual value (e.g. founder meets investor, AI engineer meets product lead, complimentary regional expansion).
+
+Contacts:
+"""
+${contactsSummary}
+"""
+
+Return a JSON object:
+{
+  "recommendations": [
+    {
+      "id": "intro-1",
+      "personAId": "ID of first person",
+      "personBId": "ID of second person",
+      "synergyReason": "Why these two must connect (2 sentences)",
+      "sharedInterests": ["Shared theme 1", "Shared theme 2"],
+      "suggestedSubject": "Warm intro subject line",
+      "draftIntroMessage": "A crisp, professional double-opt-in intro email or WhatsApp message connecting Person A and Person B.",
+      "channel": "whatsapp" | "email" | "linkedin"
+    }
+  ]
+}`;
+
+    const text = await generateWithFallback(prompt, { responseMimeType: "application/json" });
+    if (text) {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed.recommendations)) {
+        const enriched = parsed.recommendations.map((rec: any, idx: number) => {
+          const pA = list.find(c => c.id === rec.personAId) || list[0];
+          const pB = list.find(c => c.id === rec.personBId && c.id !== pA.id) || list[1] || list[0];
+          return {
+            id: rec.id || `intro-${Date.now()}-${idx}`,
+            personA: pA,
+            personB: pB,
+            synergyReason: rec.synergyReason || `${pA.name} and ${pB.name} share complimentary focus areas in ${eventName || "tech"}.`,
+            sharedInterests: rec.sharedInterests || ["Innovation", "Collaboration"],
+            suggestedSubject: rec.suggestedSubject || `Connecting ${pA.name} & ${pB.name} (${eventName || "Event"})`,
+            draftIntroMessage: rec.draftIntroMessage || `Hi ${pA.name.split(' ')[0]} and ${pB.name.split(' ')[0]}, wanted to connect you both after ${eventName || "the event"}. ${pA.name} is working on ${pA.profession} and ${pB.name} is leading ${pB.profession}. Thought you'd love to chat!`,
+            channel: rec.channel || 'whatsapp',
+          };
+        });
+        return res.json({ recommendations: enriched, source: "gemini" });
+      }
+    }
+  } catch (err) {
+    console.warn("Warm intro error:", err);
+  }
+
+  // Fallback pairing
+  const pA = list[0];
+  const pB = list[1] || list[0];
+  return res.json({
+    recommendations: [
+      {
+        id: `intro-${Date.now()}`,
+        personA: pA,
+        personB: pB,
+        synergyReason: `Both ${pA.name} and ${pB.name} are scaling initiatives aligned with the event's core themes.`,
+        sharedInterests: ["Strategic Growth", "Technology"],
+        suggestedSubject: `Intro: ${pA.name} <> ${pB.name}`,
+        draftIntroMessage: `Hi ${pA.name.split(' ')[0]} and ${pB.name.split(' ')[0]}, introducing you two! Thought you'd have great synergies collaborating post-event.`,
+        channel: "whatsapp",
+      }
+    ],
+    source: "offline-fallback",
+  });
+});
+
+// 2. AI Pitch Simulator & Charisma Coach
+app.post("/api/gemini/pitch-simulator", async (req, res) => {
+  const { pitchText, personaKey, eventName, targetTimeSec } = req.body;
+
+  const safePitch = sanitizeText(pitchText, 2000);
+  const safePersona = sanitizeText(personaKey, 50) || "tech-vc";
+
+  try {
+    const prompt = `You are an elite Pitch & Charisma Coach in Momentum Event OS.
+Evaluate this attendee's 30-60s elevator pitch at "${eventName || "the conference"}".
+
+Simulated Persona: ${safePersona} (Options: 'tech-vc', 'angel-investor', 'tech-lead', 'potential-client', 'keynote-speaker', 'co-founder')
+Target Time: ${targetTimeSec || 30} seconds
+Pitch Delivered:
+"""
+${safePitch}
+"""
+
+Evaluate ruthlessly but constructively. Return a JSON object:
+{
+  "score": 88, // Overall score 0-100
+  "hookScore": 9, // 1-10
+  "clarityScore": 8, // 1-10
+  "deliveryScore": 8, // 1-10
+  "strengths": ["Array of 2-3 specific things that landed well"],
+  "weaknesses": ["Array of 2-3 specific friction points or vague words"],
+  "fillerWordsDetected": ["Array of filler or weak words e.g. 'basically', 'kind of'"],
+  "tailoredRewrite": "A punchy, hypnotic 30-second rewrite of this exact pitch that hooks instantly and ends with a clear call-to-action.",
+  "suggestedClosingHook": "A natural 1-sentence closing question that invites an immediate coffee or exchange.",
+  "personaResponse": "How the simulated ${safePersona} persona would realistically respond in character to this pitch in a noisy hallway."
+}`;
+
+    const text = await generateWithFallback(prompt, { responseMimeType: "application/json" });
+    if (text) {
+      const parsed = JSON.parse(text);
+      return res.json({
+        ...parsed,
+        source: "gemini",
+      });
+    }
+  } catch (err) {
+    console.warn("Pitch simulator error:", err);
+  }
+
+  // High quality offline fallback
+  return res.json({
+    score: 82,
+    hookScore: 8,
+    clarityScore: 8,
+    deliveryScore: 8,
+    strengths: ["Clear core proposition", "Good enthusiasm", "Relevant to conference domain"],
+    weaknesses: ["Could tighten the opening hook", "Make the closing ask more specific"],
+    fillerWordsDetected: ["basically", "like"],
+    tailoredRewrite: `We are building the next-generation infrastructure for ${eventName || "frontier innovation"}. We solve the core bottleneck in 10x less time. I'd love to show you a 60-second demo—are you free for a quick coffee after this session?`,
+    suggestedClosingHook: "What is your team's biggest focus in this space right now?",
+    personaResponse: "That sounds intriguing. Send me a quick WhatsApp note with the one-pager and let's touch base next week.",
+    source: "offline-fallback",
+  });
+});
+
+// 3. AI Batch Personalized Follow-Up Composer
+app.post("/api/gemini/batch-follow-ups", async (req, res) => {
+  const { connections, eventName, profileName } = req.body;
+  const list = Array.isArray(connections) ? connections : [];
+
+  try {
+    const listSummary = list.map(c => `ID: ${c.id} | Name: ${c.name} | Role: ${c.profession} at ${c.company} | Channel: ${c.whatsapp ? 'whatsapp' : (c.email ? 'email' : 'linkedin')} | Notes: ${c.notes || ""}`).join("\n");
+
+    const prompt = `You are the Executive Follow-Up Strategist for ${profileName || "the attendee"} at "${eventName || "the event"}".
+Generate unique, warm, high-converting follow-up outreach messages for each of the following ${list.length} connections.
+
+Attendee: ${profileName || "Attendee"}
+Event: ${eventName || "Conference"}
+
+Connections:
+"""
+${listSummary}
+"""
+
+Return a JSON object:
+{
+  "messages": [
+    {
+      "connectionId": "ID of connection",
+      "subject": "Email subject (if email) or quick hook",
+      "message": "Personalized 2-3 sentence follow-up referencing their role/company and event context with an easy low-friction next step.",
+      "channel": "whatsapp" | "email" | "linkedin"
+    }
+  ]
+}`;
+
+    const text = await generateWithFallback(prompt, { responseMimeType: "application/json" });
+    if (text) {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed.messages)) {
+        return res.json({ messages: parsed.messages, source: "gemini" });
+      }
+    }
+  } catch (err) {
+    console.warn("Batch follow up error:", err);
+  }
+
+  // Fallback
+  const fallbackMessages = list.map(c => ({
+    connectionId: c.id,
+    subject: `Great meeting at ${eventName || "the event"}!`,
+    message: `Hi ${c.name.split(' ')[0]}, really enjoyed our conversation at ${eventName || "the event"} regarding your work at ${c.company || "your team"}. Would love to stay connected and follow up on our discussion!`,
+    channel: c.whatsapp ? 'whatsapp' : (c.email ? 'email' : 'linkedin'),
+  }));
+
+  return res.json({ messages: fallbackMessages, source: "offline-fallback" });
+});
+
+// 4. AI Event ROI & Networking Scorecard
+app.post("/api/gemini/event-roi-analytics", async (req, res) => {
+  const { connections, moments, ideas, notes, eventName, targetConnections } = req.body;
+
+  const cCount = Array.isArray(connections) ? connections.length : 0;
+  const mCount = Array.isArray(moments) ? moments.length : 0;
+  const iCount = Array.isArray(ideas) ? ideas.length : 0;
+  const nCount = Array.isArray(notes) ? notes.length : 0;
+  const target = targetConnections || 50;
+
+  try {
+    const prompt = `You are the Chief ROI Auditor for Momentum Universal Event OS.
+Evaluate the executive ROI of attending "${eventName || "Conference"}".
+
+Data Metrics:
+- Total Connections Met: ${cCount} (Target: ${target})
+- Moments / Badges Captured: ${mCount}
+- Keynote Ideas / Quotes: ${iCount}
+- Deep Session Notes & Transcripts: ${nCount}
+
+Return a JSON object:
+{
+  "roiScore": 94, // 0-100
+  "networkingVelocity": "e.g. 6.2 contacts/hour (Top 5% Tier)",
+  "relationshipEquityScore": "e.g. High ($12,500 Estimated Lifetime Value)",
+  "keyWins": ["Array of 3 top strategic wins achieved"],
+  "followUpActionPlan": ["Array of 3 high-priority 48-hour follow-up actions"],
+  "executiveSummary": "A punchy 2-paragraph ROI assessment celebrating performance and detailing how this event will drive 12-month career and business leverage."
+}`;
+
+    const text = await generateWithFallback(prompt, { responseMimeType: "application/json" });
+    if (text) {
+      const parsed = JSON.parse(text);
+      return res.json({ ...parsed, source: "gemini" });
+    }
+  } catch (err) {
+    console.warn("Event ROI error:", err);
+  }
+
+  return res.json({
+    roiScore: Math.min(100, Math.round((cCount / target) * 85 + (nCount * 3) + (mCount * 2))),
+    networkingVelocity: `${(cCount / 4).toFixed(1)} contacts/active hour`,
+    relationshipEquityScore: "High Impact Tier",
+    keyWins: [
+      `Met ${cCount} strategic contacts across high-growth verticals`,
+      `Captured ${nCount} deep session notes with verbatim transcripts`,
+      `Documented ${iCount} pivotal keynote quotes and contrarian theses`
+    ],
+    followUpActionPlan: [
+      "Send WhatsApp follow-ups to high-priority connections within 24h",
+      "Convert key takeaways into a team briefing or LinkedIn thought leadership post",
+      "Schedule follow-up exploration calls with prospective partners"
+    ],
+    executiveSummary: `Attending ${eventName || "the event"} yielded exceptional relationship equity. With ${cCount} verified connections established, comprehensive session notes logged, and multiple collaborative threads initiated, this event represents a high-leverage milestone for ecosystem expansion.`,
+    source: "offline-fallback",
+  });
 });
 
 // Setup Vite middleware in dev or static files in prod

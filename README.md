@@ -85,11 +85,25 @@ Momentum categorizes all functionality into three clear operational states: **Im
 ├──────────────────────────────┬─────────────────────────────┬────────────────────────────┤
 │     CURRENT / IMPLEMENTED    │         EXPERIMENTAL        │      PLANNED / ROADMAP     │
 ├──────────────────────────────┼─────────────────────────────┼────────────────────────────┤
-│ • 50-Connection Ring Engine  │ • WebAuthn Face/Touch ID    │ • Client-Side OCR Engine   │
-│ • Smart People Directory     │ • Web Speech Dictation      │ • Native Push Reminders    │
-│ • Multimodal Capture Hub     │ • Battery API Power Saver   │ • BLE / NFC Peer Exchange  │
-│ • Voice Recorder + Analyser  │ • Multi-Device SSE Stream   │ • Dynamic Agenda Scraping  │
-│ • Keynotes & Ideas Vault     │                             │ • WhatsApp Direct Webhooks │
+│ • Universal Event Hub &      │ • WebAuthn Face/Touch ID    │ • Client-Side OCR Engine   │
+│   Multi-Event Switcher       │ • Web Speech Dictation      │ • Dynamic Agenda Scraping  │
+│ • AI Agenda Parser (1-Click) │ • Battery API Power Saver   │ • Web NFC Real Hardware IO │
+│ • Preset Catalog (Tech/TEDx/ │ • Multi-Device SSE Stream   │ • WhatsApp Cloud API Hook  │
+│   Summit/Hackathon/Mastermind│ • Browser Notification API  │                            │
+│ • Constellation Force Radar  │   Follow-Up Push Reminders  │                            │
+│ • AI Warm Intro Matchmaker   │ • Live Audio Segmentation   │                            │
+│ • AI Pitch Arena & Coach     │                             │                            │
+│ • 3D Holographic NFC Pass    │                             │                            │
+│ • Live Copilot & Venue Kit   │                             │                            │
+│ • Executive ROI Scorecard    │                             │                            │
+│ • Kanban Pipeline & Batch AI │                             │                            │
+│ • 50-Connection Ring Engine  │                             │                            │
+│ • Smart People Directory     │                             │                            │
+│ • Touch Swipe Gestures (L/R) │                             │                            │
+│ • Multimodal Capture Hub     │                             │                            │
+│ • Live Smart Notes & Dossiers│                             │                            │
+│ • Voice Recorder + Analyser  │                             │                            │
+│ • Keynotes & Ideas Vault     │                             │                            │
 │ • Follow-Ups Action Matrix   │                             │                            │
 │ • Gemini 3.7 AI Synthesis    │                             │                            │
 │ • Offline-First Sync Queue   │                             │                            │
@@ -111,24 +125,34 @@ Momentum categorizes all functionality into three clear operational states: **Im
 4. Tap **`Auto-Summarize with AI`** to generate structured memory points and hashtags from quick notes.
 5. Tap **`Save Connection`** $\rightarrow$ Instant local persistence, haptic vibration, and queueing for Supabase sync.
 
-#### Flow B: Contextual 1-Tap Follow-Up Dispatch
-1. Open the **`Follow-Ups`** view to inspect overdue, today, and upcoming commitments.
-2. Tap **`Quick Message`** on any contact card.
-3. Select target channel: **WhatsApp**, **LinkedIn**, or **Email**.
-4. The server-side Gemini 3.7 Flash engine generates a tailored, warm, context-rich message referencing the exact conversation notes and session topics.
-5. Tap **`Launch WhatsApp`** $\rightarrow$ Deep-links directly to `https://wa.me/<phone>?text=<encoded_msg>` with zero copy-paste friction.
+#### Flow B: Constellation Force Radar & AI Warm Matchmaking
+1. Launch the **`Constellation Network`** radar visualizer from the Dashboard or More drawer.
+2. Explore an interactive, force-directed graph rendering all event contacts grouped into gravitational clusters (`Leads`, `Speakers`, `Mentors`, `Peers`).
+3. Switch to the **`AI Warm Matchmaker`** tab: Gemini automatically scans your network for complementary synergies (e.g. founder meeting investor, designer meeting engineer).
+4. Review auto-generated double-opt-in warm introduction templates with 1-click dispatch to WhatsApp, Email, or LinkedIn.
 
-#### Flow C: Multimodal Keynote & Idea Archiving
-1. In the **`Capture Hub`**, select **`Voice Memo`**, **`Photo`**, or **`Speaker Quote`**.
-2. For audio, the live visualizer provides real-time volume feedback while recording an Opus/WebM audio blob.
-3. For notes/quotes, speech recognition continuously transcribes spoken keynotes into text.
-4. Ideas are tagged with stage name, speaker title, category, and time stamp, appearing in the chronological Keynotes feed.
+#### Flow C: AI Pitch Arena & Elevator Sparring Simulator
+1. Open the **`Pitch Arena`** before entering the keynote foyer or VIP lounge.
+2. Select your practice audience persona: **Ruthless VC**, **Realistic Angel**, **Technical Lead**, **Enterprise Buyer**, or **Keynote Speaker**.
+3. Rehearse via speech dictation or write your pitch, using the adjustable auto-scrolling teleprompter.
+4. Receive instant multi-factor scoring (Hook, Clarity, Delivery, Filler words detected) with tailored rewrites and mock persona dialogue.
 
-#### Flow D: End-of-Day Compounding & Social Storytelling
-1. Navigate to the **`Recap`** view.
-2. The AI synthesis engine processes all connections, moments, and quotes logged during the day to generate:
-   - An editorial executive summary of conference themes.
-   - A ready-to-post, high-engagement LinkedIn post with milestone statistics and hashtags.
+#### Flow D: 3D Holographic Pass & Virtual NFC Beam
+1. Tap **`Digital Pass`** to open the interactive 3D delegate badge with real-time gyroscope/mouse tilt reflections and lanyard clip.
+2. Share your dynamic QR code or trigger **`NFC Beam`** to share your vCard 3.0 profile without physical touch.
+
+#### Flow E: Live Event Copilot & Venue Survival Kit
+1. Access the **`Live Copilot`** HUD during the conference to view active session status, stage countdowns, and instant contextual icebreakers tailored to the speaker's topic.
+2. Quick-copy the emergency venue Wi-Fi credentials, inspect verified quiet phone call zones, and locate charging stations.
+
+#### Flow F: Contextual 1-Tap Follow-Up Dispatch & Batch Outreach
+1. Open the **`Follow-Ups`** view to inspect overdue, today, and upcoming commitments across the 5-stage Kanban pipeline.
+2. Tap **`Quick Message`** on any contact card for bespoke WhatsApp/LinkedIn/Email copy, or launch the **`Batch AI Outreach`** generator to process all pending contacts in seconds.
+3. Tap **`Launch WhatsApp`** $\rightarrow$ Deep-links directly to `https://wa.me/<phone>?text=<encoded_msg>` with zero copy-paste friction.
+
+#### Flow G: Executive ROI Scorecard & End-of-Day Compounding
+1. Navigate to the **`Executive ROI`** scorecard to review networking velocity (contacts/hour), relationship equity grading, and key strategic wins.
+2. Generate an editorial summary and ready-to-post LinkedIn recap.
 3. Open the **`Collage Studio`** to generate high-resolution 1:1 or 9:16 branded image grids for Instagram Stories and Twitter/X.
 4. Export the complete conference dossier as an **A4 PDF Executive Journal** or a structured **Media Archive ZIP**.
 

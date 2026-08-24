@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Connection, RelationshipType } from '../types';
+import { Connection, RelationshipType, EventConfig } from '../types';
 import { 
   Search, 
   X, 
@@ -13,30 +13,48 @@ import {
   Flame, 
   Layers,
   Filter,
-  Image as ImageIcon
+  Image as ImageIcon,
+  RotateCcw,
+  ArrowLeftRight,
+  SendHorizontal,
+  Globe
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, PanInfo } from 'motion/react';
+import { triggerHaptic } from '../services/haptics';
 
 interface PeopleViewProps {
   connections: Connection[];
+  activeEvent?: EventConfig;
   onSelectConnection: (connection: Connection) => void;
   onOpenQuickConnect: () => void;
   onOpenQuickMessage: (connection: Connection) => void;
   targetCount: number;
   onClearDemoData?: () => void;
+  onTrashConnection?: (connection: Connection) => void;
+  onRestoreConnection?: (connectionId: string) => void;
+  onUpdateConnection?: (updated: Connection) => void;
 }
 
 export const PeopleView: React.FC<PeopleViewProps> = ({
   connections,
+  activeEvent,
   onSelectConnection,
   onOpenQuickConnect,
   onOpenQuickMessage,
   targetCount,
   onClearDemoData,
+  onTrashConnection,
+  onRestoreConnection,
+  onUpdateConnection,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<'all' | RelationshipType | 'high-priority' | 'with-photos' | 'demo'>('all');
+  const [showAllEvents, setShowAllEvents] = useState(false);
   const [showTrashConfirm, setShowTrashConfirm] = useState(false);
+  const [trashedNotice, setTrashedNotice] = useState<{ id: string; name: string } | null>(null);
+  const [showGestureHint, setShowGestureHint] = useState(true);
+
+  const effectiveTarget = activeEvent?.targetConnections || targetCount || 50;
 
   const demoCount = useMemo(() => {
     return connections.filter((c) => c.id.startsWith('c1') || c.id.startsWith('c2') || c.id.startsWith('c3') || c.id.startsWith('c4') || c.id.startsWith('c5') || c.id.startsWith('demo-')).length;
@@ -44,6 +62,11 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
   const filteredConnections = useMemo(() => {
     return connections.filter((c) => {
+      // Event filter
+      if (!showAllEvents && activeEvent) {
+        if (c.eventId && c.eventId !== activeEvent.id) return false;
+      }
+
       const matchesSearch =
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -56,10 +79,10 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
       if (selectedFilter === 'all') return true;
       if (selectedFilter === 'high-priority') return c.priority === 'high';
       if (selectedFilter === 'with-photos') return (c.photos && c.photos.length > 0);
-      if (selectedFilter === 'demo') return c.id.startsWith('c1') || c.id.startsWith('c2') || c.id.startsWith('c3') || c.id.startsWith('c4') || c.id.startsWith('c5') || c.id.startsWith('demo-');
+      if (selectedFilter === 'demo') return c.id.startsWith('c1') || c.id.startsWith('c2') || c.id.startsWith('c3') || c.id.startsWith('demo-');
       return c.relationship === selectedFilter;
     });
-  }, [connections, searchQuery, selectedFilter]);
+  }, [connections, searchQuery, selectedFilter, showAllEvents, activeEvent]);
 
   // Alphabetical grouping
   const groupedConnections = useMemo(() => {
@@ -82,16 +105,83 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
     speaker: { label: 'Speaker', class: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
   };
 
+  // Swipe handling
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo, connection: Connection) => {
+    const swipeThreshold = 85;
+    const velocityThreshold = 250;
+
+    // Swiped Right -> Follow Up Action
+    if (info.offset.x > swipeThreshold || info.velocity.x > velocityThreshold) {
+      triggerHaptic('success');
+      onOpenQuickMessage(connection);
+      return;
+    }
+
+    // Swiped Left -> Move to Trash
+    if (info.offset.x < -swipeThreshold || info.velocity.x < -velocityThreshold) {
+      triggerHaptic('delete');
+      if (onTrashConnection) {
+        onTrashConnection(connection);
+      } else if (onUpdateConnection) {
+        onUpdateConnection({ ...connection, inTrash: true, deletedAt: new Date().toISOString() });
+      }
+      setTrashedNotice({ id: connection.id, name: connection.name });
+      setTimeout(() => {
+        setTrashedNotice((curr) => (curr?.id === connection.id ? null : curr));
+      }, 4000);
+    }
+  };
+
+  const handleUndoTrash = () => {
+    if (!trashedNotice) return;
+    if (onRestoreConnection) {
+      onRestoreConnection(trashedNotice.id);
+    }
+    triggerHaptic('success');
+    setTrashedNotice(null);
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-5 pb-28 md:pb-12 relative animate-in fade-in duration-200">
+      {/* Toast Notice for Undo Trash */}
+      <AnimatePresence>
+        {trashedNotice && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="fixed top-20 right-4 sm:right-8 z-50 bg-[#280e08] border border-rose-500/50 text-[#fadcd2] text-xs font-semibold px-4 py-3 rounded-2xl shadow-2xl flex items-center justify-between gap-3 max-w-sm"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Trash2 className="w-4 h-4 text-rose-400 shrink-0" />
+              <span className="truncate">Moved <strong>{trashedNotice.name}</strong> to Trash</span>
+            </div>
+            <button
+              onClick={handleUndoTrash}
+              className="px-2.5 py-1 bg-white/15 hover:bg-white/25 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1 shrink-0"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Undo</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[11px] font-bold text-[#FF5C00] tracking-widest uppercase flex items-center gap-1.5">
-            Network Directory
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold text-[#FF5C00] tracking-widest uppercase flex items-center gap-1.5">
+              Network Directory
+            </span>
+            {activeEvent && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-neutral-300 font-mono">
+                {activeEvent.name}
+              </span>
+            )}
+          </div>
           <h1 className="text-2xl sm:text-3xl font-bold font-serif-display text-[#fadcd2] mt-0.5">
-            Connections ({connections.length}/{targetCount})
+            Connections ({filteredConnections.length}/{effectiveTarget})
           </h1>
         </div>
 
@@ -99,7 +189,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           {onClearDemoData && demoCount > 0 && (
             <button
               onClick={() => setShowTrashConfirm(true)}
-              className="px-3.5 py-2 rounded-xl bg-[#281107] hover:bg-[#3d180a] text-[#ffb59a] text-xs font-semibold border border-white/10 flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-[#281107] hover:bg-[#3d180a] text-[#ffb59a] text-xs font-semibold border border-white/10 flex items-center gap-1.5 transition-colors cursor-pointer"
               title="Remove demo mock contacts"
             >
               <Trash2 className="w-3.5 h-3.5 text-[#FF5C00]" />
@@ -109,13 +199,31 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
           <button
             onClick={onOpenQuickConnect}
-            className="px-4 py-2 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] flex items-center gap-1.5 shadow-lg active:scale-95 transition-transform"
+            className="px-4 py-2 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] flex items-center gap-1.5 shadow-lg active:scale-95 transition-transform cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
             <span>Add Connection</span>
           </button>
         </div>
       </div>
+
+      {/* Touch Gesture Hint Banner */}
+      {showGestureHint && connections.length > 0 && (
+        <div className="p-2.5 px-3.5 rounded-xl bg-[#140b07] border border-white/5 flex items-center justify-between text-[11px] text-[#e4beb1]/70">
+          <div className="flex items-center gap-2">
+            <ArrowLeftRight className="w-3.5 h-3.5 text-[#FF5C00] shrink-0" />
+            <span>
+              <strong>Swipe Shortcuts:</strong> Swipe right 👉 to Follow-up • Swipe left 👈 to Trash
+            </span>
+          </div>
+          <button
+            onClick={() => setShowGestureHint(false)}
+            className="text-white/40 hover:text-white text-xs px-1"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Confirmation Modal for Clearing Demo Data */}
       <AnimatePresence>
@@ -194,9 +302,9 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           <button
             key={f.id}
             onClick={() => setSelectedFilter(f.id as any)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               selectedFilter === f.id
-                ? 'bg-[#FF5C00] text-black shadow-md'
+                ? 'bg-[#FF5C00] text-black shadow-md font-bold'
                 : 'bg-[#180b06] text-[#e4beb1]/80 hover:text-white border border-white/10'
             }`}
           >
@@ -205,7 +313,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
         ))}
       </div>
 
-      {/* List / Grouped Directory */}
+      {/* List / Grouped Directory with Swipe Gestures */}
       {Object.keys(groupedConnections).length === 0 ? (
         <div className="text-center py-16 bg-[#140b07] rounded-3xl border border-white/5 space-y-3">
           <div className="w-12 h-12 rounded-full bg-white/5 text-[#e4beb1]/50 flex items-center justify-center mx-auto">
@@ -235,75 +343,96 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   const badge = relationshipBadges[c.relationship] || relationshipBadges.lead;
                   const photoCount = c.photos?.length || 0;
                   return (
-                    <motion.div
+                    <div
                       key={c.id}
-                      onClick={() => onSelectConnection(c)}
-                      whileHover={{ scale: 1.005 }}
-                      whileTap={{ scale: 0.99 }}
-                      className="bg-[#140b07] hover:bg-[#1f0f08] border border-white/10 hover:border-[#FF5C00]/40 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 cursor-pointer transition-all shadow-sm group"
+                      className="relative overflow-hidden rounded-2xl bg-[#0e0704] select-none"
                     >
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="w-12 h-12 rounded-full overflow-hidden border border-white/10 flex-shrink-0 relative group-hover:border-[#FF5C00] transition-colors">
-                          <img src={c.avatarUrl} alt={c.name} className="w-full h-full object-cover" />
-                          {c.priority === 'high' && (
-                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#FF5C00] rounded-full border border-black" />
-                          )}
-                        </div>
+                      {/* Swipe Action Revealed Underneath: LEFT (Swipe Right = Follow-Up) */}
+                      <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-[#2c1307] to-[#140b07] border-y border-l border-[#FF5C00]/40 rounded-l-2xl flex items-center justify-start pl-5 text-[#FF5C00] font-bold text-xs gap-2">
+                        <Sparkles className="w-5 h-5 text-[#FF5C00] animate-pulse" />
+                        <span>Follow-up</span>
+                      </div>
 
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-sm font-bold text-[#fadcd2] truncate group-hover:text-white">
-                              {c.name}
-                            </h3>
-                            <span
-                              className={`text-[9px] px-2 py-0.2 rounded-full border font-bold uppercase tracking-wider ${badge.class}`}
-                            >
-                              {badge.label}
-                            </span>
-                            {photoCount > 0 && (
-                              <span className="flex items-center gap-1 text-[10px] font-semibold text-[#ffb59a] bg-[#2b1208] border border-[#FF5C00]/30 px-2 py-0.2 rounded-full">
-                                <Camera className="w-3 h-3 text-[#FF5C00]" />
-                                <span>{photoCount}</span>
-                              </span>
+                      {/* Swipe Action Revealed Underneath: RIGHT (Swipe Left = Trash) */}
+                      <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-rose-950 to-[#140b07] border-y border-r border-rose-500/40 rounded-r-2xl flex items-center justify-end pr-5 text-rose-400 font-bold text-xs gap-2">
+                        <span>Trash</span>
+                        <Trash2 className="w-5 h-5 text-rose-400" />
+                      </div>
+
+                      {/* Foreground Swipeable Card */}
+                      <motion.div
+                        drag="x"
+                        dragConstraints={{ left: 0, right: 0 }}
+                        dragElastic={0.4}
+                        onDragEnd={(e, info) => handleDragEnd(e, info, c)}
+                        onClick={() => onSelectConnection(c)}
+                        whileHover={{ scale: 1.003 }}
+                        whileTap={{ scale: 0.995 }}
+                        className="relative bg-[#140b07] hover:bg-[#1f0f08] active:bg-[#20100a] border border-white/10 hover:border-[#FF5C00]/40 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 cursor-pointer transition-colors shadow-sm group touch-pan-y"
+                      >
+                        <div className="flex items-center gap-3.5 min-w-0 pointer-events-none">
+                          <div className="w-12 h-12 rounded-full overflow-hidden border border-white/10 flex-shrink-0 relative group-hover:border-[#FF5C00] transition-colors bg-neutral-900">
+                            <img src={c.avatarUrl} alt={c.name} className="w-full h-full object-cover" />
+                            {c.priority === 'high' && (
+                              <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#FF5C00] rounded-full border border-black" />
                             )}
                           </div>
-                          <p className="text-xs text-[#FF5C00] truncate mt-0.5">
-                            {c.profession} • {c.company}
-                          </p>
-                          {c.notes && (
-                            <p className="text-[11px] text-[#e4beb1]/60 truncate max-w-sm mt-0.5">
-                              {c.notes}
+
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="text-sm font-bold text-[#fadcd2] truncate group-hover:text-white">
+                                {c.name}
+                              </h3>
+                              <span
+                                className={`text-[9px] px-2 py-0.2 rounded-full border font-bold uppercase tracking-wider ${badge.class}`}
+                              >
+                                {badge.label}
+                              </span>
+                              {photoCount > 0 && (
+                                <span className="flex items-center gap-1 text-[10px] font-semibold text-[#ffb59a] bg-[#2b1208] border border-[#FF5C00]/30 px-2 py-0.2 rounded-full">
+                                  <Camera className="w-3 h-3 text-[#FF5C00]" />
+                                  <span>{photoCount}</span>
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-[#FF5C00] truncate mt-0.5">
+                              {c.profession} • {c.company}
                             </p>
-                          )}
+                            {c.notes && (
+                              <p className="text-[11px] text-[#e4beb1]/60 truncate max-w-sm mt-0.5">
+                                {c.notes}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Quick Trigger Buttons */}
-                      <div
-                        className="flex items-center gap-1.5 flex-shrink-0"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {c.whatsapp || c.phone ? (
-                          <a
-                            href={`https://wa.me/${(c.whatsapp || c.phone || '').replace(/[^0-9]/g, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 rounded-xl bg-[#28130a] hover:bg-[#381a0e] text-[#25D366] border border-white/5 transition-colors"
-                            title="Chat on WhatsApp"
-                          >
-                            <MessageSquare className="w-4 h-4" />
-                          </a>
-                        ) : null}
-
-                        <button
-                          onClick={() => onOpenQuickMessage(c)}
-                          className="p-2 rounded-xl bg-[#FF5C00] text-black font-bold hover:bg-[#ff7a33] shadow-md transition-colors"
-                          title="Generate AI Follow-up Draft"
+                        {/* Quick Trigger Buttons */}
+                        <div
+                          className="flex items-center gap-1.5 flex-shrink-0"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <Sparkles className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </motion.div>
+                          {c.whatsapp || c.phone ? (
+                            <a
+                              href={`https://wa.me/${(c.whatsapp || c.phone || '').replace(/[^0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 rounded-xl bg-[#28130a] hover:bg-[#381a0e] text-[#25D366] border border-white/5 transition-colors"
+                              title="Chat on WhatsApp"
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </a>
+                          ) : null}
+
+                          <button
+                            onClick={() => onOpenQuickMessage(c)}
+                            className="p-2 rounded-xl bg-[#FF5C00] text-black font-bold hover:bg-[#ff7a33] shadow-md transition-colors"
+                            title="Generate AI Follow-up Draft"
+                          >
+                            <Sparkles className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </motion.div>
+                    </div>
                   );
                 })}
               </div>
@@ -323,4 +452,5 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
     </div>
   );
 };
+
 

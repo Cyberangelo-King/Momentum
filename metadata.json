@@ -1,6 +1,6 @@
 {
   "name": "Momentum",
-  "description": "Mobile-first personal event OS for TEDxAkure 2026. Meet 50 connections, capture moments & ideas, track follow-ups, and generate AI recaps.",
+  "description": "Universal personal EventOS for conferences, summits, TEDx, and hackathons. Multi-event switching, AI live transcription, smart agendas, audio memo synthesis, zero-latency offline engine, and relationship CRM.",
   "requestFramePermissions": ["camera", "microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

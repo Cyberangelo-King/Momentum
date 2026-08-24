@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Moment, Idea, Connection, Note } from '../types';
+import { Moment, Idea, Connection, Note, EventConfig } from '../types';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { VoiceMemoModal } from './VoiceMemoModal';
 import { uploadAndCompressMedia } from '../services/imageCompression';
@@ -25,7 +25,8 @@ import {
   RotateCcw, 
   ShieldCheck, 
   Radio,
-  FileText
+  FileText,
+  Globe
 } from 'lucide-react';
 import { triggerHaptic } from '../services/haptics';
 
@@ -33,6 +34,7 @@ interface CaptureHubViewProps {
   moments: Moment[];
   ideas: Idea[];
   connections: Connection[];
+  activeEvent?: EventConfig;
   onAddMoment: (moment: Moment) => void;
   onAddIdea: (idea: Idea) => void;
   onAddNote?: (note: Note) => void;
@@ -43,6 +45,7 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
   moments,
   ideas,
   connections,
+  activeEvent,
   onAddMoment,
   onAddIdea,
   onAddNote,
@@ -277,7 +280,8 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       taggedPeopleIds: [],
-      location: noteLocation,
+      location: noteLocation || activeEvent?.location || 'Main Hall',
+      eventId: activeEvent?.id,
     };
 
     onAddMoment(newMoment);
@@ -296,18 +300,21 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
       setIsDictatingIdea(false);
     }
 
+    const eventTag = activeEvent?.hashtag || '#EventOS';
+
     const newIdea: Idea = {
       id: `i_${Date.now()}`,
       quote: ideaQuote.trim(),
       takeaway: ideaTakeaway.trim(),
-      speakerName: ideaSpeaker.trim() || 'TEDx Speaker',
+      speakerName: ideaSpeaker.trim() || 'Keynote Speaker',
       speakerRole: 'Presenter',
       speakerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-      sessionTitle: ideaSession.trim() || 'Main Session',
-      stageName: 'Main Stage',
+      sessionTitle: ideaSession.trim() || activeEvent?.sessions?.[0]?.title || 'Main Session',
+      stageName: activeEvent?.stages?.[0] || 'Main Stage',
       timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       category: ideaCategory,
-      tags: ['#TEDxAkure', `#${ideaCategory.replace(/\s+/g, '')}`],
+      tags: [eventTag, `#${ideaCategory.replace(/\s+/g, '')}`],
+      eventId: activeEvent?.id,
     };
 
     onAddIdea(newIdea);

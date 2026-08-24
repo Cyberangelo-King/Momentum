@@ -175,6 +175,28 @@ export class SpeechTranscriber {
 }
 
 /**
+ * Functional helper to quickly start a speech recognition session
+ */
+export function startSpeechRecognition(
+  onTranscript: (text: string) => void,
+  onError?: (err: string) => void,
+  onEnd?: () => void,
+  lang: string = 'en-US'
+): () => void {
+  const transcriber = new SpeechTranscriber({
+    onTranscript: (text) => onTranscript(text),
+    onError,
+    onEnd,
+    lang,
+  });
+  transcriber.start();
+
+  return () => {
+    transcriber.stop();
+  };
+}
+
+/**
  * Audio Recorder Session with Live Visualizer Analyser
  */
 export interface VoiceRecordingResult {

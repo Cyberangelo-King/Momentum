@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip } from 'recharts';
-import { Connection, EventSession, Moment, Idea, UserProfile, Note } from '../types';
+import { Connection, EventSession, Moment, Idea, UserProfile, Note, EventConfig } from '../types';
 import { calculateGamification } from '../services/gamification';
 import { useBatteryStatus } from '../hooks/useBatteryStatus';
 import { OfflineUsageCard } from './OfflineUsageCard';
@@ -22,7 +22,18 @@ import {
   BatteryWarning,
   Zap,
   X,
-  FileText
+  FileText,
+  BrainCircuit,
+  Compass,
+  Target,
+  Mic,
+  ArrowRight,
+  BookOpen,
+  Globe,
+  MapPin,
+  Calendar,
+  Layers,
+  ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { triggerHaptic } from '../services/haptics';
@@ -34,6 +45,8 @@ interface DashboardViewProps {
   notes?: Note[];
   sessions: EventSession[];
   profile: UserProfile;
+  activeEvent?: EventConfig;
+  onOpenEventHub?: () => void;
   onOpenQuickConnect: () => void;
   onOpenCapture: () => void;
   onOpenAddIdea: () => void;
@@ -42,6 +55,13 @@ interface DashboardViewProps {
   onOpenProfile?: () => void;
   onOpenGamification?: () => void;
   onOpenContingency?: () => void;
+  onOpenSessionDossier?: (session: EventSession) => void;
+  onOpenPostEventReview?: () => void;
+  onOpenConstellation?: () => void;
+  onOpenPitchSimulator?: () => void;
+  onOpenDigitalBadge?: () => void;
+  onOpenLiveCopilot?: () => void;
+  onOpenEventAnalytics?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -51,6 +71,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   notes = [],
   sessions,
   profile,
+  activeEvent,
+  onOpenEventHub,
   onOpenQuickConnect,
   onOpenCapture,
   onOpenAddIdea,
@@ -59,15 +81,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenProfile,
   onOpenGamification,
   onOpenContingency,
+  onOpenSessionDossier,
+  onOpenPostEventReview,
+  onOpenConstellation,
+  onOpenPitchSimulator,
+  onOpenDigitalBadge,
+  onOpenLiveCopilot,
+  onOpenEventAnalytics,
 }) => {
   const [isBatteryBannerDismissed, setIsBatteryBannerDismissed] = useState(false);
   const battery = useBatteryStatus();
 
-  const currentCount = connections.length;
-  const target = profile.targetConnections || 50;
+  // Active event-specific connection counting & target
+  const scopedConnections = activeEvent
+    ? connections.filter((c) => !c.eventId || c.eventId === activeEvent.id)
+    : connections;
+
+  const currentCount = scopedConnections.length;
+  const target = activeEvent?.targetConnections || profile.targetConnections || 50;
   const percentage = Math.min(Math.round((currentCount / target) * 100), 100);
 
-  const gamification = calculateGamification(connections, moments, ideas, target);
+  const primaryBrandColor = activeEvent?.branding?.primaryColor || '#FF5C00';
+
+  const gamification = calculateGamification(scopedConnections, moments, ideas, target);
 
   // SVG Progress Ring calculations
   const radius = 72;
@@ -80,7 +116,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       particleCount: 110,
       spread: 85,
       origin: { y: 0.55 },
-      colors: ['#FF5C00', '#ffb59a', '#ffffff', '#e4beb1', '#ffd700'],
+      colors: [primaryBrandColor, '#ffb59a', '#ffffff', '#e4beb1', '#ffd700'],
     });
   };
 
@@ -90,38 +126,40 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     }
   }, [currentCount, target]);
 
-  // Next up session
-  const nextSession = sessions[0] || {
-    title: 'The Future of Lagos Tech',
-    speaker: 'Dr. Amina Yusuf',
-    timeStr: 'In 10 mins',
-    stage: 'Main Stage',
-    heroImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDb3Bc4wJERWd1XMsg7mlbuMAKjzifyF_VoYBU0OVa86tK2YyKoV6s4preMnBmZPP4Q_fat0Fq1b3k3jQ1Z1V5AEUPdpzQqZhekLbNW6Kh9AtJAKvR2n04MHa2SVjHthEnhN0bmVEveN04SRjEjOnyjrkcy7XhuLDsQ9MvQDLsJzhERPeQRx-nc_yNJzSzdEan1xnrw29CtCveBDFY8s99Vi4f1XTrzSr1HF1DJyzYi5fAAxsI2kjUAJw',
+  // Next up session from active event or sessions array
+  const activeSessionsList = activeEvent?.sessions?.length ? activeEvent.sessions : sessions;
+  const nextSession = activeSessionsList[0] || {
+    title: 'Keynote & Executive Panel',
+    speaker: 'Featured Keynote',
+    timeStr: 'Upcoming',
+    stage: activeEvent?.stages?.[0] || 'Main Stage',
+    heroImage: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop&q=80',
   };
 
   // Hourly networking momentum chart data
   const chartData = [
-    { time: '8 AM', connections: 2 },
-    { time: '10 AM', connections: 11 },
-    { time: '12 PM', connections: 22 },
-    { time: '2 PM', connections: 28 },
+    { time: '8 AM', connections: Math.max(1, Math.floor(currentCount * 0.1)) },
+    { time: '10 AM', connections: Math.max(2, Math.floor(currentCount * 0.35)) },
+    { time: '12 PM', connections: Math.max(4, Math.floor(currentCount * 0.65)) },
+    { time: '2 PM', connections: Math.max(6, Math.floor(currentCount * 0.85)) },
     { time: '4 PM', connections: currentCount },
   ];
 
-  const overdueFollowUps = connections.filter((c) => c.followUpStatus === 'overdue' || c.followUpStatus === 'today');
+  const overdueFollowUps = scopedConnections.filter((c) => c.followUpStatus === 'overdue' || c.followUpStatus === 'today');
 
-  // Milestone checkpoints for the 50 connections goal
+  // Milestone checkpoints for the connections goal
+  const step = Math.max(5, Math.floor(target / 4));
   const milestones = [
-    { target: 10, label: 'Icebreaker', achieved: currentCount >= 10 },
-    { target: 25, label: 'Halfway', achieved: currentCount >= 25 },
-    { target: 40, label: 'Catalyst', achieved: currentCount >= 40 },
-    { target: 50, label: 'Champion', achieved: currentCount >= 50 },
+    { target: step, label: 'Icebreaker', achieved: currentCount >= step },
+    { target: step * 2, label: 'Halfway', achieved: currentCount >= step * 2 },
+    { target: step * 3, label: 'Catalyst', achieved: currentCount >= step * 3 },
+    { target: target, label: 'Champion', achieved: currentCount >= target },
   ];
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6 sm:space-y-8 pb-28 md:pb-16">
-      {/* Mobile Top Welcome & Live Badge */}
-      <div className="flex items-center justify-between gap-4">
+      {/* Top Welcome, Event Switcher & Live Badge */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div 
           onClick={() => {
             triggerHaptic('light');
@@ -130,41 +168,73 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="cursor-pointer group flex items-center gap-3.5 min-w-0"
           title="Click to edit profile"
         >
-          <div className="w-13 h-13 rounded-2xl overflow-hidden border-2 border-white/10 group-hover:border-[#FF5C00] transition-colors relative flex-shrink-0">
+          <div
+            className="w-13 h-13 rounded-2xl overflow-hidden border-2 group-hover:border-[#FF5C00] transition-colors relative flex-shrink-0"
+            style={{ borderColor: `${primaryBrandColor}80` }}
+          >
             <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover" />
             <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#25D366] rounded-full border-2 border-black" />
           </div>
           <div className="min-w-0">
-            <span className="text-[10px] font-bold text-[#FF5C00] tracking-widest uppercase flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#FF5C00] animate-ping" />
-              TEDxAkure 2026 • Live OS
-            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span
+                className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5 px-2 py-0.5 rounded-full"
+                style={{
+                  backgroundColor: `${primaryBrandColor}20`,
+                  color: primaryBrandColor,
+                }}
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full animate-ping"
+                  style={{ backgroundColor: primaryBrandColor }}
+                />
+                {activeEvent ? `${activeEvent.name}` : 'Live Event OS'}
+              </span>
+            </div>
             <h1 className="text-xl sm:text-2xl font-bold font-serif-display text-[#fadcd2] mt-0.5 truncate group-hover:text-white transition-colors">
               Welcome, {profile.name.split(' ')[0]}
             </h1>
           </div>
         </div>
 
-        {/* Gamification Level & Milestone Pill */}
-        <button
-          onClick={() => {
-            triggerHaptic('light');
-            if (onOpenGamification) onOpenGamification();
-            else triggerCelebration();
-          }}
-          className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-[#1e0f08] border border-[#FF5C00]/30 hover:border-[#FF5C00] text-[#fadcd2] text-xs font-semibold shadow-md active:scale-95 transition-all group min-h-[44px]"
-        >
-          <span className="text-lg">{gamification.levelBadge}</span>
-          <div className="text-left hidden sm:block">
-            <div className="text-[10px] text-[#FF5C00] font-bold uppercase leading-none">
-              Level {gamification.level}
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          {/* Event Hub Modal Trigger */}
+          {onOpenEventHub && (
+            <button
+              onClick={() => {
+                triggerHaptic('selection');
+                onOpenEventHub();
+              }}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-neutral-200 transition-all active:scale-95 shadow-sm"
+            >
+              <Globe className="w-3.5 h-3.5 text-neutral-400" />
+              <span>Event Hub</span>
+              <ChevronDown className="w-3 h-3 text-neutral-400" />
+            </button>
+          )}
+
+          {/* Gamification Level & Milestone Pill */}
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              if (onOpenGamification) onOpenGamification();
+              else triggerCelebration();
+            }}
+            className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-[#1e0f08] border hover:border-[#FF5C00] text-[#fadcd2] text-xs font-semibold shadow-md active:scale-95 transition-all group min-h-[44px]"
+            style={{ borderColor: `${primaryBrandColor}40` }}
+          >
+            <span className="text-lg">{gamification.levelBadge}</span>
+            <div className="text-left hidden sm:block">
+              <div className="text-[10px] font-bold uppercase leading-none" style={{ color: primaryBrandColor }}>
+                Level {gamification.level}
+              </div>
+              <div className="text-[11px] text-[#ffb59a] font-semibold leading-none mt-1">
+                {gamification.totalXp} XP
+              </div>
             </div>
-            <div className="text-[11px] text-[#ffb59a] font-semibold leading-none mt-1">
-              {gamification.totalXp} XP
-            </div>
-          </div>
-          <Sparkles className="w-4 h-4 text-[#FF5C00] group-hover:rotate-12 transition-transform" />
-        </button>
+            <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" style={{ color: primaryBrandColor }} />
+          </button>
+        </div>
       </div>
 
       {/* Low Battery Warning Banner (Battery Status API) */}
@@ -376,7 +446,127 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </motion.div>
 
-      {/* Gamification Interactive Level Banner */}
+      {/* 1,000,000x AI Superconnector & Live Copilot Command Hub */}
+      <div className="p-5 rounded-3xl bg-gradient-to-br from-[#1f0c04] via-[#130703] to-[#0a0401] border border-[#FF5C00]/40 shadow-2xl space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-[#FF5C00]/20 text-[#FF5C00] flex items-center justify-center font-bold">
+              <Zap className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-white tracking-tight">1,000,000x Event Intelligence Hub</h3>
+                <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#FF5C00] text-black font-extrabold uppercase">
+                  Gemini 3.7
+                </span>
+              </div>
+              <p className="text-xs text-[#ffb59a]/70">High-leverage networking sparring, visual radar graph, & survival kit</p>
+            </div>
+          </div>
+          {onOpenEventAnalytics && (
+            <button
+              onClick={() => {
+                triggerHaptic('light');
+                onOpenEventAnalytics();
+              }}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-[#ffb59a] hover:text-white border border-white/10 transition-colors"
+            >
+              <TrendingUp className="w-3.5 h-3.5 text-[#FF5C00]" />
+              <span>Executive ROI Scorecard</span>
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {/* Card 1: Constellation & Matchmaker */}
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              if (onOpenConstellation) onOpenConstellation();
+            }}
+            className="p-3.5 rounded-2xl bg-black/40 border border-white/10 hover:border-[#FF5C00]/60 hover:bg-[#FF5C00]/10 transition-all text-left group flex flex-col justify-between min-h-[105px]"
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="w-7 h-7 rounded-lg bg-[#FF5C00]/20 text-[#FF5C00] flex items-center justify-center">
+                <Users className="w-4 h-4" />
+              </div>
+              <span className="text-[9px] font-bold text-neutral-400 group-hover:text-white">Radar</span>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-white group-hover:text-[#FF5C00] transition-colors">
+                Constellation Graph
+              </h4>
+              <p className="text-[10px] text-[#ffb59a]/70 line-clamp-1 mt-0.5">AI Double-Opt-In Intros</p>
+            </div>
+          </button>
+
+          {/* Card 2: AI Pitch Arena */}
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              if (onOpenPitchSimulator) onOpenPitchSimulator();
+            }}
+            className="p-3.5 rounded-2xl bg-black/40 border border-white/10 hover:border-[#FF5C00]/60 hover:bg-[#FF5C00]/10 transition-all text-left group flex flex-col justify-between min-h-[105px]"
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                <Flame className="w-4 h-4" />
+              </div>
+              <span className="text-[9px] font-bold text-amber-400">Sparring</span>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-white group-hover:text-[#FF5C00] transition-colors">
+                AI Pitch Arena
+              </h4>
+              <p className="text-[10px] text-[#ffb59a]/70 line-clamp-1 mt-0.5">30s Elevator Rehearsal</p>
+            </div>
+          </button>
+
+          {/* Card 3: 3D Holographic Pass & NFC */}
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              if (onOpenDigitalBadge) onOpenDigitalBadge();
+            }}
+            className="p-3.5 rounded-2xl bg-black/40 border border-white/10 hover:border-[#FF5C00]/60 hover:bg-[#FF5C00]/10 transition-all text-left group flex flex-col justify-between min-h-[105px]"
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <Award className="w-4 h-4" />
+              </div>
+              <span className="text-[9px] font-bold text-emerald-400">vCard 3.0</span>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-white group-hover:text-[#FF5C00] transition-colors">
+                Holographic Pass
+              </h4>
+              <p className="text-[10px] text-[#ffb59a]/70 line-clamp-1 mt-0.5">3D Tilt & NFC Wave</p>
+            </div>
+          </button>
+
+          {/* Card 4: Live Copilot & Venue Kit */}
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              if (onOpenLiveCopilot) onOpenLiveCopilot();
+            }}
+            className="p-3.5 rounded-2xl bg-black/40 border border-white/10 hover:border-[#FF5C00]/60 hover:bg-[#FF5C00]/10 transition-all text-left group flex flex-col justify-between min-h-[105px]"
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                <Compass className="w-4 h-4" />
+              </div>
+              <span className="text-[9px] font-bold text-purple-400">Live HUD</span>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-white group-hover:text-[#FF5C00] transition-colors">
+                Live Copilot & WiFi
+              </h4>
+              <p className="text-[10px] text-[#ffb59a]/70 line-clamp-1 mt-0.5">Survival Cheatsheet</p>
+            </div>
+          </button>
+        </div>
+      </div>
       <div 
         onClick={() => {
           triggerHaptic('light');
@@ -420,6 +610,115 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
+      {/* Event Lifecycle Experience Strip: BEFORE -> CAPTURE -> UNDERSTAND -> REFLECT -> ACT */}
+      <div className="p-5 rounded-3xl bg-gradient-to-br from-[#1d0e07] via-[#140804] to-[#0d0502] border border-[#FF5C00]/30 shadow-xl space-y-3.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#FF5C00] animate-pulse" />
+            <span className="text-[11px] font-bold text-[#FF5C00] uppercase tracking-wider">
+              Experience Flow • Before → Capture → Understand → Reflect → Act
+            </span>
+          </div>
+          <span className="text-[11px] text-[#e4beb1]/60">5 Pillars of Momentum</span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
+          {/* 1. BEFORE */}
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              if (onOpenSessionDossier && sessions[0]) {
+                onOpenSessionDossier(sessions[0]);
+              }
+            }}
+            className="p-3 rounded-2xl bg-black/40 border border-white/10 hover:border-[#FF5C00]/50 hover:bg-[#FF5C00]/10 transition-all text-left group flex flex-col justify-between min-h-[90px]"
+          >
+            <div className="flex items-center justify-between w-full">
+              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400">1. Before</span>
+              <BookOpen className="w-3.5 h-3.5 text-blue-400 group-hover:scale-110 transition-transform" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white group-hover:text-[#FF5C00]">Speaker Briefing</p>
+              <p className="text-[10px] text-[#e4beb1]/60 mt-0.5">Dossier & Angles</p>
+            </div>
+          </button>
+
+          {/* 2. CAPTURE */}
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              onOpenCapture();
+            }}
+            className="p-3 rounded-2xl bg-black/40 border border-white/10 hover:border-[#FF5C00]/50 hover:bg-[#FF5C00]/10 transition-all text-left group flex flex-col justify-between min-h-[90px]"
+          >
+            <div className="flex items-center justify-between w-full">
+              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#FF5C00]/20 text-[#FF5C00]">2. Capture</span>
+              <Mic className="w-3.5 h-3.5 text-[#FF5C00] group-hover:scale-110 transition-transform" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white group-hover:text-[#FF5C00]">1-Tap Instant</p>
+              <p className="text-[10px] text-[#e4beb1]/60 mt-0.5">Audio, Idea, Quote</p>
+            </div>
+          </button>
+
+          {/* 3. UNDERSTAND */}
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              onSelectTab('notes');
+            }}
+            className="p-3 rounded-2xl bg-black/40 border border-white/10 hover:border-[#FF5C00]/50 hover:bg-[#FF5C00]/10 transition-all text-left group flex flex-col justify-between min-h-[90px]"
+          >
+            <div className="flex items-center justify-between w-full">
+              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300">3. Understand</span>
+              <BrainCircuit className="w-3.5 h-3.5 text-purple-300 group-hover:scale-110 transition-transform" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white group-hover:text-[#FF5C00]">Notes & Synthesis</p>
+              <p className="text-[10px] text-[#e4beb1]/60 mt-0.5">Theses & Contrarian</p>
+            </div>
+          </button>
+
+          {/* 4. REFLECT */}
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              if (onOpenPostEventReview) {
+                onOpenPostEventReview();
+              }
+            }}
+            className="p-3 rounded-2xl bg-black/40 border border-[#FF5C00]/40 hover:border-[#FF5C00] hover:bg-[#FF5C00]/15 transition-all text-left group flex flex-col justify-between min-h-[90px]"
+          >
+            <div className="flex items-center justify-between w-full">
+              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">4. Reflect</span>
+              <Compass className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white group-hover:text-[#FF5C00]">5-Pillar Review</p>
+              <p className="text-[10px] text-[#e4beb1]/60 mt-0.5">Mindset & Summary</p>
+            </div>
+          </button>
+
+          {/* 5. ACT */}
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              onSelectTab('followups');
+            }}
+            className="p-3 rounded-2xl bg-black/40 border border-white/10 hover:border-[#FF5C00]/50 hover:bg-[#FF5C00]/10 transition-all text-left group flex flex-col justify-between min-h-[90px] col-span-2 sm:col-span-1"
+          >
+            <div className="flex items-center justify-between w-full">
+              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">5. Act</span>
+              <Target className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white group-hover:text-[#FF5C00]">Follow-Up CRM</p>
+              <p className="text-[10px] text-[#e4beb1]/60 mt-0.5">Alerts & Outreach</p>
+            </div>
+          </button>
+        </div>
+      </div>
+
       {/* Offline Usage Statistics & Local Storage Summary */}
       <OfflineUsageCard
         connections={connections}
@@ -428,7 +727,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         onOpenContingency={onOpenContingency}
       />
 
-      {/* Next Up Live Talk Card */}
+      {/* Next Up Live Talk Card with Speaker Briefing (Before) & Notes (During) */}
       <div className="bg-[#140b07] border border-white/10 rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-5">
         <div className="flex items-center gap-4 w-full sm:w-auto">
           <div className="w-18 h-18 rounded-2xl overflow-hidden bg-black flex-shrink-0 border border-white/10">
@@ -452,16 +751,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            triggerHaptic('light');
-            onOpenAddIdea();
-          }}
-          className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-[#221008] hover:bg-[#32160c] text-[#ffb59a] text-xs font-semibold border border-white/10 flex items-center justify-center gap-2 flex-shrink-0 transition-colors min-h-[48px] active:scale-95"
-        >
-          <Lightbulb className="w-4 h-4 text-[#FF5C00]" />
-          <span>Record Session Notes</span>
-        </button>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              if (onOpenSessionDossier && sessions[0]) {
+                onOpenSessionDossier(sessions[0]);
+              }
+            }}
+            className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-[#1d0e07] hover:bg-[#2c140a] text-blue-300 text-xs font-semibold border border-blue-500/30 flex items-center justify-center gap-2 flex-shrink-0 transition-colors min-h-[48px] active:scale-95"
+          >
+            <BookOpen className="w-4 h-4 text-blue-400" />
+            <span>Speaker Dossier</span>
+          </button>
+
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              onOpenAddIdea();
+            }}
+            className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-[#221008] hover:bg-[#32160c] text-[#ffb59a] text-xs font-semibold border border-white/10 flex items-center justify-center gap-2 flex-shrink-0 transition-colors min-h-[48px] active:scale-95"
+          >
+            <Lightbulb className="w-4 h-4 text-[#FF5C00]" />
+            <span>Capture Notes</span>
+          </button>
+        </div>
       </div>
 
       {/* Met Today Avatar Carousel */}

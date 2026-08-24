@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Connection, RelationshipType, PriorityLevel } from '../types';
+import { Connection, RelationshipType, PriorityLevel, EventConfig } from '../types';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { summarizeConnection } from '../services/aiService';
 import { compressImage } from '../services/imageCompression';
@@ -11,6 +11,7 @@ interface QuickConnectModalProps {
   onClose: () => void;
   onSaveConnection: (connection: Connection) => void;
   existingCount: number;
+  activeEvent?: EventConfig;
 }
 
 export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
@@ -18,6 +19,7 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
   onClose,
   onSaveConnection,
   existingCount,
+  activeEvent,
 }) => {
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
@@ -134,7 +136,8 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
       followUpDate,
       followUpStatus: 'today',
       metTimestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      eventContext: 'TEDxAkure 2026',
+      eventId: activeEvent?.id,
+      eventContext: activeEvent?.name || 'Live Event',
       conversationMemory: memoryPoints,
       tags,
     };

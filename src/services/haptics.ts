@@ -3,7 +3,7 @@
  * Provides subtle tactile feedback for navigation, saving, deleting, and milestone achievements.
  */
 
-type HapticType = 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error' | 'delete' | 'milestone' | 'unlock';
+export type HapticType = 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error' | 'delete' | 'milestone' | 'unlock' | 'selection';
 
 export const triggerHaptic = (type: HapticType = 'light'): void => {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') return;
@@ -11,6 +11,7 @@ export const triggerHaptic = (type: HapticType = 'light'): void => {
 
   try {
     switch (type) {
+      case 'selection':
       case 'light':
         // Quick subtle tap for tab changes and buttons (12ms)
         navigator.vibrate(12);

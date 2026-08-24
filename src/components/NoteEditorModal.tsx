@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Note, NoteCategory, NoteActionItem, SpeakerQuestionItem, Connection, EventSession } from '../types';
+import { Note, NoteCategory, NoteActionItem, SpeakerQuestionItem, Connection, EventSession, EventConfig } from '../types';
 import { enhanceNoteWithGemini, generateSpeakerQuestions, transcribeAudioWithGemini, refineTranscriptWithGemini } from '../services/aiService';
 import { VoiceRecorderSession, SpeechTranscriber, isSpeechRecognitionSupported, VoiceRecordingResult } from '../services/speechService';
 import { 
@@ -43,6 +43,7 @@ interface NoteEditorModalProps {
   onDeleteNote?: (noteId: string) => void;
   connections: Connection[];
   sessions: EventSession[];
+  activeEvent?: EventConfig;
 }
 
 export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
@@ -53,6 +54,7 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
   onDeleteNote,
   connections,
   sessions,
+  activeEvent,
 }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -472,6 +474,7 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
       date: note?.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       createdAt: note?.createdAt || now,
       updatedAt: now,
+      eventId: note?.eventId || activeEvent?.id,
       isDemo: false,
     };
 

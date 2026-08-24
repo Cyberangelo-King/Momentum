@@ -22,6 +22,7 @@ interface RecapViewProps {
   profile: UserProfile;
   onOpenExports: () => void;
   onOpenCollage: () => void;
+  onOpenPostEventReview?: () => void;
 }
 
 export const RecapView: React.FC<RecapViewProps> = ({
@@ -31,6 +32,7 @@ export const RecapView: React.FC<RecapViewProps> = ({
   profile,
   onOpenExports,
   onOpenCollage,
+  onOpenPostEventReview,
 }) => {
   const [recapData, setRecapData] = useState<RecapResponse | null>(null);
   const [isLoadingRecap, setIsLoadingRecap] = useState(false);
@@ -236,6 +238,39 @@ export const RecapView: React.FC<RecapViewProps> = ({
           {recapData?.linkedInPost}
         </div>
       </div>
+
+      {/* 5-Pillar Comprehensive Synthesis Trigger */}
+      {onOpenPostEventReview && (
+        <div className="p-5 rounded-2xl bg-gradient-to-r from-[#2c1308] via-[#1a0c06] to-[#120703] border border-[#FF5C00]/40 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-[#FF5C00] text-black flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-lg shadow-[#FF5C00]/30">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FF5C00]/20 text-[#FF5C00] uppercase tracking-wider">
+                  5-Pillar Framework
+                </span>
+                <span className="text-xs text-[#e4beb1]/60">Gemini Powered</span>
+              </div>
+              <h3 className="text-base font-bold text-white font-serif-display mt-0.5">
+                Deep Post-Event Reflection & Forward Strategy
+              </h3>
+              <p className="text-xs text-[#e4beb1]/80">
+                1. What happened • 2. What I learned • 3. Mindset shifts • 4. Action commitments • 5. Key follow-ups
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={onOpenPostEventReview}
+            className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] transition-all flex items-center justify-center gap-2 flex-shrink-0 shadow-lg shadow-[#FF5C00]/20 min-h-[44px]"
+          >
+            <span>Open 5-Pillar Review</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Action shortcuts for exports */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">

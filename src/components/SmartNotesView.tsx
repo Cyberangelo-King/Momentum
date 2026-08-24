@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Note, NoteCategory, Connection, EventSession } from '../types';
+import { Note, NoteCategory, Connection, EventSession, EventConfig } from '../types';
 import { NoteEditorModal } from './NoteEditorModal';
 import { SpeakerQuestionGeneratorModal } from './SpeakerQuestionGeneratorModal';
 import { VoiceMemoModal } from './VoiceMemoModal';
@@ -29,7 +29,8 @@ import {
   Bookmark,
   Calendar,
   Layers,
-  Wand2
+  Wand2,
+  Globe
 } from 'lucide-react';
 import { triggerHaptic } from '../services/haptics';
 
@@ -37,23 +38,34 @@ interface SmartNotesViewProps {
   notes: Note[];
   connections: Connection[];
   sessions: EventSession[];
+  activeEvent?: EventConfig;
   onSaveNote: (note: Note) => void;
+  onUpdateNote?: (note: Note) => void;
   onDeleteNote: (noteId: string) => void;
-  onSaveVoiceMoment: (momentData: any) => void;
+  onTrashNote?: (note: Note) => void;
+  onRestoreNote?: (noteId: string) => void;
+  onSaveVoiceMoment?: (momentData: any) => void;
+  onOpenSpeakerDossier?: (session: EventSession) => void;
 }
 
 export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
   notes,
   connections,
   sessions,
+  activeEvent,
   onSaveNote,
+  onUpdateNote,
   onDeleteNote,
+  onTrashNote,
+  onRestoreNote,
   onSaveVoiceMoment,
+  onOpenSpeakerDossier,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [filterHasActions, setFilterHasActions] = useState(false);
   const [filterHasQuestions, setFilterHasQuestions] = useState(false);
+  const [showAllEventsNotes, setShowAllEventsNotes] = useState(false);
   
   // Modals state
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -71,6 +83,9 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
     return notes
       .filter((n) => !n.inTrash)
       .filter((n) => {
+        if (!showAllEventsNotes && activeEvent) {
+          if (n.eventId && n.eventId !== activeEvent.id) return false;
+        }
         if (selectedCategory !== 'All' && n.category !== selectedCategory) {
           return false;
         }
@@ -98,7 +113,7 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
         if (!a.isPinned && b.isPinned) return 1;
         return new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime();
       });
-  }, [notes, selectedCategory, filterHasActions, filterHasQuestions, searchQuery]);
+  }, [notes, selectedCategory, filterHasActions, filterHasQuestions, searchQuery, showAllEventsNotes, activeEvent]);
 
   // Overall stats
   const totalNotes = notes.filter((n) => !n.inTrash).length;
@@ -678,6 +693,7 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
         onDeleteNote={onDeleteNote}
         connections={connections}
         sessions={sessions}
+        activeEvent={activeEvent}
       />
 
       {/* Speaker Question Generator Modal */}
