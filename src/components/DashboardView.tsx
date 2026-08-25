@@ -101,22 +101,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const target = activeEvent?.targetConnections || profile.targetConnections || 50;
   const percentage = Math.min(Math.round((currentCount / target) * 100), 100);
 
-  const primaryBrandColor = activeEvent?.branding?.primaryColor || '#FF5C00';
-
   const gamification = calculateGamification(scopedConnections, moments, ideas, target);
 
   // SVG Progress Ring calculations
-  const radius = 72;
+  const radius = 68;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   const triggerCelebration = () => {
     triggerHaptic('milestone');
     confetti({
-      particleCount: 110,
-      spread: 85,
-      origin: { y: 0.55 },
-      colors: [primaryBrandColor, '#ffb59a', '#ffffff', '#e4beb1', '#ffd700'],
+      particleCount: 80,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#38bdf8', '#818cf8', '#34d399', '#f8fafc'],
     });
   };
 
@@ -138,11 +136,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   // Hourly networking momentum chart data
   const chartData = [
-    { time: '8 AM', connections: Math.max(1, Math.floor(currentCount * 0.1)) },
-    { time: '10 AM', connections: Math.max(2, Math.floor(currentCount * 0.35)) },
-    { time: '12 PM', connections: Math.max(4, Math.floor(currentCount * 0.65)) },
-    { time: '2 PM', connections: Math.max(6, Math.floor(currentCount * 0.85)) },
-    { time: '4 PM', connections: currentCount },
+    { time: '08:00', connections: Math.max(1, Math.floor(currentCount * 0.1)) },
+    { time: '10:00', connections: Math.max(2, Math.floor(currentCount * 0.35)) },
+    { time: '12:00', connections: Math.max(4, Math.floor(currentCount * 0.65)) },
+    { time: '14:00', connections: Math.max(6, Math.floor(currentCount * 0.85)) },
+    { time: '16:00', connections: currentCount },
   ];
 
   const overdueFollowUps = scopedConnections.filter((c) => c.followUpStatus === 'overdue' || c.followUpStatus === 'today');
@@ -150,15 +148,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   // Milestone checkpoints for the connections goal
   const step = Math.max(5, Math.floor(target / 4));
   const milestones = [
-    { target: step, label: 'Icebreaker', achieved: currentCount >= step },
-    { target: step * 2, label: 'Halfway', achieved: currentCount >= step * 2 },
-    { target: step * 3, label: 'Catalyst', achieved: currentCount >= step * 3 },
-    { target: target, label: 'Champion', achieved: currentCount >= target },
+    { target: step, label: 'Initial Contact', achieved: currentCount >= step },
+    { target: step * 2, label: 'Midway', achieved: currentCount >= step * 2 },
+    { target: step * 3, label: 'Network Effect', achieved: currentCount >= step * 3 },
+    { target: target, label: 'Target Met', achieved: currentCount >= target },
   ];
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-6 sm:space-y-8 pb-28 md:pb-16">
-      {/* Top Welcome, Event Switcher & Live Badge */}
+    <div className="w-full max-w-5xl mx-auto space-y-6 pb-28 md:pb-16 text-[var(--text-primary)]">
+      {/* Header & Status Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div 
           onClick={() => {
@@ -166,38 +164,26 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             if (onOpenProfile) onOpenProfile();
           }} 
           className="cursor-pointer group flex items-center gap-3.5 min-w-0"
-          title="Click to edit profile"
+          title="Profile settings"
         >
-          <div
-            className="w-13 h-13 rounded-2xl overflow-hidden border-2 group-hover:border-[#FF5C00] transition-colors relative flex-shrink-0"
-            style={{ borderColor: `${primaryBrandColor}80` }}
-          >
+          <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/[0.12] group-hover:border-[var(--accent-primary)] transition-colors relative flex-shrink-0 bg-[var(--bg-surface-subtle)]">
             <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover" />
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#25D366] rounded-full border-2 border-black" />
+            <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border border-black" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5 px-2 py-0.5 rounded-full"
-                style={{
-                  backgroundColor: `${primaryBrandColor}20`,
-                  color: primaryBrandColor,
-                }}
-              >
-                <span
-                  className="w-1.5 h-1.5 rounded-full animate-ping"
-                  style={{ backgroundColor: primaryBrandColor }}
-                />
-                {activeEvent ? `${activeEvent.name}` : 'Live Event OS'}
+              <span className="text-[10px] font-mono tracking-wider uppercase flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-[var(--text-secondary)]">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                {activeEvent ? activeEvent.name : 'Event Workspace'}
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold font-serif-display text-[#fadcd2] mt-0.5 truncate group-hover:text-white transition-colors">
-              Welcome, {profile.name.split(' ')[0]}
+            <h1 className="text-xl font-semibold tracking-tight text-white mt-0.5 truncate group-hover:text-[var(--accent-primary)] transition-colors">
+              {profile.name}
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           {/* Event Hub Modal Trigger */}
           {onOpenEventHub && (
             <button
@@ -205,69 +191,56 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 triggerHaptic('selection');
                 onOpenEventHub();
               }}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-neutral-200 transition-all active:scale-95 shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] text-xs font-medium text-white/90 transition-colors cursor-pointer shadow-sm"
             >
-              <Globe className="w-3.5 h-3.5 text-neutral-400" />
+              <Globe className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
               <span>Event Hub</span>
-              <ChevronDown className="w-3 h-3 text-neutral-400" />
+              <ChevronDown className="w-3 h-3 text-white/40" />
             </button>
           )}
 
-          {/* Gamification Level & Milestone Pill */}
+          {/* XP Badge */}
           <button
             onClick={() => {
               triggerHaptic('light');
               if (onOpenGamification) onOpenGamification();
               else triggerCelebration();
             }}
-            className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-[#1e0f08] border hover:border-[#FF5C00] text-[#fadcd2] text-xs font-semibold shadow-md active:scale-95 transition-all group min-h-[44px]"
-            style={{ borderColor: `${primaryBrandColor}40` }}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] text-xs font-medium text-white transition-colors cursor-pointer shadow-sm"
           >
-            <span className="text-lg">{gamification.levelBadge}</span>
+            <span className="text-base">{gamification.levelBadge}</span>
             <div className="text-left hidden sm:block">
-              <div className="text-[10px] font-bold uppercase leading-none" style={{ color: primaryBrandColor }}>
-                Level {gamification.level}
+              <div className="text-[10px] font-mono text-[var(--accent-primary)] leading-none">
+                Lvl {gamification.level}
               </div>
-              <div className="text-[11px] text-[#ffb59a] font-semibold leading-none mt-1">
+              <div className="text-[11px] font-mono text-white/80 leading-none mt-1">
                 {gamification.totalXp} XP
               </div>
             </div>
-            <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" style={{ color: primaryBrandColor }} />
           </button>
         </div>
       </div>
 
-      {/* Low Battery Warning Banner (Battery Status API) */}
+      {/* Battery Warning */}
       <AnimatePresence>
         {battery.isSupported && battery.isLowBattery && !isBatteryBannerDismissed && (
           <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.98 }}
-            className="p-4 rounded-2xl bg-gradient-to-r from-[#2c1005] via-[#1f0d04] to-[#160803] border border-[#FF5C00]/40 shadow-lg flex items-center justify-between gap-3 text-left"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/30 flex items-center justify-between gap-3 text-left"
           >
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-[#FF5C00]/20 text-[#FF5C00] flex items-center justify-center flex-shrink-0 animate-pulse">
-                <BatteryWarning className="w-5 h-5" />
-              </div>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <BatteryWarning className="w-4 h-4 text-amber-400 shrink-0" />
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-[#fadcd2]">
-                    Low Device Battery ({battery.percentage}%)
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FF5C00]/20 text-[#FF5C00] font-bold uppercase tracking-wider">
-                    Power Save Mode
-                  </span>
-                </div>
-                <p className="text-[11px] text-[#e4beb1]/80 mt-0.5 leading-relaxed">
-                  Conserve battery during keynotes: use Quick Connect text notes, lower screen brightness, and avoid high-res video recording.
-                </p>
+                <span className="text-xs font-medium text-amber-200">
+                  Device battery low ({battery.percentage}%). Power-saving defaults applied.
+                </span>
               </div>
             </div>
             <button
               onClick={() => setIsBatteryBannerDismissed(true)}
-              className="text-[#e4beb1]/60 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0"
-              title="Dismiss banner"
+              className="text-amber-200/60 hover:text-white p-1 rounded transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -275,138 +248,111 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Hero Circular 50-Connection Progress Card */}
+      {/* Hero Networking Target Card */}
       <motion.div 
-        initial={{ opacity: 0, y: 15 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="bg-gradient-to-br from-[#1d0d06] via-[#120703] to-[#0d0502] border border-white/10 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl"
+        transition={{ duration: 0.25 }}
+        className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl p-6 sm:p-7 relative overflow-hidden shadow-lg"
       >
-        <div className="absolute top-0 right-0 w-80 h-80 bg-[#FF5C00]/12 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-60 h-60 bg-[#FF5C00]/8 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-8 relative z-10">
-          {/* Animated Progress Ring Visual */}
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-6 relative z-10">
+          {/* Progress Ring */}
           <div 
             className="relative flex items-center justify-center cursor-pointer group flex-shrink-0" 
-            onClick={() => {
-              triggerCelebration();
-            }}
+            onClick={triggerCelebration}
           >
-            {/* Ambient pulse glow on high progress */}
-            <div className="absolute inset-0 rounded-full bg-[#FF5C00]/15 blur-xl group-hover:bg-[#FF5C00]/30 transition-all scale-95" />
-
-            <svg width="180" height="180" className="transform -rotate-90">
-              <defs>
-                <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#FF8246" />
-                  <stop offset="50%" stopColor="#FF5C00" />
-                  <stop offset="100%" stopColor="#FF3300" />
-                </linearGradient>
-                <filter id="glow">
-                  <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-                  <feMerge>
-                    <feMergeNode in="coloredBlur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
-
-              {/* Background Track */}
+            <svg width="160" height="160" className="transform -rotate-90">
               <circle
-                cx="90"
-                cy="90"
+                cx="80"
+                cy="80"
                 r={radius}
-                className="text-white/10"
-                strokeWidth="14"
+                className="text-white/[0.06]"
+                strokeWidth="10"
                 stroke="currentColor"
                 fill="transparent"
               />
-
-              {/* Framer Motion Animated Stroke Ring */}
               <motion.circle
-                cx="90"
-                cy="90"
+                cx="80"
+                cy="80"
                 r={radius}
-                stroke="url(#ringGradient)"
-                strokeWidth="14"
+                stroke="var(--accent-primary)"
+                strokeWidth="10"
                 strokeDasharray={circumference}
                 initial={{ strokeDashoffset: circumference }}
                 animate={{ strokeDashoffset }}
-                transition={{ duration: 1.5, ease: [0.25, 1, 0.5, 1] }}
+                transition={{ duration: 1.2, ease: [0.25, 1, 0.5, 1] }}
                 strokeLinecap="round"
                 fill="transparent"
-                filter={percentage > 0 ? 'url(#glow)' : undefined}
               />
             </svg>
 
-            {/* Inner Ring Content */}
+            {/* Inner Ring */}
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none pointer-events-none">
               <motion.span 
                 key={currentCount}
-                initial={{ scale: 0.8, opacity: 0 }}
+                initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="text-4xl font-bold font-serif-display text-[#fadcd2] tracking-tight"
+                className="text-3xl font-semibold font-mono text-white tracking-tight"
               >
                 {currentCount}
               </motion.span>
-              <span className="text-[10px] text-[#e4beb1]/70 uppercase tracking-widest font-semibold mt-0.5">
+              <span className="text-[10px] font-mono text-[var(--text-secondary)] uppercase tracking-wider mt-0.5">
                 of {target} Target
               </span>
-              <span className="text-[11px] text-[#FF5C00] font-bold mt-1 bg-[#FF5C00]/15 px-2 py-0.5 rounded-full">
-                {percentage}% Done
+              <span className="text-[10px] font-mono text-[var(--accent-primary)] font-semibold mt-1">
+                {percentage}% Completed
               </span>
             </div>
           </div>
 
-          {/* Context & Rapid Actions */}
+          {/* Context & Actions */}
           <div className="flex-1 text-center lg:text-left space-y-4">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF5C00]/20 text-[#FF5C00] text-xs font-bold uppercase tracking-wider mb-2">
-                <Flame className="w-3.5 h-3.5 fill-current" />
-                <span>50 Connections Goal</span>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-[var(--text-secondary)] text-[11px] font-mono mb-2">
+                <Target className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+                <span>Networking Objective</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-[#fadcd2] font-serif-display leading-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-white tracking-tight leading-tight">
                 {currentCount >= target
-                  ? '🎉 50 Target Achieved! You conquered TEDx!'
-                  : `${target - currentCount} connections left to hit 50`}
+                  ? 'Target Achieved'
+                  : `${target - currentCount} connections remaining to reach quota`}
               </h2>
-              <p className="text-sm text-[#e4beb1]/70 mt-1.5 max-w-lg leading-relaxed">
-                Connect seamlessly with African founders, speakers, and investors. Save badges, phone numbers, and talk insights with zero lag.
+              <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-lg leading-relaxed">
+                Seamless contact exchange, speech insight logging, and structured follow-up scheduling with 100% offline persistence.
               </p>
             </div>
 
-            {/* Milestone Checkpoint Indicators */}
+            {/* Milestones */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
               {milestones.map((m) => (
                 <div
                   key={m.target}
-                  className={`p-2.5 rounded-xl border text-left transition-all ${
+                  className={`p-2.5 rounded-xl border text-left transition-colors ${
                     m.achieved
-                      ? 'bg-[#FF5C00]/15 border-[#FF5C00]/50 text-[#fadcd2]'
-                      : 'bg-white/5 border-white/5 text-neutral-500'
+                      ? 'bg-white/[0.06] border-[var(--accent-primary)]/40 text-white'
+                      : 'bg-white/[0.02] border-white/[0.05] text-white/40'
                   }`}
                 >
-                  <div className="flex items-center justify-between text-[11px] font-bold">
-                    <span>{m.target} Met</span>
-                    {m.achieved && <CheckCircle2 className="w-3.5 h-3.5 text-[#FF5C00]" />}
+                  <div className="flex items-center justify-between text-[11px] font-mono">
+                    <span>{m.target} Goal</span>
+                    {m.achieved && <CheckCircle2 className="w-3 h-3 text-[var(--accent-primary)]" />}
                   </div>
-                  <span className="text-[10px] opacity-80 block truncate mt-0.5">{m.label}</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] block truncate mt-0.5">{m.label}</span>
                 </div>
               ))}
             </div>
 
-            {/* Main Action Buttons with Min 44px Touch Targets */}
-            <div className="flex flex-wrap items-center gap-3 pt-2 justify-center lg:justify-start">
+            {/* Quick Actions */}
+            <div className="flex flex-wrap items-center gap-2.5 pt-1 justify-center lg:justify-start">
               <button
                 onClick={() => {
                   triggerHaptic('light');
                   onOpenQuickConnect();
                 }}
-                className="px-5 py-3 rounded-2xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] transition-all flex items-center gap-2 shadow-lg shadow-[#FF5C00]/25 active:scale-95 min-h-[48px]"
+                className="px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
               >
-                <Bolt className="w-4 h-4 fill-current" />
-                <span>Quick Connect (10s)</span>
+                <Bolt className="w-3.5 h-3.5 fill-current" />
+                <span>Quick Connect</span>
               </button>
 
               <button
@@ -414,10 +360,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   triggerHaptic('light');
                   onOpenCapture();
                 }}
-                className="px-4 py-3 rounded-2xl bg-[#221008] text-[#fadcd2] border border-white/10 font-semibold text-xs hover:bg-[#32160c] transition-colors flex items-center gap-2 min-h-[48px] active:scale-95"
+                className="px-3.5 py-2.5 rounded-xl bg-[var(--bg-surface-subtle)] hover:bg-white/[0.08] text-white border border-[var(--border-subtle)] font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
               >
-                <Camera className="w-4 h-4 text-[#FF5C00]" />
-                <span>Capture Moment</span>
+                <Camera className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+                <span>Capture Photo</span>
               </button>
 
               <button
@@ -425,10 +371,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   triggerHaptic('light');
                   onOpenAddIdea();
                 }}
-                className="px-4 py-3 rounded-2xl bg-[#221008] text-[#fadcd2] border border-white/10 font-semibold text-xs hover:bg-[#32160c] transition-colors flex items-center gap-2 min-h-[48px] active:scale-95"
+                className="px-3.5 py-2.5 rounded-xl bg-[var(--bg-surface-subtle)] hover:bg-white/[0.08] text-white border border-[var(--border-subtle)] font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
               >
-                <Lightbulb className="w-4 h-4 text-[#ffb59a]" />
-                <span>Log Insight</span>
+                <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+                <span>Log Idea</span>
               </button>
 
               <button
@@ -436,32 +382,26 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   triggerHaptic('light');
                   onSelectTab('notes');
                 }}
-                className="px-4 py-3 rounded-2xl bg-[#221008] text-[#fadcd2] border border-white/10 font-semibold text-xs hover:bg-[#32160c] transition-colors flex items-center gap-2 min-h-[48px] active:scale-95"
+                className="px-3.5 py-2.5 rounded-xl bg-[var(--bg-surface-subtle)] hover:bg-white/[0.08] text-white border border-[var(--border-subtle)] font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
               >
-                <FileText className="w-4 h-4 text-[#FF5C00]" />
-                <span>Smart Notes & Q&A</span>
+                <FileText className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+                <span>Notes & Q&A</span>
               </button>
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* 1,000,000x AI Superconnector & Live Copilot Command Hub */}
-      <div className="p-5 rounded-3xl bg-gradient-to-br from-[#1f0c04] via-[#130703] to-[#0a0401] border border-[#FF5C00]/40 shadow-2xl space-y-4">
+      {/* Intelligence & Event Tooling Grid */}
+      <div className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl p-5 sm:p-6 space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-[#FF5C00]/20 text-[#FF5C00] flex items-center justify-center font-bold">
-              <Zap className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-white tracking-tight">1,000,000x Event Intelligence Hub</h3>
-                <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#FF5C00] text-black font-extrabold uppercase">
-                  Gemini 3.7
-                </span>
-              </div>
-              <p className="text-xs text-[#ffb59a]/70">High-leverage networking sparring, visual radar graph, & survival kit</p>
-            </div>
+          <div className="space-y-0.5">
+            <h3 className="text-sm font-semibold text-white">
+              Event Intelligence Suite
+            </h3>
+            <p className="text-xs text-[var(--text-secondary)]">
+              Real-time networking tools, pitch simulator, and contact exchange.
+            </p>
           </div>
           {onOpenEventAnalytics && (
             <button
@@ -469,34 +409,34 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 triggerHaptic('light');
                 onOpenEventAnalytics();
               }}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-[#ffb59a] hover:text-white border border-white/10 transition-colors"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-xs font-medium text-white border border-white/[0.08] transition-colors cursor-pointer"
             >
-              <TrendingUp className="w-3.5 h-3.5 text-[#FF5C00]" />
-              <span>Executive ROI Scorecard</span>
+              <TrendingUp className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+              <span>Event Analytics</span>
             </button>
           )}
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {/* Card 1: Constellation & Matchmaker */}
+          {/* Card 1: Constellation Graph */}
           <button
             onClick={() => {
               triggerHaptic('light');
               if (onOpenConstellation) onOpenConstellation();
             }}
-            className="p-3.5 rounded-2xl bg-black/40 border border-white/10 hover:border-[#FF5C00]/60 hover:bg-[#FF5C00]/10 transition-all text-left group flex flex-col justify-between min-h-[105px]"
+            className="p-3.5 rounded-xl bg-[var(--bg-surface-subtle)] border border-white/[0.05] hover:border-[var(--accent-primary)]/40 hover:bg-white/[0.06] transition-colors text-left flex flex-col justify-between min-h-[96px] cursor-pointer"
           >
             <div className="flex items-center justify-between w-full">
-              <div className="w-7 h-7 rounded-lg bg-[#FF5C00]/20 text-[#FF5C00] flex items-center justify-center">
-                <Users className="w-4 h-4" />
+              <div className="w-7 h-7 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center">
+                <Users className="w-3.5 h-3.5" />
               </div>
-              <span className="text-[9px] font-bold text-neutral-400 group-hover:text-white">Radar</span>
+              <span className="text-[9px] font-mono text-[var(--text-secondary)]">Network</span>
             </div>
             <div>
-              <h4 className="text-xs font-bold text-white group-hover:text-[#FF5C00] transition-colors">
-                Constellation Graph
+              <h4 className="text-xs font-semibold text-white">
+                Network Radar
               </h4>
-              <p className="text-[10px] text-[#ffb59a]/70 line-clamp-1 mt-0.5">AI Double-Opt-In Intros</p>
+              <p className="text-[10px] text-[var(--text-secondary)] line-clamp-1 mt-0.5">Graph & Matching</p>
             </div>
           </button>
 
@@ -506,123 +446,81 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               triggerHaptic('light');
               if (onOpenPitchSimulator) onOpenPitchSimulator();
             }}
-            className="p-3.5 rounded-2xl bg-black/40 border border-white/10 hover:border-[#FF5C00]/60 hover:bg-[#FF5C00]/10 transition-all text-left group flex flex-col justify-between min-h-[105px]"
+            className="p-3.5 rounded-xl bg-[var(--bg-surface-subtle)] border border-white/[0.05] hover:border-amber-400/40 hover:bg-white/[0.06] transition-colors text-left flex flex-col justify-between min-h-[96px] cursor-pointer"
           >
             <div className="flex items-center justify-between w-full">
-              <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
-                <Flame className="w-4 h-4" />
+              <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                <Flame className="w-3.5 h-3.5" />
               </div>
-              <span className="text-[9px] font-bold text-amber-400">Sparring</span>
+              <span className="text-[9px] font-mono text-amber-400">Rehearse</span>
             </div>
             <div>
-              <h4 className="text-xs font-bold text-white group-hover:text-[#FF5C00] transition-colors">
-                AI Pitch Arena
+              <h4 className="text-xs font-semibold text-white">
+                Pitch Simulator
               </h4>
-              <p className="text-[10px] text-[#ffb59a]/70 line-clamp-1 mt-0.5">30s Elevator Rehearsal</p>
+              <p className="text-[10px] text-[var(--text-secondary)] line-clamp-1 mt-0.5">30s Rehearsal</p>
             </div>
           </button>
 
-          {/* Card 3: 3D Holographic Pass & NFC */}
+          {/* Card 3: Holographic Pass */}
           <button
             onClick={() => {
               triggerHaptic('light');
               if (onOpenDigitalBadge) onOpenDigitalBadge();
             }}
-            className="p-3.5 rounded-2xl bg-black/40 border border-white/10 hover:border-[#FF5C00]/60 hover:bg-[#FF5C00]/10 transition-all text-left group flex flex-col justify-between min-h-[105px]"
+            className="p-3.5 rounded-xl bg-[var(--bg-surface-subtle)] border border-white/[0.05] hover:border-emerald-400/40 hover:bg-white/[0.06] transition-colors text-left flex flex-col justify-between min-h-[96px] cursor-pointer"
           >
             <div className="flex items-center justify-between w-full">
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                <Award className="w-4 h-4" />
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                <Award className="w-3.5 h-3.5" />
               </div>
-              <span className="text-[9px] font-bold text-emerald-400">vCard 3.0</span>
+              <span className="text-[9px] font-mono text-emerald-400">Digital Pass</span>
             </div>
             <div>
-              <h4 className="text-xs font-bold text-white group-hover:text-[#FF5C00] transition-colors">
-                Holographic Pass
+              <h4 className="text-xs font-semibold text-white">
+                Contact Card
               </h4>
-              <p className="text-[10px] text-[#ffb59a]/70 line-clamp-1 mt-0.5">3D Tilt & NFC Wave</p>
+              <p className="text-[10px] text-[var(--text-secondary)] line-clamp-1 mt-0.5">QR & vCard Export</p>
             </div>
           </button>
 
-          {/* Card 4: Live Copilot & Venue Kit */}
+          {/* Card 4: Live Venue HUD */}
           <button
             onClick={() => {
               triggerHaptic('light');
               if (onOpenLiveCopilot) onOpenLiveCopilot();
             }}
-            className="p-3.5 rounded-2xl bg-black/40 border border-white/10 hover:border-[#FF5C00]/60 hover:bg-[#FF5C00]/10 transition-all text-left group flex flex-col justify-between min-h-[105px]"
+            className="p-3.5 rounded-xl bg-[var(--bg-surface-subtle)] border border-white/[0.05] hover:border-purple-400/40 hover:bg-white/[0.06] transition-colors text-left flex flex-col justify-between min-h-[96px] cursor-pointer"
           >
             <div className="flex items-center justify-between w-full">
-              <div className="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
-                <Compass className="w-4 h-4" />
+              <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                <Compass className="w-3.5 h-3.5" />
               </div>
-              <span className="text-[9px] font-bold text-purple-400">Live HUD</span>
+              <span className="text-[9px] font-mono text-purple-400">Venue HUD</span>
             </div>
             <div>
-              <h4 className="text-xs font-bold text-white group-hover:text-[#FF5C00] transition-colors">
-                Live Copilot & WiFi
+              <h4 className="text-xs font-semibold text-white">
+                Live Briefing
               </h4>
-              <p className="text-[10px] text-[#ffb59a]/70 line-clamp-1 mt-0.5">Survival Cheatsheet</p>
+              <p className="text-[10px] text-[var(--text-secondary)] line-clamp-1 mt-0.5">Stages & Schedules</p>
             </div>
           </button>
         </div>
       </div>
-      <div 
-        onClick={() => {
-          triggerHaptic('light');
-          if (onOpenGamification) onOpenGamification();
-        }}
-        className="p-5 rounded-3xl bg-[#140804] border border-white/10 hover:border-[#FF5C00]/40 transition-all cursor-pointer flex flex-col sm:flex-row items-center justify-between gap-4 group"
-      >
-        <div className="flex items-center gap-3.5 w-full sm:w-auto">
-          <div className="w-12 h-12 rounded-2xl bg-[#FF5C00]/15 text-[#FF5C00] flex items-center justify-center font-bold text-xl flex-shrink-0">
-            {gamification.levelBadge}
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-[#fadcd2]">
-                Rank: {gamification.levelTitle}
-              </span>
-              <span className="text-[10px] text-[#FF5C00] font-bold px-2.5 py-0.5 rounded-full bg-[#FF5C00]/20">
-                Level {gamification.level}
-              </span>
-            </div>
-            <p className="text-xs text-[#e4beb1]/60 mt-0.5">
-              {gamification.totalXp} XP total • {gamification.badges.filter(b => b.isUnlocked).length} badges unlocked
-            </p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-3.5 w-full sm:w-auto justify-between sm:justify-end">
-          <div className="w-36 sm:w-48 space-y-1.5">
-            <div className="flex justify-between text-[11px] text-[#e4beb1]/70 font-semibold">
-              <span>Tier Progress</span>
-              <span>{gamification.levelProgressPercent}%</span>
-            </div>
-            <div className="w-full h-2 bg-black/60 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[#FF5C00] rounded-full transition-all duration-700"
-                style={{ width: `${gamification.levelProgressPercent}%` }}
-              />
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-[#e4beb1]/60 group-hover:text-[#FF5C00] group-hover:translate-x-0.5 transition-all" />
-        </div>
-      </div>
-
-      {/* Event Lifecycle Experience Strip: BEFORE -> CAPTURE -> UNDERSTAND -> REFLECT -> ACT */}
-      <div className="p-5 rounded-3xl bg-gradient-to-br from-[#1d0e07] via-[#140804] to-[#0d0502] border border-[#FF5C00]/30 shadow-xl space-y-3.5">
+      {/* Experience Workflow Strip: Before -> Capture -> Understand -> Reflect -> Act */}
+      <div className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl p-5 sm:p-6 space-y-3.5 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#FF5C00] animate-pulse" />
-            <span className="text-[11px] font-bold text-[#FF5C00] uppercase tracking-wider">
-              Experience Flow • Before → Capture → Understand → Reflect → Act
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]" />
+            <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-secondary)]">
+              Workflow Pipeline
             </span>
           </div>
-          <span className="text-[11px] text-[#e4beb1]/60">5 Pillars of Momentum</span>
+          <span className="text-[11px] font-mono text-[var(--text-secondary)]">5 Phases</span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
           {/* 1. BEFORE */}
           <button
             onClick={() => {
@@ -631,15 +529,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 onOpenSessionDossier(sessions[0]);
               }
             }}
-            className="p-3 rounded-2xl bg-black/40 border border-white/10 hover:border-[#FF5C00]/50 hover:bg-[#FF5C00]/10 transition-all text-left group flex flex-col justify-between min-h-[90px]"
+            className="p-3 rounded-xl bg-[var(--bg-surface-subtle)] border border-white/[0.05] hover:border-sky-400/40 hover:bg-white/[0.06] transition-colors text-left flex flex-col justify-between min-h-[85px] cursor-pointer"
           >
             <div className="flex items-center justify-between w-full">
-              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400">1. Before</span>
-              <BookOpen className="w-3.5 h-3.5 text-blue-400 group-hover:scale-110 transition-transform" />
+              <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400">1. Prepare</span>
+              <BookOpen className="w-3.5 h-3.5 text-sky-400" />
             </div>
             <div>
-              <p className="text-xs font-bold text-white group-hover:text-[#FF5C00]">Speaker Briefing</p>
-              <p className="text-[10px] text-[#e4beb1]/60 mt-0.5">Dossier & Angles</p>
+              <p className="text-xs font-semibold text-white">Speaker Dossier</p>
+              <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">Briefing & Background</p>
             </div>
           </button>
 
@@ -649,15 +547,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               triggerHaptic('light');
               onOpenCapture();
             }}
-            className="p-3 rounded-2xl bg-black/40 border border-white/10 hover:border-[#FF5C00]/50 hover:bg-[#FF5C00]/10 transition-all text-left group flex flex-col justify-between min-h-[90px]"
+            className="p-3 rounded-xl bg-[var(--bg-surface-subtle)] border border-white/[0.05] hover:border-[var(--accent-primary)]/40 hover:bg-white/[0.06] transition-colors text-left flex flex-col justify-between min-h-[85px] cursor-pointer"
           >
             <div className="flex items-center justify-between w-full">
-              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#FF5C00]/20 text-[#FF5C00]">2. Capture</span>
-              <Mic className="w-3.5 h-3.5 text-[#FF5C00] group-hover:scale-110 transition-transform" />
+              <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400">2. Capture</span>
+              <Mic className="w-3.5 h-3.5 text-sky-400" />
             </div>
             <div>
-              <p className="text-xs font-bold text-white group-hover:text-[#FF5C00]">1-Tap Instant</p>
-              <p className="text-[10px] text-[#e4beb1]/60 mt-0.5">Audio, Idea, Quote</p>
+              <p className="text-xs font-semibold text-white">Instant Capture</p>
+              <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">Audio & Notes</p>
             </div>
           </button>
 
@@ -667,15 +565,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               triggerHaptic('light');
               onSelectTab('notes');
             }}
-            className="p-3 rounded-2xl bg-black/40 border border-white/10 hover:border-[#FF5C00]/50 hover:bg-[#FF5C00]/10 transition-all text-left group flex flex-col justify-between min-h-[90px]"
+            className="p-3 rounded-xl bg-[var(--bg-surface-subtle)] border border-white/[0.05] hover:border-purple-400/40 hover:bg-white/[0.06] transition-colors text-left flex flex-col justify-between min-h-[85px] cursor-pointer"
           >
             <div className="flex items-center justify-between w-full">
-              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300">3. Understand</span>
-              <BrainCircuit className="w-3.5 h-3.5 text-purple-300 group-hover:scale-110 transition-transform" />
+              <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400">3. Synthesize</span>
+              <BrainCircuit className="w-3.5 h-3.5 text-purple-400" />
             </div>
             <div>
-              <p className="text-xs font-bold text-white group-hover:text-[#FF5C00]">Notes & Synthesis</p>
-              <p className="text-[10px] text-[#e4beb1]/60 mt-0.5">Theses & Contrarian</p>
+              <p className="text-xs font-semibold text-white">Structured Notes</p>
+              <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">Core Insights</p>
             </div>
           </button>
 
@@ -687,15 +585,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 onOpenPostEventReview();
               }
             }}
-            className="p-3 rounded-2xl bg-black/40 border border-[#FF5C00]/40 hover:border-[#FF5C00] hover:bg-[#FF5C00]/15 transition-all text-left group flex flex-col justify-between min-h-[90px]"
+            className="p-3 rounded-xl bg-[var(--bg-surface-subtle)] border border-white/[0.05] hover:border-emerald-400/40 hover:bg-white/[0.06] transition-colors text-left flex flex-col justify-between min-h-[85px] cursor-pointer"
           >
             <div className="flex items-center justify-between w-full">
-              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">4. Reflect</span>
-              <Compass className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+              <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">4. Reflect</span>
+              <Compass className="w-3.5 h-3.5 text-emerald-400" />
             </div>
             <div>
-              <p className="text-xs font-bold text-white group-hover:text-[#FF5C00]">5-Pillar Review</p>
-              <p className="text-[10px] text-[#e4beb1]/60 mt-0.5">Mindset & Summary</p>
+              <p className="text-xs font-semibold text-white">Event Review</p>
+              <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">Takeaway Analysis</p>
             </div>
           </button>
 
@@ -705,32 +603,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               triggerHaptic('light');
               onSelectTab('followups');
             }}
-            className="p-3 rounded-2xl bg-black/40 border border-white/10 hover:border-[#FF5C00]/50 hover:bg-[#FF5C00]/10 transition-all text-left group flex flex-col justify-between min-h-[90px] col-span-2 sm:col-span-1"
+            className="p-3 rounded-xl bg-[var(--bg-surface-subtle)] border border-white/[0.05] hover:border-amber-400/40 hover:bg-white/[0.06] transition-colors text-left flex flex-col justify-between min-h-[85px] col-span-2 sm:col-span-1 cursor-pointer"
           >
             <div className="flex items-center justify-between w-full">
-              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">5. Act</span>
-              <Target className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+              <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400">5. Execute</span>
+              <Target className="w-3.5 h-3.5 text-amber-400" />
             </div>
             <div>
-              <p className="text-xs font-bold text-white group-hover:text-[#FF5C00]">Follow-Up CRM</p>
-              <p className="text-[10px] text-[#e4beb1]/60 mt-0.5">Alerts & Outreach</p>
+              <p className="text-xs font-semibold text-white">Follow-Up CRM</p>
+              <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">Outreach Queue</p>
             </div>
           </button>
         </div>
       </div>
 
-      {/* Offline Usage Statistics & Local Storage Summary */}
-      <OfflineUsageCard
-        connections={connections}
-        moments={moments}
-        ideas={ideas}
-        onOpenContingency={onOpenContingency}
-      />
-
-      {/* Next Up Live Talk Card with Speaker Briefing (Before) & Notes (During) */}
-      <div className="bg-[#140b07] border border-white/10 rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-5">
+      {/* Next Up Session Card */}
+      <div className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-sm">
         <div className="flex items-center gap-4 w-full sm:w-auto">
-          <div className="w-18 h-18 rounded-2xl overflow-hidden bg-black flex-shrink-0 border border-white/10">
+          <div className="w-16 h-16 rounded-xl overflow-hidden bg-black flex-shrink-0 border border-white/[0.08]">
             <img
               src={nextSession.heroImage}
               alt={nextSession.speaker}
@@ -739,15 +629,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#FF5C00]/20 text-[#FF5C00] font-bold uppercase tracking-wider">
-                Next Up • {nextSession.timeStr}
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-[var(--accent-primary)] uppercase tracking-wider">
+                Next · {nextSession.timeStr}
               </span>
-              <span className="text-xs text-[#e4beb1]/60">{nextSession.stage}</span>
+              <span className="text-xs text-[var(--text-secondary)]">{nextSession.stage}</span>
             </div>
-            <h3 className="text-lg font-bold font-serif-display text-[#fadcd2] mt-1">
+            <h3 className="text-base font-semibold text-white mt-1">
               {nextSession.title}
             </h3>
-            <p className="text-xs text-[#e4beb1]/70 mt-0.5">{nextSession.speaker}</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">{nextSession.speaker}</p>
           </div>
         </div>
 
@@ -759,9 +649,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 onOpenSessionDossier(sessions[0]);
               }
             }}
-            className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-[#1d0e07] hover:bg-[#2c140a] text-blue-300 text-xs font-semibold border border-blue-500/30 flex items-center justify-center gap-2 flex-shrink-0 transition-colors min-h-[48px] active:scale-95"
+            className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-sky-400 text-xs font-medium border border-sky-500/20 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
-            <BookOpen className="w-4 h-4 text-blue-400" />
+            <BookOpen className="w-3.5 h-3.5" />
             <span>Speaker Dossier</span>
           </button>
 
@@ -770,46 +660,46 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               triggerHaptic('light');
               onOpenAddIdea();
             }}
-            className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-[#221008] hover:bg-[#32160c] text-[#ffb59a] text-xs font-semibold border border-white/10 flex items-center justify-center gap-2 flex-shrink-0 transition-colors min-h-[48px] active:scale-95"
+            className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-amber-400 text-xs font-medium border border-amber-500/20 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
-            <Lightbulb className="w-4 h-4 text-[#FF5C00]" />
-            <span>Capture Notes</span>
+            <Lightbulb className="w-3.5 h-3.5" />
+            <span>Take Notes</span>
           </button>
         </div>
       </div>
 
-      {/* Met Today Avatar Carousel */}
-      <div className="space-y-4">
+      {/* Met Today Carousel */}
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#e4beb1] flex items-center gap-2">
-            <Users className="w-4 h-4 text-[#FF5C00]" />
-            <span>People Met Today ({connections.length})</span>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] font-mono flex items-center gap-2">
+            <Users className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+            <span>Captured Contacts ({connections.length})</span>
           </h2>
           <button
             onClick={() => {
               triggerHaptic('light');
               onSelectTab('people');
             }}
-            className="text-xs text-[#FF5C00] font-semibold hover:underline flex items-center gap-1 min-h-[36px]"
+            className="text-xs text-[var(--accent-primary)] font-medium hover:underline flex items-center gap-1 cursor-pointer"
           >
             <span>View All</span>
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-2">
+        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
           {/* Add Connection Bubble */}
           <button
             onClick={() => {
               triggerHaptic('light');
               onOpenQuickConnect();
             }}
-            className="flex-shrink-0 flex flex-col items-center justify-center w-18 h-22 rounded-2xl bg-[#1a0c06] border border-dashed border-[#FF5C00]/50 hover:border-[#FF5C00] transition-colors group active:scale-95"
+            className="flex-shrink-0 flex flex-col items-center justify-center w-16 h-20 rounded-xl bg-white/[0.03] border border-dashed border-white/[0.15] hover:border-[var(--accent-primary)] transition-colors group cursor-pointer"
           >
-            <div className="w-10 h-10 rounded-full bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Bolt className="w-5 h-5 fill-current" />
+            <div className="w-8 h-8 rounded-full bg-white/[0.05] text-[var(--accent-primary)] flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Bolt className="w-4 h-4 fill-current" />
             </div>
-            <span className="text-[11px] text-[#e4beb1] font-semibold mt-1.5">Add</span>
+            <span className="text-[10px] text-[var(--text-secondary)] font-mono mt-1">Add</span>
           </button>
 
           {/* Connection Avatars */}
@@ -820,15 +710,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 triggerHaptic('light');
                 onSelectConnection(c);
               }}
-              className="flex-shrink-0 flex flex-col items-center justify-center w-18 h-22 rounded-2xl bg-[#140804] border border-white/5 hover:border-[#FF5C00]/40 transition-all cursor-pointer group p-1.5 active:scale-95"
+              className="flex-shrink-0 flex flex-col items-center justify-center w-16 h-20 rounded-xl bg-[var(--bg-surface-card)] border border-white/[0.05] hover:border-[var(--accent-primary)]/40 transition-colors cursor-pointer group p-1"
             >
-              <div className="w-11 h-11 rounded-full overflow-hidden border border-white/10 group-hover:scale-105 transition-transform relative">
+              <div className="w-9 h-9 rounded-full overflow-hidden border border-white/10 group-hover:scale-105 transition-transform relative">
                 <img src={c.avatarUrl} alt={c.name} className="w-full h-full object-cover" />
                 {c.priority === 'high' && (
-                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#FF5C00] rounded-full border-2 border-black"></span>
+                  <span className="absolute bottom-0 right-0 w-2 h-2 bg-[var(--accent-primary)] rounded-full border border-black" />
                 )}
               </div>
-              <span className="text-[11px] text-[#fadcd2] font-medium mt-1.5 truncate w-full text-center">
+              <span className="text-[10px] text-white/90 font-medium mt-1 truncate w-full text-center">
                 {c.name.split(' ')[0]}
               </span>
             </div>
@@ -837,52 +727,53 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* Grid: Network Trend & Active Action Queue */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Momentum Velocity Chart */}
-        <div className="bg-[#140b07] border border-white/10 rounded-3xl p-5 sm:p-6">
+        <div className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl p-5 sm:p-6 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#e4beb1] flex items-center gap-1.5">
-                <TrendingUp className="w-4 h-4 text-[#FF5C00]" />
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] font-mono flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                 <span>Connection Velocity</span>
               </h3>
-              <p className="text-xs text-[#e4beb1]/60 mt-0.5">Accumulation pacing through the day</p>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">Rate of contact additions over time</p>
             </div>
-            <span className="text-xs font-bold text-[#FF5C00] bg-[#FF5C00]/10 px-2.5 py-1 rounded-full">
+            <span className="text-xs font-mono font-medium text-[var(--accent-primary)] bg-sky-500/10 px-2 py-0.5 rounded-full border border-sky-500/20">
               {Math.max(1, Math.round(currentCount / 6))} / hr
             </span>
           </div>
 
-          <div className="h-40 w-full pt-3">
+          <div className="h-40 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#FF5C00" stopOpacity={0.6} />
-                    <stop offset="95%" stopColor="#FF5C00" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <XAxis
                   dataKey="time"
-                  stroke="#66554e"
-                  fontSize={11}
+                  stroke="#64748b"
+                  fontSize={10}
                   tickLine={false}
                   axisLine={false}
+                  fontFamily="var(--font-mono)"
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#180b06',
+                    backgroundColor: '#0e1420',
                     borderColor: 'rgba(255,255,255,0.1)',
-                    borderRadius: 12,
-                    fontSize: 12,
-                    color: '#fadcd2',
+                    borderRadius: 8,
+                    fontSize: 11,
+                    color: '#f8fafc',
                   }}
                 />
                 <Area
                   type="monotone"
                   dataKey="connections"
-                  stroke="#FF5C00"
-                  strokeWidth={2.5}
+                  stroke="#38bdf8"
+                  strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorCount)"
                 />
@@ -892,25 +783,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Action Queue: Follow-ups Due */}
-        <div className="bg-[#140b07] border border-white/10 rounded-3xl p-5 sm:p-6 flex flex-col justify-between">
+        <div className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl p-5 sm:p-6 flex flex-col justify-between shadow-sm">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#e4beb1] flex items-center gap-1.5">
-                <AlarmClock className="w-4 h-4 text-[#FF5C00]" />
-                <span>Follow-up Queue</span>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] font-mono flex items-center gap-1.5">
+                <AlarmClock className="w-3.5 h-3.5 text-amber-400" />
+                <span>Follow-Up Queue</span>
               </h3>
               <button
                 onClick={() => {
                   triggerHaptic('light');
                   onSelectTab('followups');
                 }}
-                className="text-xs text-[#FF5C00] font-semibold hover:underline"
+                className="text-xs text-[var(--accent-primary)] font-medium hover:underline cursor-pointer"
               >
-                Tracker ({overdueFollowUps.length})
+                View all ({overdueFollowUps.length})
               </button>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {overdueFollowUps.slice(0, 3).map((item) => (
                 <div
                   key={item.id}
@@ -918,35 +809,40 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     triggerHaptic('light');
                     onSelectConnection(item);
                   }}
-                  className="flex items-center justify-between p-3 rounded-2xl bg-[#20110a] hover:bg-[#2e170e] transition-colors cursor-pointer border border-white/5 active:scale-98"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--bg-surface-subtle)] hover:bg-white/[0.06] transition-colors cursor-pointer border border-white/[0.04]"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5">
                     <img
                       src={item.avatarUrl}
                       alt={item.name}
-                      className="w-9 h-9 rounded-full object-cover border border-white/10"
+                      className="w-8 h-8 rounded-full object-cover border border-white/10"
                     />
                     <div>
-                      <p className="text-xs font-bold text-[#fadcd2]">{item.name}</p>
-                      <p className="text-[11px] text-[#e4beb1]/60">{item.company}</p>
+                      <p className="text-xs font-medium text-white">{item.name}</p>
+                      <p className="text-[11px] text-[var(--text-secondary)]">{item.company}</p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#FF5C00]/20 text-[#FF5C00]">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
                     {item.followUpStatus === 'overdue' ? 'Overdue' : 'Due Today'}
                   </span>
                 </div>
               ))}
+              {overdueFollowUps.length === 0 && (
+                <div className="text-center py-6 text-xs text-[var(--text-secondary)]">
+                  No overdue follow-ups pending.
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs text-[#e4beb1]/60 mt-4">
+          <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs text-[var(--text-secondary)] mt-3">
             <span>{moments.length} Moments captured</span>
-            <span>{ideas.length} Ideas logged</span>
+            <span>{ideas.length} Ideas recorded</span>
           </div>
         </div>
       </div>
 
-      {/* Offline Usage Statistics & Storage Protection */}
+      {/* Offline Storage Summary */}
       <OfflineUsageCard
         connections={connections}
         moments={moments}
@@ -956,5 +852,3 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     </div>
   );
 };
-
-

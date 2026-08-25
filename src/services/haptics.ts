@@ -3,7 +3,7 @@
  * Provides subtle tactile feedback for navigation, saving, deleting, and milestone achievements.
  */
 
-export type HapticType = 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error' | 'delete' | 'milestone' | 'unlock' | 'selection';
+export type HapticType = 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error' | 'delete' | 'milestone' | 'unlock' | 'selection' | 'nfc_handshake' | 'nfc_bump';
 
 export const triggerHaptic = (type: HapticType = 'light'): void => {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') return;
@@ -23,6 +23,11 @@ export const triggerHaptic = (type: HapticType = 'light'): void => {
       case 'heavy':
         // Firm confirmation (45ms)
         navigator.vibrate(45);
+        break;
+      case 'nfc_handshake':
+      case 'nfc_bump':
+        // Characteristic tactile triple-pulse handshake pattern for contactless phone bumps
+        navigator.vibrate([60, 40, 90, 40, 160]);
         break;
       case 'success':
         // Dual pleasant pulse for saving records
@@ -57,6 +62,7 @@ export const haptic = {
   tap: () => triggerHaptic('light'),
   medium: () => triggerHaptic('medium'),
   success: () => triggerHaptic('success'),
+  nfc: () => triggerHaptic('nfc_handshake'),
   delete: () => triggerHaptic('delete'),
   warning: () => triggerHaptic('warning'),
   error: () => triggerHaptic('error'),

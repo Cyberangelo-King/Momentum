@@ -1,10 +1,26 @@
-import React, { useState, useRef } from 'react';
-import { Connection, RelationshipType, PriorityLevel, EventConfig } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import { Connection, RelationshipType, PriorityLevel, EventConfig, NfcExchangeLog } from '../types';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { summarizeConnection } from '../services/aiService';
 import { compressImage } from '../services/imageCompression';
-import { Camera, Image as ImageIcon, Plus, Trash2, Bolt, Check, Sparkles, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { motion } from 'motion/react';
+import { NfcContactPayload, createNfcExchangeLog } from '../services/nfcService';
+import { triggerHaptic } from '../services/haptics';
+import { 
+  Camera, 
+  Image as ImageIcon, 
+  Plus, 
+  Trash2, 
+  Bolt, 
+  Check, 
+  Sparkles, 
+  X, 
+  ChevronDown, 
+  ChevronUp,
+  Smartphone,
+  Radio,
+  CheckCircle2
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface QuickConnectModalProps {
   isOpen: boolean;
@@ -12,6 +28,8 @@ interface QuickConnectModalProps {
   onSaveConnection: (connection: Connection) => void;
   existingCount: number;
   activeEvent?: EventConfig;
+  initialNfcData?: NfcContactPayload | null;
+  onOpenNfcScanner?: () => void;
 }
 
 export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
@@ -20,6 +38,8 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
   onSaveConnection,
   existingCount,
   activeEvent,
+  initialNfcData,
+  onOpenNfcScanner,
 }) => {
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
@@ -30,6 +50,9 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
   const [notes, setNotes] = useState('');
   const [relationship, setRelationship] = useState<RelationshipType>('lead');
   const [priority, setPriority] = useState<PriorityLevel>('high');
+  const [isNfcBumped, setIsNfcBumped] = useState(false);
+  const [nfcLog, setNfcLog] = useState<NfcExchangeLog | null>(null);
+  const [nfcSuccessToast, setNfcSuccessToast] = useState<string | null>(null);
   const [followUpDate, setFollowUpDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
@@ -41,6 +64,33 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
   const [isAiSummarizing, setIsAiSummarizing] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Pre-fill from initialNfcData if provided
+  useEffect(() => {
+    if (initialNfcData) {
+      setName(initialNfcData.name || '');
+      setCompany(initialNfcData.company || '');
+      setProfession(initialNfcData.profession || '');
+      setPhone(initialNfcData.phone || '');
+      setEmail(initialNfcData.email || '');
+      setLinkedin(initialNfcData.linkedin || '');
+      setNotes(initialNfcData.notes || '');
+      if (initialNfcData.avatarUrl) {
+        setAvatarUrl(initialNfcData.avatarUrl);
+      }
+      setIsNfcBumped(true);
+      const log = createNfcExchangeLog(
+        'bump',
+        initialNfcData.eventId || activeEvent?.id,
+        initialNfcData.eventName || activeEvent?.name,
+        'Pre-filled via Web-NFC phone bump'
+      );
+      setNfcLog(log);
+      setNfcSuccessToast(`Parsed NFC contact for ${initialNfcData.name}!`);
+      triggerHaptic('nfc_handshake');
+      setTimeout(() => setNfcSuccessToast(null), 4000);
+    }
+  }, [initialNfcData, activeEvent]);
 
   if (!isOpen) return null;
 
@@ -139,7 +189,10 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
       eventId: activeEvent?.id,
       eventContext: activeEvent?.name || 'Live Event',
       conversationMemory: memoryPoints,
-      tags,
+      tags: isNfcBumped ? Array.from(new Set([...tags, '#NFCBump'])) : tags,
+      isNfcCaptured: isNfcBumped,
+      nfcTimestamp: isNfcBumped ? (nfcLog?.timestamp || new Date().toISOString()) : undefined,
+      nfcExchangeHistory: nfcLog ? [nfcLog] : undefined,
     };
 
     onSaveConnection(newConnection);
@@ -159,6 +212,8 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
     setAvatarUrl('');
     setRelationship('lead');
     setPriority('high');
+    setIsNfcBumped(false);
+    setNfcLog(null);
     setShowAdvanced(false);
   };
 
@@ -188,16 +243,99 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
                 </p>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="text-white/60 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+
+            <div className="flex items-center gap-2">
+              {onOpenNfcScanner && (
+                <button
+                  type="button"
+                  onClick={onOpenNfcScanner}
+                  className="relative p-2 rounded-xl bg-[#FF5C00]/20 hover:bg-[#FF5C00]/30 text-[#FF5C00] border border-[#FF5C00]/40 transition-all flex items-center gap-1.5 text-xs font-bold"
+                  title="Bump Phone with Attendee"
+                >
+                  {/* Subtle Pulse Animation */}
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF5C00] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF5C00]"></span>
+                  </span>
+                  <Smartphone className="w-4 h-4 animate-pulse" />
+                  <span className="hidden sm:inline">NFC Bump</span>
+                </button>
+              )}
+
+              <button
+                onClick={onClose}
+                className="text-white/60 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSave} className="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1">
+            {/* NFC Success Toast Banner */}
+            <AnimatePresence>
+              {nfcSuccessToast && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="p-3 rounded-2xl bg-emerald-950/80 border border-emerald-500/50 text-emerald-200 text-xs font-semibold flex items-center justify-between shadow-lg"
+                >
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{nfcSuccessToast}</span>
+                  </div>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
+                    Pre-filled
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* NFC Bump Quick Trigger Bar */}
+            {onOpenNfcScanner && !isNfcBumped && (
+              <div 
+                onClick={onOpenNfcScanner}
+                className="p-3 rounded-2xl bg-gradient-to-r from-[#200e05] to-[#160a03] border border-[#FF5C00]/30 hover:border-[#FF5C00]/60 cursor-pointer transition-all flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="relative w-9 h-9 rounded-xl bg-[#FF5C00]/20 text-[#FF5C00] flex items-center justify-center">
+                    <Smartphone className="w-4 h-4" />
+                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF5C00] opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FF5C00]"></span>
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <span>Bump Phones to Auto-Fill</span>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-[#FF5C00]/20 text-[#ffb59a] font-mono">Web-NFC</span>
+                    </div>
+                    <p className="text-[11px] text-[#e4beb1]/60">Touch attendee's phone or badge to populate form</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="px-3 py-1.5 rounded-xl bg-[#FF5C00] text-black font-bold text-xs group-hover:brightness-110 transition-all flex items-center gap-1"
+                >
+                  <Radio className="w-3.5 h-3.5 animate-pulse" />
+                  <span>Scan</span>
+                </button>
+              </div>
+            )}
+
+            {isNfcBumped && (
+              <div className="p-2.5 rounded-xl bg-[#241208] border border-[#FF5C00]/40 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-[#ffb59a]">
+                  <Smartphone className="w-4 h-4 text-[#FF5C00]" />
+                  <span className="font-bold">Verified NFC Contact Exchange</span>
+                </div>
+                <span className="text-[10px] text-[#e4beb1]/70 font-mono">
+                  {nfcLog?.timeFormatted || 'Captured'}
+                </span>
+              </div>
+            )}
             {/* Photos & Badge Attachments Section */}
             <div className="p-4 rounded-2xl bg-[#180b06] border border-white/5 space-y-3">
               <div className="flex items-center justify-between">

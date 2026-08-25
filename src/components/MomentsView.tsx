@@ -97,7 +97,7 @@ export const MomentsView: React.FC<MomentsViewProps> = ({
     >
       {/* Toast feedback */}
       {deleteSuccessToast && (
-        <div className="fixed top-20 right-4 sm:right-8 z-50 p-4 bg-[#140b07] border border-rose-500/50 rounded-2xl shadow-2xl flex items-center gap-3 text-xs text-[#fadcd2] animate-fade-in">
+        <div className="fixed top-20 right-4 sm:right-8 z-50 p-4 bg-[var(--bg-surface-card)] border border-rose-500/50 rounded-2xl shadow-2xl flex items-center gap-3 text-xs text-white animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{deleteSuccessToast}</span>
         </div>
@@ -106,17 +106,17 @@ export const MomentsView: React.FC<MomentsViewProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[11px] font-bold text-[#FF5C00] tracking-widest uppercase">
+          <span className="text-[11px] font-bold text-[var(--accent-primary)] tracking-widest uppercase font-mono">
             Chronological Timeline
           </span>
-          <h1 className="text-2xl sm:text-3xl font-bold font-serif-display text-[#fadcd2] mt-0.5">
+          <h1 className="text-2xl sm:text-3xl font-bold font-serif-display text-white mt-0.5">
             Event Moments ({moments.length})
           </h1>
         </div>
 
         <button
           onClick={onOpenCapture}
-          className="px-4 py-2.5 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] flex items-center justify-center gap-2 shadow-lg shadow-[#FF5C00]/20 active:scale-95 transition-all self-start sm:self-auto"
+          className="px-4 py-2.5 rounded-xl bg-[var(--accent-primary)] text-black font-bold text-xs hover:brightness-110 flex items-center justify-center gap-2 shadow-lg shadow-[var(--accent-primary)]/20 active:scale-95 transition-all self-start sm:self-auto"
         >
           <Camera className="w-4 h-4" />
           <span>Capture Moment</span>
@@ -139,8 +139,8 @@ export const MomentsView: React.FC<MomentsViewProps> = ({
               onClick={() => setFilterType(tab.id as any)}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                 filterType === tab.id
-                  ? 'bg-[#FF5C00] text-black shadow-md'
-                  : 'bg-[#180b06] text-[#e4beb1]/80 hover:text-white border border-white/10'
+                  ? 'bg-[var(--accent-primary)] text-black shadow-md font-bold'
+                  : 'bg-[var(--bg-surface-card)] text-[var(--text-secondary)] hover:text-white border border-[var(--border-subtle)] hover:border-[var(--border-accent)]'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -151,7 +151,7 @@ export const MomentsView: React.FC<MomentsViewProps> = ({
       </div>
 
       {/* Timeline Stream */}
-      <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-2 sm:before:left-3 before:top-3 before:bottom-3 before:w-0.5 before:bg-[#FF5C00]/30">
+      <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-2 sm:before:left-3 before:top-3 before:bottom-3 before:w-0.5 before:bg-[var(--accent-primary)]/30">
         <AnimatePresence mode="popLayout">
           {filteredMoments.map((moment, index) => (
             <motion.div
@@ -163,24 +163,24 @@ export const MomentsView: React.FC<MomentsViewProps> = ({
               className="relative group"
             >
               {/* Timeline dot */}
-              <div className="absolute -left-6 sm:-left-8 top-2 w-4 h-4 rounded-full bg-[#180b06] border-2 border-[#FF5C00] flex items-center justify-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#FF5C00]"></div>
+              <div className="absolute -left-6 sm:-left-8 top-2 w-4 h-4 rounded-full bg-[var(--bg-surface-card)] border-2 border-[var(--accent-primary)] flex items-center justify-center">
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]"></div>
               </div>
 
               {/* Moment Card */}
-              <div className="bg-[#140b07] border border-white/10 hover:border-[#FF5C00]/40 rounded-2xl overflow-hidden transition-all shadow-lg">
+              <div className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] hover:border-[var(--border-accent)] rounded-2xl overflow-hidden transition-all shadow-md">
                 {/* Voice Memo Dedicated Player Block */}
                 {moment.type === 'voice' ? (
-                  <div className="bg-[#1c0e08] p-4 border-b border-white/5 space-y-3">
+                  <div className="bg-[var(--bg-surface-subtle)] p-4 border-b border-[var(--border-subtle)] space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-1 rounded-full bg-[#FF5C00]/20 text-[#FF5C00] text-[10px] font-bold border border-[#FF5C00]/30 flex items-center gap-1.5">
+                      <span className="px-2.5 py-1 rounded-full bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] text-[10px] font-bold border border-[var(--border-accent)] flex items-center gap-1.5 font-mono">
                         <Mic className="w-3 h-3" />
                         <span>VOICE MEMO</span>
                       </span>
 
                       <div className="flex items-center gap-2">
                         {moment.audioDuration && (
-                          <span className="text-[11px] font-mono text-[#e4beb1]/70 font-semibold">
+                          <span className="text-[11px] font-mono text-[var(--text-secondary)] font-semibold">
                             {moment.audioDuration}
                           </span>
                         )}
@@ -196,10 +196,10 @@ export const MomentsView: React.FC<MomentsViewProps> = ({
 
                     {/* Interactive Audio Player */}
                     {moment.mediaUrl && (
-                      <div className="flex items-center gap-3 p-3 bg-[#0d0603] rounded-xl border border-white/5">
+                      <div className="flex items-center gap-3 p-3 bg-[var(--bg-canvas)] rounded-xl border border-[var(--border-subtle)]">
                         <button
                           onClick={(e) => handleToggleAudio(moment, e)}
-                          className="w-10 h-10 rounded-xl bg-[#FF5C00] text-black flex items-center justify-center hover:bg-[#ff7a33] transition-transform active:scale-95 shrink-0 shadow-md"
+                          className="w-10 h-10 rounded-xl bg-[var(--accent-primary)] text-black flex items-center justify-center hover:brightness-110 transition-transform active:scale-95 shrink-0 shadow-md"
                           aria-label={playingMomentId === moment.id ? 'Pause memo' : 'Play voice memo'}
                         >
                           {playingMomentId === moment.id ? (
@@ -217,14 +217,14 @@ export const MomentsView: React.FC<MomentsViewProps> = ({
                                   style={{ height: `${h}px` }}
                                   className={`w-1 rounded-full transition-all ${
                                     playingMomentId === moment.id
-                                      ? 'bg-[#FF5C00] animate-pulse'
+                                      ? 'bg-[var(--accent-primary)] animate-pulse'
                                       : 'bg-white/20'
                                   }`}
                                 />
                               )
                             )}
                           </div>
-                          <p className="text-[10px] text-[#e4beb1]/60 truncate mt-1 font-mono">
+                          <p className="text-[10px] text-[var(--text-secondary)] truncate mt-1 font-mono">
                             {playingMomentId === moment.id
                               ? '▶ Playing audio recording...'
                               : 'Tap to listen to speech recording'}
@@ -254,7 +254,7 @@ export const MomentsView: React.FC<MomentsViewProps> = ({
                         />
                       )}
 
-                      <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md text-[10px] font-bold text-[#FF5C00] border border-white/10 flex items-center gap-1.5">
+                      <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md text-[10px] font-bold text-[var(--accent-primary)] border border-white/10 flex items-center gap-1.5 font-mono">
                         {moment.type === 'video' ? <Video className="w-3 h-3" /> : <Camera className="w-3 h-3" />}
                         <span>{moment.type.toUpperCase()}</span>
                       </span>
@@ -274,12 +274,12 @@ export const MomentsView: React.FC<MomentsViewProps> = ({
                 {/* Text content & Speech Transcript */}
                 <div className="p-5 space-y-3">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#FF5C00] font-bold tracking-wide flex items-center gap-1">
+                    <span className="text-[var(--accent-primary)] font-bold tracking-wide flex items-center gap-1 font-mono">
                       <Clock className="w-3 h-3 inline" />
                       {moment.timestamp} • {moment.location}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="text-[#e4beb1]/50">{moment.date}</span>
+                      <span className="text-[var(--text-secondary)] font-mono">{moment.date}</span>
                       {moment.type !== 'voice' && !moment.mediaUrl && (
                         <button
                           onClick={(e) => handleInitiateDelete(moment, e)}
@@ -292,7 +292,7 @@ export const MomentsView: React.FC<MomentsViewProps> = ({
                     </div>
                   </div>
 
-                  <h3 className="text-base font-bold font-serif-display text-[#fadcd2]">
+                  <h3 className="text-base font-bold font-serif-display text-white">
                     {moment.title}
                   </h3>
 
@@ -300,18 +300,18 @@ export const MomentsView: React.FC<MomentsViewProps> = ({
                     <div
                       className={
                         moment.type === 'voice'
-                          ? 'p-3 bg-[#1e0f08] border border-white/5 rounded-xl'
+                          ? 'p-3 bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] rounded-xl'
                           : ''
                       }
                     >
                       {moment.type === 'voice' && (
-                        <span className="text-[10px] uppercase font-bold text-[#FF5C00] tracking-wider mb-1 flex items-center gap-1">
+                        <span className="text-[10px] uppercase font-bold text-[var(--accent-primary)] tracking-wider mb-1 flex items-center gap-1 font-mono">
                           <Sparkles className="w-3 h-3" />
                           <span>Speech-to-Text Transcription:</span>
                         </span>
                       )}
                       <p
-                        className={`text-xs text-[#e4beb1]/85 leading-relaxed ${
+                        className={`text-xs text-[var(--text-primary)] leading-relaxed ${
                           moment.type === 'voice' ? 'italic font-serif-body' : ''
                         }`}
                       >
@@ -322,8 +322,8 @@ export const MomentsView: React.FC<MomentsViewProps> = ({
 
                   {/* Tagged people chips */}
                   {moment.taggedPeopleIds && moment.taggedPeopleIds.length > 0 && (
-                    <div className="pt-2 border-t border-white/5 flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] text-[#e4beb1]/60 font-semibold uppercase tracking-wider">
+                    <div className="pt-2 border-t border-[var(--border-subtle)] flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider font-mono">
                         Tagged:
                       </span>
                       {moment.taggedPeopleIds.map((pid) => {
@@ -333,7 +333,7 @@ export const MomentsView: React.FC<MomentsViewProps> = ({
                           <button
                             key={pid}
                             onClick={() => onSelectConnection(person)}
-                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#271812] hover:bg-[#381a0e] text-[#ffb59a] text-[11px] font-semibold border border-white/5 transition-colors"
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--bg-surface-subtle)] hover:bg-white/[0.08] text-white text-[11px] font-semibold border border-[var(--border-subtle)] transition-colors"
                           >
                             <img
                               src={person.avatarUrl}
@@ -396,11 +396,11 @@ export const MomentsView: React.FC<MomentsViewProps> = ({
             )}
 
             <div className="mt-4 text-center max-w-xl">
-              <h3 className="text-lg font-bold font-serif-display text-[#fadcd2]">
+              <h3 className="text-lg font-bold font-serif-display text-white">
                 {activeLightbox.title}
               </h3>
-              <p className="text-xs text-[#e4beb1]/80 mt-1">{activeLightbox.caption}</p>
-              <p className="text-[11px] text-[#FF5C00] font-semibold mt-1">
+              <p className="text-xs text-[var(--text-secondary)] mt-1">{activeLightbox.caption}</p>
+              <p className="text-[11px] text-[var(--accent-primary)] font-semibold mt-1 font-mono">
                 {activeLightbox.timestamp} • {activeLightbox.location}
               </p>
             </div>

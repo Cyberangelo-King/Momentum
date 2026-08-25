@@ -119,25 +119,22 @@ END:VCARD`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-black/85 backdrop-blur-xl animate-fade-in">
-      <div className="w-full max-w-2xl max-h-[95vh] rounded-3xl bg-[#0d0704] border border-[#FF5C00]/30 shadow-2xl flex flex-col overflow-hidden text-white">
+      <div className="w-full max-w-2xl max-h-[95vh] rounded-3xl bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] shadow-2xl flex flex-col overflow-hidden text-[var(--text-primary)]">
         {/* Header */}
-        <div className="p-4 md:p-5 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-[#1c0a03] to-[#0d0704]">
+        <div className="p-4 md:p-5 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-surface-subtle)]">
           <div className="flex items-center gap-3">
-            <div 
-              className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg"
-              style={{ backgroundColor: `${brandColor}25`, color: brandColor }}
-            >
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--border-accent)]">
               <QrCode className="w-5 h-5 animate-pulse" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-white tracking-tight">Holographic Pass & NFC Studio</h2>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center gap-1">
+                <h2 className="text-lg font-bold text-white tracking-tight font-serif-display">Holographic Pass & NFC Studio</h2>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold font-mono flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3" />
                   Live Verified
                 </span>
               </div>
-              <p className="text-xs text-[#ffb59a]/70">
+              <p className="text-xs text-[var(--text-secondary)]">
                 Interactive tilt-responsive digital badge with vCard contact exchange
               </p>
             </div>
@@ -155,8 +152,8 @@ END:VCARD`;
         </div>
 
         {/* Badge Tier Selector */}
-        <div className="px-5 py-2.5 bg-[#140803] border-b border-white/5 flex items-center justify-between">
-          <span className="text-xs font-bold text-neutral-400">Badge Tier:</span>
+        <div className="px-5 py-2.5 bg-[var(--bg-surface-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between">
+          <span className="text-xs font-bold text-[var(--text-secondary)] font-mono">Badge Tier:</span>
           <div className="flex items-center gap-1.5">
             {(['FOUNDER', 'VIP', 'SPEAKER', 'ATTENDEE'] as const).map((role) => (
               <button
@@ -165,9 +162,9 @@ END:VCARD`;
                   triggerHaptic('light');
                   setBadgeRole(role);
                 }}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold font-mono transition-all ${
                   badgeRole === role
-                    ? 'bg-[#FF5C00] text-black shadow-md'
+                    ? 'bg-[var(--accent-primary)] text-black shadow-md'
                     : 'bg-white/5 text-neutral-400 hover:text-white'
                 }`}
               >
@@ -180,7 +177,7 @@ END:VCARD`;
         {/* Main Content Area */}
         <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col items-center justify-center space-y-6">
           {/* Lanyard Top Strap */}
-          <div className="w-16 h-4 bg-gradient-to-b from-[#331508] to-[#1a0a03] rounded-t-lg border-t border-x border-[#FF5C00]/40 flex items-center justify-center -mb-2 shadow-inner">
+          <div className="w-16 h-4 bg-[var(--bg-surface-subtle)] rounded-t-lg border-t border-x border-[var(--border-accent)] flex items-center justify-center -mb-2 shadow-inner">
             <div className="w-8 h-1.5 bg-black/60 rounded-full" />
           </div>
 
@@ -198,14 +195,14 @@ END:VCARD`;
               style={{
                 transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
                 transformStyle: 'preserve-3d',
-                boxShadow: '0 25px 50px -12px rgba(255, 92, 0, 0.25)',
+                boxShadow: '0 25px 50px -12px var(--accent-glow)',
               }}
-              className="relative w-72 sm:w-80 h-[430px] rounded-3xl bg-gradient-to-b from-[#1f0d04] via-[#120602] to-[#070301] border-2 border-[#FF5C00]/50 p-6 flex flex-col justify-between overflow-hidden"
+              className="relative w-72 sm:w-80 h-[430px] rounded-3xl bg-[var(--bg-surface-card)] border-2 border-[var(--border-accent)] p-6 flex flex-col justify-between overflow-hidden"
             >
               {/* Holographic Glare Overlay */}
               <div
                 style={{
-                  background: `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255, 181, 154, 0.25) 0%, rgba(255, 92, 0, 0.1) 40%, transparent 80%)`,
+                  background: `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255, 255, 255, 0.15) 0%, transparent 60%)`,
                 }}
                 className="absolute inset-0 pointer-events-none transition-opacity duration-75 mix-blend-screen"
               />
@@ -216,14 +213,14 @@ END:VCARD`;
                   <h3 className="font-serif-display text-lg font-bold text-white tracking-tight">
                     {eventName}
                   </h3>
-                  <p className="text-[10px] text-[#ffb59a] font-semibold uppercase tracking-wider">
+                  <p className="text-[10px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider font-mono">
                     {eventYear} • {venue}
                   </p>
                 </div>
 
                 {/* Role Pill */}
-                <span className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider shadow-lg ${
-                  badgeRole === 'FOUNDER' ? 'bg-[#FF5C00] text-black' :
+                <span className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-lg ${
+                  badgeRole === 'FOUNDER' ? 'bg-[var(--accent-primary)] text-black' :
                   badgeRole === 'VIP' ? 'bg-amber-400 text-black' :
                   badgeRole === 'SPEAKER' ? 'bg-purple-500 text-white' :
                   'bg-white/20 text-white'
@@ -234,32 +231,32 @@ END:VCARD`;
 
               {/* Center User Profile & Photo */}
               <div className="relative z-10 text-center space-y-2.5 my-auto">
-                <div className="relative w-20 h-20 mx-auto rounded-full p-1 bg-gradient-to-tr from-[#FF5C00] to-amber-400 shadow-xl">
+                <div className="relative w-20 h-20 mx-auto rounded-full p-1 bg-gradient-to-tr from-[var(--accent-primary)] to-[var(--accent-secondary)] shadow-xl">
                   <img
                     src={profile.avatarUrl}
                     alt={profile.name}
                     className="w-full h-full rounded-full object-cover bg-neutral-900"
                   />
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-black border border-[#FF5C00] flex items-center justify-center">
-                    <Sparkles className="w-3 h-3 text-[#FF5C00]" />
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-black border border-[var(--accent-primary)] flex items-center justify-center">
+                    <Sparkles className="w-3 h-3 text-[var(--accent-primary)]" />
                   </div>
                 </div>
 
                 <div>
                   <h4 className="text-base font-bold text-white tracking-tight">{profile.name}</h4>
-                  <p className="text-xs text-[#ffb59a] font-medium">{profile.title}</p>
+                  <p className="text-xs text-[var(--text-secondary)] font-medium">{profile.title}</p>
                 </div>
               </div>
 
               {/* QR Code & Contact Footer */}
-              <div className="relative z-10 p-3 rounded-2xl bg-black/70 border border-white/10 flex items-center justify-between gap-3">
-                <div className="w-14 h-14 rounded-xl bg-[#0e0704] border border-[#FF5C00]/30 p-1 shrink-0 flex items-center justify-center overflow-hidden">
+              <div className="relative z-10 p-3 rounded-2xl bg-[var(--bg-canvas)] border border-[var(--border-subtle)] flex items-center justify-between gap-3">
+                <div className="w-14 h-14 rounded-xl bg-white p-1 shrink-0 flex items-center justify-center overflow-hidden">
                   <img src={qrCodeUrl} alt="Contact QR Code" className="w-full h-full object-contain" />
                 </div>
                 <div className="text-left min-w-0 flex-1">
-                  <span className="text-[9px] uppercase font-bold text-neutral-400 block">Instant vCard Pass</span>
+                  <span className="text-[9px] uppercase font-bold text-[var(--text-secondary)] block font-mono">Instant vCard Pass</span>
                   <p className="text-[11px] text-white truncate font-medium">{profile.email}</p>
-                  <span className="text-[9px] text-[#FF5C00] font-semibold">Scan to save directly to phone</span>
+                  <span className="text-[9px] text-[var(--accent-primary)] font-semibold font-mono">Scan to save to phone</span>
                 </div>
               </div>
             </div>
@@ -269,7 +266,7 @@ END:VCARD`;
           <div className="w-full max-w-sm grid grid-cols-2 gap-2.5">
             <button
               onClick={handleDownloadVCard}
-              className="py-3 px-3 rounded-2xl bg-[#FF5C00] hover:bg-[#FF7A33] text-black font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#FF5C00]/20 active:scale-95 transition-all"
+              className="py-3 px-3 rounded-2xl bg-[var(--accent-primary)] hover:brightness-110 text-black font-bold text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
             >
               <Download className="w-4 h-4" />
               Download vCard .vcf
@@ -296,9 +293,9 @@ END:VCARD`;
             <button
               onClick={handleSimulateNfcBeam}
               disabled={isNfcBeaming}
-              className="col-span-2 py-2.5 px-3 rounded-2xl bg-gradient-to-r from-[#2a1105] to-[#150702] border border-[#FF5C00]/40 text-[#ffb59a] hover:text-white font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all"
+              className="col-span-2 py-2.5 px-3 rounded-2xl bg-[var(--bg-surface-subtle)] border border-[var(--border-accent)] text-[var(--accent-primary)] hover:text-white font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all"
             >
-              <Smartphone className={`w-4 h-4 ${isNfcBeaming ? 'animate-bounce text-[#FF5C00]' : ''}`} />
+              <Smartphone className={`w-4 h-4 ${isNfcBeaming ? 'animate-bounce text-[var(--accent-primary)]' : ''}`} />
               {isNfcBeaming ? 'Beaming Contact via NFC Wave...' : 'Simulate 1-Tap NFC Contact Beam'}
             </button>
           </div>

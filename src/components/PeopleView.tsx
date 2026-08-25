@@ -99,7 +99,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
   }, [filteredConnections]);
 
   const relationshipBadges: Record<string, { label: string; class: string }> = {
-    lead: { label: 'Lead', class: 'bg-[#FF5C00]/20 text-[#ffb59a] border-[#FF5C00]/40' },
+    lead: { label: 'Lead', class: 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border-[var(--border-accent)]' },
     peer: { label: 'Peer', class: 'bg-blue-500/20 text-blue-300 border-blue-500/40' },
     mentor: { label: 'Mentor', class: 'bg-purple-500/20 text-purple-300 border-purple-500/40' },
     speaker: { label: 'Speaker', class: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
@@ -142,7 +142,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-5 pb-28 md:pb-12 relative animate-in fade-in duration-200">
+    <div className="w-full max-w-4xl mx-auto space-y-5 pb-28 md:pb-12 relative animate-in fade-in duration-200 text-[var(--text-primary)]">
       {/* Toast Notice for Undo Trash */}
       <AnimatePresence>
         {trashedNotice && (
@@ -150,7 +150,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-20 right-4 sm:right-8 z-50 bg-[#280e08] border border-rose-500/50 text-[#fadcd2] text-xs font-semibold px-4 py-3 rounded-2xl shadow-2xl flex items-center justify-between gap-3 max-w-sm"
+            className="fixed top-20 right-4 sm:right-8 z-50 bg-[var(--bg-surface-card)] border border-rose-500/50 text-white text-xs font-semibold px-4 py-3 rounded-2xl shadow-2xl flex items-center justify-between gap-3 max-w-sm"
           >
             <div className="flex items-center gap-2 min-w-0">
               <Trash2 className="w-4 h-4 text-rose-400 shrink-0" />
@@ -171,16 +171,16 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-[#FF5C00] tracking-widest uppercase flex items-center gap-1.5">
+            <span className="text-[11px] font-bold text-[var(--accent-primary)] tracking-widest uppercase flex items-center gap-1.5 font-mono">
               Network Directory
             </span>
             {activeEvent && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-neutral-300 font-mono">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-[var(--border-subtle)] text-[var(--text-secondary)] font-mono">
                 {activeEvent.name}
               </span>
             )}
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-serif-display text-[#fadcd2] mt-0.5">
+          <h1 className="text-2xl sm:text-3xl font-bold font-serif-display text-white mt-0.5">
             Connections ({filteredConnections.length}/{effectiveTarget})
           </h1>
         </div>
@@ -189,17 +189,17 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           {onClearDemoData && demoCount > 0 && (
             <button
               onClick={() => setShowTrashConfirm(true)}
-              className="px-3.5 py-2 rounded-xl bg-[#281107] hover:bg-[#3d180a] text-[#ffb59a] text-xs font-semibold border border-white/10 flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] text-[var(--text-secondary)] hover:text-white text-xs font-semibold border border-[var(--border-subtle)] flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
               title="Remove demo mock contacts"
             >
-              <Trash2 className="w-3.5 h-3.5 text-[#FF5C00]" />
+              <Trash2 className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
               <span>Clean Demo Data ({demoCount})</span>
             </button>
           )}
 
           <button
             onClick={onOpenQuickConnect}
-            className="px-4 py-2 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] flex items-center gap-1.5 shadow-lg active:scale-95 transition-transform cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-[var(--accent-primary)] text-black font-bold text-xs hover:brightness-110 flex items-center gap-1.5 shadow-lg shadow-[var(--accent-primary)]/20 active:scale-95 transition-all cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
             <span>Add Connection</span>
@@ -209,9 +209,9 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
       {/* Touch Gesture Hint Banner */}
       {showGestureHint && connections.length > 0 && (
-        <div className="p-2.5 px-3.5 rounded-xl bg-[#140b07] border border-white/5 flex items-center justify-between text-[11px] text-[#e4beb1]/70">
+        <div className="p-2.5 px-3.5 rounded-xl bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] flex items-center justify-between text-[11px] text-[var(--text-secondary)] shadow-sm">
           <div className="flex items-center gap-2">
-            <ArrowLeftRight className="w-3.5 h-3.5 text-[#FF5C00] shrink-0" />
+            <ArrowLeftRight className="w-3.5 h-3.5 text-[var(--accent-primary)] shrink-0" />
             <span>
               <strong>Swipe Shortcuts:</strong> Swipe right 👉 to Follow-up • Swipe left 👈 to Trash
             </span>
@@ -233,17 +233,17 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-[#180b06] border border-white/10 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center"
+              className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center text-[var(--text-primary)]"
             >
               <div className="w-12 h-12 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mx-auto">
                 <Trash2 className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold font-serif-display text-[#fadcd2]">
+                <h3 className="text-lg font-bold font-serif-display text-white">
                   Remove Demo Data?
                 </h3>
-                <p className="text-xs text-[#e4beb1]/70 mt-1">
-                  This will remove the {demoCount} preloaded demo sample contacts so you can focus entirely on real people you meet at TEDxAkure.
+                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                  This will remove the {demoCount} preloaded demo sample contacts so you can focus entirely on real people you meet.
                 </p>
               </div>
               <div className="flex gap-2 pt-2">
@@ -270,13 +270,13 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3.5 top-3 text-[#e4beb1]/50 w-4 h-4" />
+        <Search className="absolute left-3.5 top-3 text-[var(--text-secondary)] w-4 h-4" />
         <input
           type="text"
           placeholder="Search by name, company, role, or discussion tag..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-[#140b07] border border-white/10 rounded-xl pl-10 pr-10 py-2.5 text-xs sm:text-sm text-[#fadcd2] placeholder:text-[#e4beb1]/40 focus:outline-none focus:border-[#FF5C00] transition-colors"
+          className="w-full bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-xl pl-10 pr-10 py-2.5 text-xs sm:text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[var(--accent-primary)] transition-colors shadow-sm"
         />
         {searchQuery && (
           <button
@@ -304,8 +304,8 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
             onClick={() => setSelectedFilter(f.id as any)}
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               selectedFilter === f.id
-                ? 'bg-[#FF5C00] text-black shadow-md font-bold'
-                : 'bg-[#180b06] text-[#e4beb1]/80 hover:text-white border border-white/10'
+                ? 'bg-[var(--accent-primary)] text-black shadow-md font-bold'
+                : 'bg-[var(--bg-surface-card)] text-[var(--text-secondary)] hover:text-white border border-[var(--border-subtle)] hover:border-[var(--border-accent)]'
             }`}
           >
             {f.label}
@@ -315,12 +315,12 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
       {/* List / Grouped Directory with Swipe Gestures */}
       {Object.keys(groupedConnections).length === 0 ? (
-        <div className="text-center py-16 bg-[#140b07] rounded-3xl border border-white/5 space-y-3">
-          <div className="w-12 h-12 rounded-full bg-white/5 text-[#e4beb1]/50 flex items-center justify-center mx-auto">
+        <div className="text-center py-16 bg-[var(--bg-surface-card)] rounded-3xl border border-[var(--border-subtle)] space-y-3 shadow-md">
+          <div className="w-12 h-12 rounded-full bg-white/5 text-[var(--text-secondary)] flex items-center justify-center mx-auto">
             <Search className="w-6 h-6" />
           </div>
-          <p className="text-sm font-semibold text-[#fadcd2]">No connections found</p>
-          <p className="text-xs text-[#e4beb1]/60 max-w-xs mx-auto">
+          <p className="text-sm font-semibold text-white">No connections found</p>
+          <p className="text-xs text-[var(--text-secondary)] max-w-xs mx-auto">
             Try adjusting your search keywords or filter category.
           </p>
         </div>
@@ -329,11 +329,11 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           {(Object.entries(groupedConnections) as [string, Connection[]][]).map(([letter, group]) => (
             <div key={letter} className="space-y-2.5">
               {/* Group Letter Header */}
-              <div className="sticky top-16 md:top-0 z-10 bg-[#0A0A0A]/95 backdrop-blur-md py-1 border-b border-white/10 flex items-center justify-between">
-                <span className="text-xs font-extrabold text-[#FF5C00] font-serif-display">
+              <div className="sticky top-16 md:top-0 z-10 bg-[var(--bg-canvas)]/95 backdrop-blur-md py-1 border-b border-[var(--border-subtle)] flex items-center justify-between">
+                <span className="text-xs font-extrabold text-[var(--accent-primary)] font-serif-display font-mono">
                   {letter}
                 </span>
-                <span className="text-[10px] text-[#e4beb1]/50 font-semibold">
+                <span className="text-[10px] text-[var(--text-secondary)] font-semibold font-mono">
                   {group.length} contact{group.length > 1 ? 's' : ''}
                 </span>
               </div>
@@ -345,16 +345,16 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   return (
                     <div
                       key={c.id}
-                      className="relative overflow-hidden rounded-2xl bg-[#0e0704] select-none"
+                      className="relative overflow-hidden rounded-2xl bg-[var(--bg-canvas)] select-none shadow-sm"
                     >
                       {/* Swipe Action Revealed Underneath: LEFT (Swipe Right = Follow-Up) */}
-                      <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-[#2c1307] to-[#140b07] border-y border-l border-[#FF5C00]/40 rounded-l-2xl flex items-center justify-start pl-5 text-[#FF5C00] font-bold text-xs gap-2">
-                        <Sparkles className="w-5 h-5 text-[#FF5C00] animate-pulse" />
+                      <div className="absolute inset-y-0 left-0 w-1/2 bg-[var(--bg-surface-subtle)] border-y border-l border-[var(--border-accent)] rounded-l-2xl flex items-center justify-start pl-5 text-[var(--accent-primary)] font-bold text-xs gap-2">
+                        <Sparkles className="w-5 h-5 text-[var(--accent-primary)] animate-pulse" />
                         <span>Follow-up</span>
                       </div>
 
                       {/* Swipe Action Revealed Underneath: RIGHT (Swipe Left = Trash) */}
-                      <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-rose-950 to-[#140b07] border-y border-r border-rose-500/40 rounded-r-2xl flex items-center justify-end pr-5 text-rose-400 font-bold text-xs gap-2">
+                      <div className="absolute inset-y-0 right-0 w-1/2 bg-rose-950/60 border-y border-r border-rose-500/40 rounded-r-2xl flex items-center justify-end pr-5 text-rose-400 font-bold text-xs gap-2">
                         <span>Trash</span>
                         <Trash2 className="w-5 h-5 text-rose-400" />
                       </div>
@@ -368,38 +368,38 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                         onClick={() => onSelectConnection(c)}
                         whileHover={{ scale: 1.003 }}
                         whileTap={{ scale: 0.995 }}
-                        className="relative bg-[#140b07] hover:bg-[#1f0f08] active:bg-[#20100a] border border-white/10 hover:border-[#FF5C00]/40 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 cursor-pointer transition-colors shadow-sm group touch-pan-y"
+                        className="relative bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] active:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] hover:border-[var(--border-accent)] rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 cursor-pointer transition-colors shadow-sm group touch-pan-y"
                       >
                         <div className="flex items-center gap-3.5 min-w-0 pointer-events-none">
-                          <div className="w-12 h-12 rounded-full overflow-hidden border border-white/10 flex-shrink-0 relative group-hover:border-[#FF5C00] transition-colors bg-neutral-900">
+                          <div className="w-12 h-12 rounded-full overflow-hidden border border-[var(--border-subtle)] flex-shrink-0 relative group-hover:border-[var(--accent-primary)] transition-colors bg-neutral-900">
                             <img src={c.avatarUrl} alt={c.name} className="w-full h-full object-cover" />
                             {c.priority === 'high' && (
-                              <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#FF5C00] rounded-full border border-black" />
+                              <span className="absolute bottom-0 right-0 w-3 h-3 bg-[var(--accent-primary)] rounded-full border border-black" />
                             )}
                           </div>
 
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="text-sm font-bold text-[#fadcd2] truncate group-hover:text-white">
+                              <h3 className="text-sm font-bold text-white truncate group-hover:text-[var(--accent-primary)] transition-colors">
                                 {c.name}
                               </h3>
                               <span
-                                className={`text-[9px] px-2 py-0.2 rounded-full border font-bold uppercase tracking-wider ${badge.class}`}
+                                className={`text-[9px] px-2 py-0.2 rounded-full border font-bold uppercase tracking-wider font-mono ${badge.class}`}
                               >
                                 {badge.label}
                               </span>
                               {photoCount > 0 && (
-                                <span className="flex items-center gap-1 text-[10px] font-semibold text-[#ffb59a] bg-[#2b1208] border border-[#FF5C00]/30 px-2 py-0.2 rounded-full">
-                                  <Camera className="w-3 h-3 text-[#FF5C00]" />
+                                <span className="flex items-center gap-1 text-[10px] font-semibold text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 border border-[var(--border-accent)] px-2 py-0.2 rounded-full font-mono">
+                                  <Camera className="w-3 h-3 text-[var(--accent-primary)]" />
                                   <span>{photoCount}</span>
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-[#FF5C00] truncate mt-0.5">
+                            <p className="text-xs text-[var(--accent-primary)] truncate mt-0.5">
                               {c.profession} • {c.company}
                             </p>
                             {c.notes && (
-                              <p className="text-[11px] text-[#e4beb1]/60 truncate max-w-sm mt-0.5">
+                              <p className="text-[11px] text-[var(--text-secondary)] truncate max-w-sm mt-0.5">
                                 {c.notes}
                               </p>
                             )}
@@ -416,7 +416,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                               href={`https://wa.me/${(c.whatsapp || c.phone || '').replace(/[^0-9]/g, '')}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-2 rounded-xl bg-[#28130a] hover:bg-[#381a0e] text-[#25D366] border border-white/5 transition-colors"
+                              className="p-2 rounded-xl bg-[var(--bg-surface-subtle)] hover:bg-white/[0.08] text-[#25D366] border border-[var(--border-subtle)] transition-colors"
                               title="Chat on WhatsApp"
                             >
                               <MessageSquare className="w-4 h-4" />
@@ -425,7 +425,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
                           <button
                             onClick={() => onOpenQuickMessage(c)}
-                            className="p-2 rounded-xl bg-[#FF5C00] text-black font-bold hover:bg-[#ff7a33] shadow-md transition-colors"
+                            className="p-2 rounded-xl bg-[var(--accent-primary)] text-black font-bold hover:brightness-110 shadow-md transition-colors"
                             title="Generate AI Follow-up Draft"
                           >
                             <Sparkles className="w-4 h-4" />
@@ -444,7 +444,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
       {/* Floating Action Button for Mobile */}
       <button
         onClick={onOpenQuickConnect}
-        className="md:hidden fixed bottom-24 right-5 w-14 h-14 rounded-full bg-[#FF5C00] text-black flex items-center justify-center shadow-2xl z-30 active:scale-95 transition-transform"
+        className="md:hidden fixed bottom-24 right-5 w-14 h-14 rounded-full bg-[var(--accent-primary)] text-black flex items-center justify-center shadow-2xl z-30 active:scale-95 transition-transform"
         title="Quick Connect (10s)"
       >
         <UserPlus className="w-6 h-6 stroke-[2.5]" />

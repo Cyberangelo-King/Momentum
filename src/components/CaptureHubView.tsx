@@ -335,16 +335,16 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
   const featuredIdea = ideas[0];
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6 pb-24 md:pb-12">
+    <div className="w-full max-w-4xl mx-auto space-y-6 pb-24 md:pb-12 text-[var(--text-primary)]">
       {/* Header */}
       <div>
-        <span className="text-[11px] font-bold text-[#FF5C00] tracking-widest uppercase">
+        <span className="text-[11px] font-bold text-[var(--accent-primary)] tracking-widest uppercase">
           Multimodal Memory
         </span>
-        <h1 className="text-2xl sm:text-3xl font-bold font-serif-display text-[#fadcd2] mt-0.5">
+        <h1 className="text-2xl sm:text-3xl font-bold font-serif-display text-white mt-0.5">
           Capture Hub
         </h1>
-        <p className="text-xs text-[#e4beb1]/70 mt-1">
+        <p className="text-xs text-[var(--text-secondary)] mt-1">
           Collect photographs, video reflections, Web Speech voice memos, and rapid insights with zero latency.
         </p>
       </div>
@@ -354,108 +354,108 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
         {/* Photo Card */}
         <div
           onClick={handleOpenPhotoCamera}
-          className="bg-[#180b06] hover:bg-[#26130b] border border-white/10 hover:border-[#FF5C00]/50 rounded-2xl p-4 cursor-pointer transition-all flex flex-col justify-between h-36 group"
+          className="bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] hover:border-[var(--border-accent)] rounded-2xl p-4 cursor-pointer transition-all flex flex-col justify-between h-36 group shadow-md"
         >
-          <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center group-hover:scale-110 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] flex items-center justify-center group-hover:scale-110 transition-transform">
             <Camera className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[#fadcd2]">Photo Snap</h3>
-            <p className="text-[10px] text-[#e4beb1]/60 mt-0.5">Live camera snapshot</p>
+            <h3 className="text-sm font-bold text-white">Photo Snap</h3>
+            <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">Live camera snapshot</p>
           </div>
         </div>
 
         {/* Video Card */}
         <div
           onClick={handleOpenVideoCamera}
-          className="bg-[#180b06] hover:bg-[#26130b] border border-white/10 hover:border-[#FF5C00]/50 rounded-2xl p-4 cursor-pointer transition-all flex flex-col justify-between h-36 group"
+          className="bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] hover:border-[var(--border-accent)] rounded-2xl p-4 cursor-pointer transition-all flex flex-col justify-between h-36 group shadow-md"
         >
-          <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center group-hover:scale-110 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] flex items-center justify-center group-hover:scale-110 transition-transform">
             <Video className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[#fadcd2]">Short Video</h3>
-            <p className="text-[10px] text-[#e4beb1]/60 mt-0.5">Record talk snippet</p>
+            <h3 className="text-sm font-bold text-white">Short Video</h3>
+            <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">Record talk snippet</p>
           </div>
         </div>
 
         {/* Voice Memo Card (Web Speech API) */}
         <div
           onClick={() => setIsVoiceMemoOpen(true)}
-          className="bg-[#1e0e07] hover:bg-[#2c150c] border border-[#FF5C00]/30 hover:border-[#FF5C00] rounded-2xl p-4 cursor-pointer transition-all flex flex-col justify-between h-36 group relative overflow-hidden shadow-lg"
+          className="bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-accent)] rounded-2xl p-4 cursor-pointer transition-all flex flex-col justify-between h-36 group relative overflow-hidden shadow-lg"
         >
           <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-[#FF5C00] text-black flex items-center justify-center group-hover:scale-110 transition-transform shadow-md">
+            <div className="w-10 h-10 rounded-xl bg-[var(--accent-primary)] text-black flex items-center justify-center group-hover:scale-110 transition-transform shadow-md">
               <Mic className="w-5 h-5" />
             </div>
-            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#FF5C00]/20 text-[#FF5C00] font-bold border border-[#FF5C00]/30">
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] font-bold border border-[var(--border-accent)] font-mono">
               SPEECH API
             </span>
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[#fadcd2] flex items-center gap-1">
+            <h3 className="text-sm font-bold text-white flex items-center gap-1">
               <span>Voice Memo</span>
-              <Sparkles className="w-3 h-3 text-[#FF5C00]" />
+              <Sparkles className="w-3 h-3 text-[var(--accent-primary)]" />
             </h3>
-            <p className="text-[10px] text-[#e4beb1]/70 mt-0.5">Auto-transcribe speech</p>
+            <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">Auto-transcribe speech</p>
           </div>
         </div>
 
         {/* Talk Quote Card */}
         <div
           onClick={() => setIsAddingIdeaModal(true)}
-          className="bg-[#180b06] hover:bg-[#26130b] border border-white/10 hover:border-[#FF5C00]/50 rounded-2xl p-4 cursor-pointer transition-all flex flex-col justify-between h-36 group"
+          className="bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] hover:border-[var(--border-accent)] rounded-2xl p-4 cursor-pointer transition-all flex flex-col justify-between h-36 group shadow-md"
         >
-          <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center group-hover:scale-110 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] flex items-center justify-center group-hover:scale-110 transition-transform">
             <Lightbulb className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[#fadcd2]">Talk Insight</h3>
-            <p className="text-[10px] text-[#e4beb1]/60 mt-0.5">Speaker quote & thesis</p>
+            <h3 className="text-sm font-bold text-white">Talk Insight</h3>
+            <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">Speaker quote & thesis</p>
           </div>
         </div>
 
         {/* Rapid Note Card */}
         <div
           onClick={() => setIsAddingNote(true)}
-          className="bg-[#180b06] hover:bg-[#26130b] border border-white/10 hover:border-[#FF5C00]/50 rounded-2xl p-4 cursor-pointer transition-all flex flex-col justify-between h-36 group col-span-2 sm:col-span-1"
+          className="bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] hover:border-[var(--border-accent)] rounded-2xl p-4 cursor-pointer transition-all flex flex-col justify-between h-36 group col-span-2 sm:col-span-1 shadow-md"
         >
-          <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center group-hover:scale-110 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] flex items-center justify-center group-hover:scale-110 transition-transform">
             <PenLine className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[#fadcd2]">Field Note</h3>
-            <p className="text-[10px] text-[#e4beb1]/60 mt-0.5">Thoughts & impressions</p>
+            <h3 className="text-sm font-bold text-white">Field Note</h3>
+            <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">Thoughts & impressions</p>
           </div>
         </div>
       </div>
 
       {/* Featured Insight Card */}
       {featuredIdea && (
-        <div className="bg-[#1e100a] border border-[#FF5C00]/30 rounded-2xl p-5 relative overflow-hidden shadow-lg">
+        <div className="bg-[var(--bg-surface-card)] border border-[var(--border-accent)] rounded-2xl p-5 relative overflow-hidden shadow-lg">
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FF5C00] text-black font-bold uppercase tracking-wider">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent-primary)] text-black font-bold uppercase tracking-wider font-mono">
               Featured Insight
             </span>
-            <span className="text-xs text-[#e4beb1]/70">• {featuredIdea.sessionTitle}</span>
+            <span className="text-xs text-[var(--text-secondary)]">• {featuredIdea.sessionTitle}</span>
           </div>
 
-          <blockquote className="text-base sm:text-lg font-serif-display italic text-[#fadcd2] leading-relaxed">
+          <blockquote className="text-base sm:text-lg font-serif-display italic text-white leading-relaxed">
             "{featuredIdea.quote}"
           </blockquote>
 
-          <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/10">
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-[var(--border-subtle)]">
             <div className="flex items-center gap-2.5">
               <img
                 src={featuredIdea.speakerAvatar}
                 alt={featuredIdea.speakerName}
-                className="w-7 h-7 rounded-full object-cover border border-white/10"
+                className="w-7 h-7 rounded-full object-cover border border-[var(--border-subtle)]"
               />
-              <span className="text-xs font-semibold text-[#fadcd2]">
+              <span className="text-xs font-semibold text-white">
                 {featuredIdea.speakerName}
               </span>
             </div>
-            <span className="text-[11px] text-[#FF5C00] font-semibold">
+            <span className="text-[11px] text-[var(--accent-primary)] font-semibold font-mono">
               {featuredIdea.category}
             </span>
           </div>
@@ -465,8 +465,8 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
       {/* Recent Captures Grid */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-[#e4beb1] flex items-center gap-2">
-            <History className="w-4 h-4 text-[#FF5C00]" />
+          <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2 font-mono">
+            <History className="w-4 h-4 text-[var(--accent-primary)]" />
             Recent Captures ({moments.length})
           </h2>
         </div>
@@ -475,18 +475,18 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
           {moments.map((m) => (
             <div
               key={m.id}
-              className="bg-[#140b07] border border-white/10 rounded-2xl overflow-hidden shadow-md flex flex-col justify-between"
+              className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl overflow-hidden shadow-md flex flex-col justify-between"
             >
               {m.type === 'voice' ? (
                 /* Voice Memo Card Display */
-                <div className="bg-[#1c0e08] p-4 border-b border-white/5 space-y-3">
+                <div className="bg-[var(--bg-surface-subtle)] p-4 border-b border-[var(--border-subtle)] space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="px-2 py-0.5 rounded-full bg-[#FF5C00]/20 text-[#FF5C00] text-[10px] font-bold border border-[#FF5C00]/30 flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded-full bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] text-[10px] font-bold border border-[var(--border-accent)] flex items-center gap-1 font-mono">
                       <Mic className="w-3 h-3" />
                       VOICE MEMO
                     </span>
                     {m.audioDuration && (
-                      <span className="text-[11px] font-mono text-[#e4beb1]/70 font-semibold">
+                      <span className="text-[11px] font-mono text-[var(--text-secondary)] font-semibold">
                         {m.audioDuration}
                       </span>
                     )}
@@ -494,10 +494,10 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
 
                   {/* Audio player button */}
                   {m.mediaUrl && (
-                    <div className="flex items-center gap-3 p-2.5 bg-[#0e0603] rounded-xl border border-white/5">
+                    <div className="flex items-center gap-3 p-2.5 bg-black/40 rounded-xl border border-[var(--border-subtle)]">
                       <button
                         onClick={() => handleTogglePlayAudio(m)}
-                        className="w-9 h-9 rounded-lg bg-[#FF5C00] text-black flex items-center justify-center hover:bg-[#ff7a33] transition-transform active:scale-95 shrink-0"
+                        className="w-9 h-9 rounded-lg bg-[var(--accent-primary)] text-black flex items-center justify-center hover:brightness-110 transition-transform active:scale-95 shrink-0"
                         aria-label={playingMomentId === m.id ? 'Pause memo' : 'Play voice memo'}
                       >
                         {playingMomentId === m.id ? (
@@ -514,13 +514,13 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                               style={{ height: `${h}px` }}
                               className={`w-1 rounded-full ${
                                 playingMomentId === m.id
-                                  ? 'bg-[#FF5C00] animate-pulse'
+                                  ? 'bg-[var(--accent-primary)] animate-pulse'
                                   : 'bg-white/20'
                               }`}
                             />
                           ))}
                         </div>
-                        <p className="text-[10px] text-[#e4beb1]/60 truncate mt-0.5">
+                        <p className="text-[10px] text-[var(--text-secondary)] truncate mt-0.5">
                           {playingMomentId === m.id ? 'Playing audio stream...' : 'Tap to play audio'}
                         </p>
                       </div>
@@ -529,12 +529,12 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
 
                   {/* Transcribed text */}
                   {m.caption && (
-                    <div className="p-2.5 bg-[#25130b] rounded-xl border border-white/5">
-                      <p className="text-[10px] uppercase font-bold text-[#FF5C00] tracking-wider mb-0.5 flex items-center gap-1">
+                    <div className="p-2.5 bg-white/[0.03] rounded-xl border border-[var(--border-subtle)]">
+                      <p className="text-[10px] uppercase font-bold text-[var(--accent-primary)] tracking-wider mb-0.5 flex items-center gap-1 font-mono">
                         <Sparkles className="w-2.5 h-2.5" />
                         Transcript:
                       </p>
-                      <p className="text-xs text-[#fadcd2] italic line-clamp-3 leading-relaxed">
+                      <p className="text-xs text-[var(--text-primary)] italic line-clamp-3 leading-relaxed">
                         "{m.caption}"
                       </p>
                     </div>
@@ -556,37 +556,37 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   )}
-                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-sm text-[10px] font-bold text-[#FF5C00] border border-white/10">
+                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-sm text-[10px] font-bold text-[var(--accent-primary)] border border-white/10 font-mono">
                     {m.type.toUpperCase()}
                   </span>
                 </div>
               ) : (
-                <div className="h-32 bg-[#20100a] p-4 flex flex-col justify-between border-b border-white/5">
-                  <span className="text-xs text-[#FF5C00] font-bold">NOTE</span>
-                  <p className="text-xs text-[#fadcd2] italic line-clamp-3">"{m.caption}"</p>
+                <div className="h-32 bg-[var(--bg-surface-subtle)] p-4 flex flex-col justify-between border-b border-[var(--border-subtle)]">
+                  <span className="text-xs text-[var(--accent-primary)] font-bold font-mono">NOTE</span>
+                  <p className="text-xs text-[var(--text-primary)] italic line-clamp-3">"{m.caption}"</p>
                 </div>
               )}
 
               <div className="p-4 flex-1 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between text-[10px] text-[#e4beb1]/60 mb-1">
+                  <div className="flex items-center justify-between text-[10px] text-[var(--text-secondary)] mb-1 font-mono">
                     <span>{m.location}</span>
                     <span>{m.timestamp}</span>
                   </div>
-                  <h3 className="text-sm font-bold text-[#fadcd2]">{m.title}</h3>
+                  <h3 className="text-sm font-bold text-white">{m.title}</h3>
                   {m.type !== 'voice' && m.caption && m.mediaUrl && (
-                    <p className="text-xs text-[#e4beb1]/80 mt-1 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-[var(--text-secondary)] mt-1 line-clamp-2 leading-relaxed">
                       {m.caption}
                     </p>
                   )}
                 </div>
 
                 {m.taggedPeopleNames && m.taggedPeopleNames.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-3 pt-2 border-t border-white/5">
+                  <div className="flex flex-wrap gap-1 mt-3 pt-2 border-t border-[var(--border-subtle)]">
                     {m.taggedPeopleNames.map((name, i) => (
                       <span
                         key={i}
-                        className="text-[10px] px-2 py-0.5 rounded-md bg-[#28130a] text-[#ffb59a]"
+                        className="text-[10px] px-2 py-0.5 rounded-md bg-[var(--bg-surface-subtle)] text-[var(--accent-primary)] border border-[var(--border-subtle)] font-mono"
                       >
                         @{name}
                       </span>
@@ -648,16 +648,16 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
       {pendingMedia && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
           <div
-            className="bg-[#140b07] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-5 space-y-4"
+            className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-5 space-y-4 text-[var(--text-primary)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold font-serif-display text-[#fadcd2]">
+              <h2 className="text-base font-bold font-serif-display text-white">
                 Save {pendingMedia.type === 'photo' ? 'Photo' : 'Video'} Moment
               </h2>
               <button
                 onClick={() => setPendingMedia(null)}
-                className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+                className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-colors"
                 aria-label="Close dialog"
               >
                 <X className="w-5 h-5" />
@@ -678,18 +678,18 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
 
             <form onSubmit={handleSaveMediaMoment} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-[#e4beb1] mb-1">Title</label>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Title</label>
                 <input
                   type="text"
                   required
                   value={mediaTitle}
                   onChange={(e) => setMediaTitle(e.target.value)}
-                  className="w-full bg-[#0d0603] border border-white/10 rounded-xl px-3 py-2 text-xs text-[#fadcd2] focus:border-[#FF5C00]"
+                  className="w-full bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-white focus:border-[var(--accent-primary)] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#e4beb1] mb-1">
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
                   Caption / Story
                 </label>
                 <textarea
@@ -697,15 +697,15 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                   value={mediaCaption}
                   onChange={(e) => setMediaCaption(e.target.value)}
                   placeholder="What made this moment memorable?"
-                  className="w-full bg-[#0d0603] border border-white/10 rounded-xl px-3 py-2 text-xs text-[#fadcd2] focus:border-[#FF5C00] resize-none"
+                  className="w-full bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-white focus:border-[var(--accent-primary)] focus:outline-none resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#e4beb1] mb-1">
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
                   Tag People Present
                 </label>
-                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1 bg-[#0d0603] rounded-xl border border-white/10">
+                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1 bg-[var(--bg-surface-subtle)] rounded-xl border border-[var(--border-subtle)]">
                   {connections.map((c) => (
                     <button
                       type="button"
@@ -713,8 +713,8 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                       onClick={() => toggleTagPerson(c.id)}
                       className={`text-[11px] px-2 py-1 rounded-md transition-colors ${
                         taggedPeople.includes(c.id)
-                          ? 'bg-[#FF5C00] text-black font-bold'
-                          : 'bg-[#1e100a] text-[#e4beb1]/70 hover:text-white'
+                          ? 'bg-[var(--accent-primary)] text-black font-bold'
+                          : 'bg-white/5 text-[var(--text-secondary)] hover:text-white'
                       }`}
                     >
                       {c.name}
@@ -728,14 +728,14 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                   type="button"
                   onClick={() => setPendingMedia(null)}
                   disabled={isSavingMedia}
-                  className="w-1/3 py-2.5 rounded-xl border border-white/10 text-xs font-semibold text-[#fadcd2] disabled:opacity-50"
+                  className="w-1/3 py-2.5 rounded-xl border border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-secondary)] hover:text-white disabled:opacity-50"
                 >
                   Discard
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingMedia}
-                  className="flex-1 py-2.5 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="flex-1 py-2.5 rounded-xl bg-[var(--accent-primary)] text-black font-bold text-xs hover:brightness-110 flex items-center justify-center gap-2 disabled:opacity-50 shadow-md"
                 >
                   {isSavingMedia ? (
                     <>
@@ -756,11 +756,11 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
       {isAddingNote && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
           <div
-            className="bg-[#140b07] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-5 space-y-4"
+            className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-5 space-y-4 text-[var(--text-primary)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold font-serif-display text-[#fadcd2]">
+              <h2 className="text-base font-bold font-serif-display text-white">
                 Log Field Note
               </h2>
               <button
@@ -772,7 +772,7 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                   setIsDictatingNote(false);
                   setIsAddingNote(false);
                 }}
-                className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+                className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-colors"
                 aria-label="Close dialog"
               >
                 <X className="w-5 h-5" />
@@ -781,19 +781,19 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
 
             <form onSubmit={handleSaveNote} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-[#e4beb1] mb-1">Headline</label>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Headline</label>
                 <input
                   type="text"
                   placeholder="e.g. UX Workshop Note"
                   value={noteTitle}
                   onChange={(e) => setNoteTitle(e.target.value)}
-                  className="w-full bg-[#0d0603] border border-white/10 rounded-xl px-3 py-2 text-xs text-[#fadcd2] focus:border-[#FF5C00]"
+                  className="w-full bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-white focus:border-[var(--accent-primary)] focus:outline-none"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-semibold text-[#e4beb1]">
+                  <label className="block text-xs font-semibold text-[var(--text-secondary)]">
                     Thought / Note *
                   </label>
                   {speechSupported && (
@@ -803,7 +803,7 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                       className={`text-[10px] px-2 py-0.5 rounded-lg font-semibold flex items-center gap-1 transition-all ${
                         isDictatingNote
                           ? 'bg-rose-600 text-white animate-pulse'
-                          : 'bg-[#FF5C00]/10 text-[#FF5C00] hover:bg-[#FF5C00]/20'
+                          : 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/25'
                       }`}
                     >
                       <Mic className="w-3 h-3" />
@@ -817,17 +817,17 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                   placeholder="The transition between states is where the UX magic happens..."
                   value={noteContent}
                   onChange={(e) => setNoteContent(e.target.value)}
-                  className="w-full bg-[#0d0603] border border-white/10 rounded-xl px-3 py-2 text-xs text-[#fadcd2] focus:border-[#FF5C00] resize-none leading-relaxed"
+                  className="w-full bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-white focus:border-[var(--accent-primary)] focus:outline-none resize-none leading-relaxed"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#e4beb1] mb-1">Location</label>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Location</label>
                 <input
                   type="text"
                   value={noteLocation}
                   onChange={(e) => setNoteLocation(e.target.value)}
-                  className="w-full bg-[#0d0603] border border-white/10 rounded-xl px-3 py-2 text-xs text-[#fadcd2] focus:border-[#FF5C00]"
+                  className="w-full bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-white focus:border-[var(--accent-primary)] focus:outline-none"
                 />
               </div>
 
@@ -842,13 +842,13 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                     setIsDictatingNote(false);
                     setIsAddingNote(false);
                   }}
-                  className="w-1/3 py-2.5 rounded-xl border border-white/10 text-xs font-semibold text-[#fadcd2]"
+                  className="w-1/3 py-2.5 rounded-xl border border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-secondary)] hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33]"
+                  className="flex-1 py-2.5 rounded-xl bg-[var(--accent-primary)] text-black font-bold text-xs hover:brightness-110 shadow-md"
                 >
                   Save Note
                 </button>
@@ -862,11 +862,11 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
       {isAddingIdeaModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
           <div
-            className="bg-[#140b07] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-5 space-y-4"
+            className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-5 space-y-4 text-[var(--text-primary)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold font-serif-display text-[#fadcd2]">
+              <h2 className="text-base font-bold font-serif-display text-white">
                 Save Talk Insight
               </h2>
               <button
@@ -878,7 +878,7 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                   setIsDictatingIdea(false);
                   setIsAddingIdeaModal(false);
                 }}
-                className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+                className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-colors"
                 aria-label="Close dialog"
               >
                 <X className="w-5 h-5" />
@@ -888,7 +888,7 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
             <form onSubmit={handleSaveIdea} className="space-y-3">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-semibold text-[#e4beb1]">
+                  <label className="block text-xs font-semibold text-[var(--text-secondary)]">
                     Key Quote or Core Idea *
                   </label>
                   {speechSupported && (
@@ -898,7 +898,7 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                       className={`text-[10px] px-2 py-0.5 rounded-lg font-semibold flex items-center gap-1 transition-all ${
                         isDictatingIdea
                           ? 'bg-rose-600 text-white animate-pulse'
-                          : 'bg-[#FF5C00]/10 text-[#FF5C00] hover:bg-[#FF5C00]/20'
+                          : 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/25'
                       }`}
                     >
                       <Mic className="w-3 h-3" />
@@ -912,38 +912,38 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                   placeholder="e.g. Community is the ultimate moat in a world of infinite replication."
                   value={ideaQuote}
                   onChange={(e) => setIdeaQuote(e.target.value)}
-                  className="w-full bg-[#0d0603] border border-white/10 rounded-xl px-3 py-2 text-xs text-[#fadcd2] focus:border-[#FF5C00] resize-none"
+                  className="w-full bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-white focus:border-[var(--accent-primary)] focus:outline-none resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#e4beb1] mb-1">Speaker Name</label>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Speaker Name</label>
                 <input
                   type="text"
                   placeholder="e.g. Dr. Amina Yusuf"
                   value={ideaSpeaker}
                   onChange={(e) => setIdeaSpeaker(e.target.value)}
-                  className="w-full bg-[#0d0603] border border-white/10 rounded-xl px-3 py-2 text-xs text-[#fadcd2] focus:border-[#FF5C00]"
+                  className="w-full bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-white focus:border-[var(--accent-primary)] focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-semibold text-[#e4beb1] mb-1">Session</label>
+                  <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Session</label>
                   <input
                     type="text"
                     placeholder="e.g. Main Stage"
                     value={ideaSession}
                     onChange={(e) => setIdeaSession(e.target.value)}
-                    className="w-full bg-[#0d0603] border border-white/10 rounded-xl px-3 py-2 text-xs text-[#fadcd2] focus:border-[#FF5C00]"
+                    className="w-full bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-white focus:border-[var(--accent-primary)] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#e4beb1] mb-1">Category</label>
+                  <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Category</label>
                   <select
                     value={ideaCategory}
                     onChange={(e) => setIdeaCategory(e.target.value as any)}
-                    className="w-full bg-[#0d0603] border border-white/10 rounded-xl px-3 py-2 text-xs text-[#fadcd2] focus:border-[#FF5C00]"
+                    className="w-full bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-white focus:border-[var(--accent-primary)] focus:outline-none"
                   >
                     <option value="Keynote">Keynote</option>
                     <option value="Workshop">Workshop</option>
@@ -966,13 +966,13 @@ export const CaptureHubView: React.FC<CaptureHubViewProps> = ({
                     setIsDictatingIdea(false);
                     setIsAddingIdeaModal(false);
                   }}
-                  className="w-1/3 py-2.5 rounded-xl border border-white/10 text-xs font-semibold text-[#fadcd2]"
+                  className="w-1/3 py-2.5 rounded-xl border border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-secondary)] hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33]"
+                  className="flex-1 py-2.5 rounded-xl bg-[var(--accent-primary)] text-black font-bold text-xs hover:brightness-110 shadow-md"
                 >
                   Save Insight
                 </button>

@@ -308,24 +308,24 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0502] text-[#fadcd2] pb-24 md:pb-12 pt-16 md:pt-6 px-4 sm:px-6 md:pl-72 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] pb-24 md:pb-12 pt-16 md:pt-6 px-4 sm:px-6 md:pl-72 max-w-7xl mx-auto">
       {/* Top Banner / Header */}
       <div className="space-y-4 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#FF5C00]/20 text-[#FF8246] border border-[#FF5C00]/30 text-[11px] font-bold uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 rounded-full bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--border-accent)] text-[11px] font-bold uppercase tracking-wider font-mono">
                 Event OS Intelligence
               </span>
-              <span className="text-xs text-[#e4beb1]/60 font-mono">
+              <span className="text-xs text-[var(--text-secondary)] font-mono">
                 {totalNotes} {totalNotes === 1 ? 'Note' : 'Notes'}
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-serif-display font-bold text-white tracking-tight">
               Smart Notes & AI Copilot
             </h1>
-            <p className="text-xs sm:text-sm text-[#e4beb1]/80 max-w-2xl">
-              Better than pen and paper. Capture live talk reflections, extract action items, and let Gemini 3.7 prepare sharp speaker questions.
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)] max-w-2xl">
+              Better than pen and paper. Capture live talk reflections, extract action items, and let Gemini prepare sharp speaker questions.
             </p>
           </div>
 
@@ -336,10 +336,10 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
                 triggerHaptic('light');
                 setIsQuestionGenOpen(true);
               }}
-              className="py-2.5 px-3.5 rounded-xl bg-[#201008] hover:bg-[#2e160c] border border-[#FF5C00]/30 text-xs font-semibold text-[#FF8246] flex items-center gap-1.5 transition-colors active:scale-95"
+              className="py-2.5 px-3.5 rounded-xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1.5 transition-colors active:scale-95 shadow-sm"
               title="Generate tailored questions for speakers"
             >
-              <HelpCircle className="w-4 h-4 text-[#FF5C00]" />
+              <HelpCircle className="w-4 h-4 text-[var(--accent-primary)]" />
               <span>Speaker Q&A</span>
             </button>
 
@@ -348,16 +348,16 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
                 triggerHaptic('light');
                 setIsVoiceMemoOpen(true);
               }}
-              className="py-2.5 px-3.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-xs font-semibold text-rose-300 flex items-center gap-1.5 transition-colors active:scale-95"
+              className="py-2.5 px-3.5 rounded-xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] text-xs font-semibold text-[var(--accent-primary)] flex items-center gap-1.5 transition-colors active:scale-95 shadow-sm"
               title="Record spoken audio memo with Gemini transcription"
             >
-              <Mic className="w-4 h-4 text-rose-400" />
+              <Mic className="w-4 h-4 text-[var(--accent-primary)]" />
               <span>Voice Memo</span>
             </button>
 
             <button
               onClick={() => handleOpenNewNote()}
-              className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#FF5C00] to-[#ff7e38] text-black text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-[#FF5C00]/25 hover:brightness-110 active:scale-95 transition-all"
+              className="py-2.5 px-4 rounded-xl bg-[var(--accent-primary)] text-black text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-[var(--accent-primary)]/20 hover:brightness-110 active:scale-95 transition-all"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
               <span>New Note</span>
@@ -367,22 +367,22 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
 
         {/* Highlight Stats Strip */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          <div className="p-3 bg-[#160a04] border border-white/5 rounded-2xl">
-            <p className="text-[10px] text-[#e4beb1]/60 uppercase tracking-wider font-semibold">Total Notes</p>
+          <div className="p-3 bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl shadow-sm">
+            <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold font-mono">Total Notes</p>
             <p className="text-xl font-bold font-serif-display text-white mt-0.5">{totalNotes}</p>
           </div>
-          <div className="p-3 bg-[#160a04] border border-white/5 rounded-2xl">
-            <p className="text-[10px] text-[#e4beb1]/60 uppercase tracking-wider font-semibold">Pending Actions</p>
-            <p className="text-xl font-bold font-serif-display text-[#FF8246] mt-0.5">{pendingActionsCount}</p>
+          <div className="p-3 bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl shadow-sm">
+            <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold font-mono">Pending Actions</p>
+            <p className="text-xl font-bold font-serif-display text-[var(--accent-primary)] mt-0.5">{pendingActionsCount}</p>
           </div>
-          <div className="p-3 bg-[#160a04] border border-white/5 rounded-2xl">
-            <p className="text-[10px] text-[#e4beb1]/60 uppercase tracking-wider font-semibold">Q&A Questions</p>
+          <div className="p-3 bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl shadow-sm">
+            <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold font-mono">Q&A Questions</p>
             <p className="text-xl font-bold font-serif-display text-emerald-400 mt-0.5">{totalQuestionsCount}</p>
           </div>
-          <div className="p-3 bg-[#160a04] border border-white/5 rounded-2xl flex items-center justify-between">
+          <div className="p-3 bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl flex items-center justify-between shadow-sm">
             <div>
-              <p className="text-[10px] text-[#e4beb1]/60 uppercase tracking-wider font-semibold">Markdown Export</p>
-              <p className="text-xs font-bold text-[#fadcd2] mt-0.5">Bundle All</p>
+              <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold font-mono">Markdown Export</p>
+              <p className="text-xs font-bold text-white mt-0.5">Bundle All</p>
             </div>
             <button
               onClick={handleExportAllNotes}
@@ -403,9 +403,9 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search across titles, takeaways, action items, tags, or speakers..."
-                className="w-full bg-[#140b07] border border-white/10 rounded-2xl py-2.5 pl-10 pr-4 text-xs sm:text-sm text-[#fadcd2] focus:border-[#FF5C00] focus:outline-none placeholder:text-white/30"
+                className="w-full bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl py-2.5 pl-10 pr-4 text-xs sm:text-sm text-white focus:border-[var(--accent-primary)] focus:outline-none placeholder:text-white/30 shadow-sm"
               />
-              <Search className="w-4 h-4 text-[#FF5C00] absolute left-3.5 top-3" />
+              <Search className="w-4 h-4 text-[var(--accent-primary)] absolute left-3.5 top-3" />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
@@ -424,8 +424,8 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
                 }}
                 className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-colors ${
                   filterHasActions
-                    ? 'bg-[#FF5C00] text-black border-[#FF5C00]'
-                    : 'bg-[#140b07] text-[#e4beb1]/70 border-white/10 hover:text-white'
+                    ? 'bg-[var(--accent-primary)] text-black border-[var(--accent-primary)]'
+                    : 'bg-[var(--bg-surface-card)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:text-white'
                 }`}
               >
                 <ListChecks className="w-3.5 h-3.5" />
@@ -439,8 +439,8 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
                 }}
                 className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-colors ${
                   filterHasQuestions
-                    ? 'bg-[#FF5C00] text-black border-[#FF5C00]'
-                    : 'bg-[#140b07] text-[#e4beb1]/70 border-white/10 hover:text-white'
+                    ? 'bg-[var(--accent-primary)] text-black border-[var(--accent-primary)]'
+                    : 'bg-[var(--bg-surface-card)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:text-white'
                 }`}
               >
                 <HelpCircle className="w-3.5 h-3.5" />
@@ -460,8 +460,8 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
                 }}
                 className={`px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition-colors ${
                   selectedCategory === cat
-                    ? 'bg-[#FF5C00] text-black font-bold'
-                    : 'bg-[#160a04] text-[#e4beb1]/70 border border-white/5 hover:text-white hover:border-white/20'
+                    ? 'bg-[var(--accent-primary)] text-black font-bold shadow-sm'
+                    : 'bg-[var(--bg-surface-card)] text-[var(--text-secondary)] border border-[var(--border-subtle)] hover:text-white hover:border-[var(--border-accent)]'
                 }`}
               >
                 {cat}
@@ -484,28 +484,28 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
               <div
                 key={noteItem.id}
                 onClick={() => handleEditNote(noteItem)}
-                className={`group p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between space-y-4 hover:shadow-xl hover:shadow-[#FF5C00]/5 ${
+                className={`group p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between space-y-4 hover:shadow-xl shadow-md ${
                   noteItem.isPinned
-                    ? 'bg-gradient-to-br from-[#1d0e07] to-[#140a04] border-[#FF5C00]/40'
-                    : 'bg-[#120803] border-white/10 hover:border-[#FF5C00]/30'
+                    ? 'bg-[var(--bg-surface-card)] border-[var(--border-accent)]'
+                    : 'bg-[var(--bg-surface-card)] border-[var(--border-subtle)] hover:border-[var(--border-accent)]'
                 }`}
               >
                 {/* Note Card Header */}
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FF5C00]/15 text-[#FF8246] border border-[#FF5C00]/30">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--border-accent)] font-mono">
                         {noteItem.category || 'Note'}
                       </span>
                       {noteItem.speaker && (
-                        <span className="text-[11px] text-[#fadcd2] font-semibold flex items-center gap-1">
-                          <User className="w-3 h-3 text-[#FF5C00]" />
+                        <span className="text-[11px] text-white font-semibold flex items-center gap-1">
+                          <User className="w-3 h-3 text-[var(--accent-primary)]" />
                           <span>{noteItem.speaker}</span>
                         </span>
                       )}
                       {noteItem.location && (
-                        <span className="text-[10px] text-[#e4beb1]/60 flex items-center gap-1">
-                          <MapPin className="w-2.5 h-2.5 text-[#FF5C00]" />
+                        <span className="text-[10px] text-[var(--text-secondary)] flex items-center gap-1 font-mono">
+                          <MapPin className="w-2.5 h-2.5 text-[var(--accent-primary)]" />
                           <span>{noteItem.location}</span>
                         </span>
                       )}
@@ -516,7 +516,7 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
                         onClick={(e) => handleTogglePin(noteItem, e)}
                         className={`p-1.5 rounded-lg transition-colors ${
                           noteItem.isPinned
-                            ? 'text-[#FF5C00] bg-[#FF5C00]/10'
+                            ? 'text-[var(--accent-primary)] bg-[var(--accent-primary)]/15'
                             : 'text-white/30 hover:text-white hover:bg-white/5'
                         }`}
                         title={noteItem.isPinned ? 'Unpin' : 'Pin to top'}
@@ -539,31 +539,31 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-base font-bold font-serif-display text-white group-hover:text-[#ffb59a] transition-colors leading-snug">
+                  <h3 className="text-base font-bold font-serif-display text-white group-hover:text-[var(--accent-primary)] transition-colors leading-snug">
                     {noteItem.title || 'Untitled Note'}
                   </h3>
 
                   {/* AI Summary Banner if exists */}
                   {noteItem.summary && (
-                    <p className="text-xs text-[#fadcd2]/90 italic bg-[#1a0c06] p-2.5 rounded-xl border border-[#FF5C00]/20 leading-relaxed">
+                    <p className="text-xs text-[var(--text-primary)] italic bg-[var(--bg-surface-subtle)] p-2.5 rounded-xl border border-[var(--border-subtle)] leading-relaxed">
                       "{noteItem.summary}"
                     </p>
                   )}
 
                   {/* Content Preview */}
-                  <p className="text-xs text-[#e4beb1]/80 line-clamp-3 leading-relaxed">
+                  <p className="text-xs text-[var(--text-secondary)] line-clamp-3 leading-relaxed">
                     {noteItem.content || 'No text content yet. Click to start typing or speak.'}
                   </p>
                 </div>
 
                 {/* Key takeaways or actions preview */}
-                <div className="space-y-2.5 pt-2 border-t border-white/5">
+                <div className="space-y-2.5 pt-2 border-t border-[var(--border-subtle)]">
                   {/* Action items preview list */}
                   {noteItem.actionItems && noteItem.actionItems.length > 0 && (
                     <div className="space-y-1.5">
-                      <div className="flex items-center justify-between text-[10px] font-bold uppercase text-[#e4beb1]/60">
+                      <div className="flex items-center justify-between text-[10px] font-bold uppercase text-[var(--text-secondary)] font-mono">
                         <span className="flex items-center gap-1">
-                          <ListChecks className="w-3 h-3 text-[#FF5C00]" />
+                          <ListChecks className="w-3 h-3 text-[var(--accent-primary)]" />
                           <span>Action Items</span>
                         </span>
                         <span>{completedActions}/{totalActions}</span>
@@ -573,7 +573,7 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
                           <div
                             key={item.id}
                             onClick={(e) => handleToggleActionInCard(noteItem, item.id, e)}
-                            className="flex items-center gap-2 text-xs text-[#fadcd2]/90 p-1.5 rounded-lg bg-black/20 hover:bg-black/40 transition-colors"
+                            className="flex items-center gap-2 text-xs text-white p-1.5 rounded-lg bg-black/20 hover:bg-black/40 transition-colors"
                           >
                             {item.completed ? (
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -591,7 +591,7 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
 
                   {/* Prepared Questions counter pill */}
                   {noteItem.suggestedQuestions && noteItem.suggestedQuestions.length > 0 && (
-                    <div className="flex items-center gap-1.5 text-[11px] text-[#FF8246] bg-[#FF5C00]/10 border border-[#FF5C00]/20 px-2.5 py-1 rounded-xl">
+                    <div className="flex items-center gap-1.5 text-[11px] text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 border border-[var(--border-accent)] px-2.5 py-1 rounded-xl font-mono">
                       <HelpCircle className="w-3 h-3" />
                       <span className="font-bold">{noteItem.suggestedQuestions.length} Speaker Questions Prepared</span>
                     </div>
@@ -601,7 +601,7 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
                   {noteItem.tags && noteItem.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {noteItem.tags.slice(0, 4).map((t) => (
-                        <span key={t} className="text-[10px] text-[#e4beb1]/60 bg-white/5 px-2 py-0.5 rounded-md">
+                        <span key={t} className="text-[10px] text-[var(--text-secondary)] bg-white/5 px-2 py-0.5 rounded-md font-mono">
                           #{t}
                         </span>
                       ))}
@@ -609,7 +609,7 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
                   )}
 
                   {/* Footer metadata & Audio player pill */}
-                  <div className="flex items-center justify-between text-[11px] text-[#e4beb1]/50 pt-1">
+                  <div className="flex items-center justify-between text-[11px] text-[var(--text-secondary)] pt-1 font-mono">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       <span>{new Date(noteItem.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
@@ -619,7 +619,7 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
                       <button
                         type="button"
                         onClick={(e) => handleToggleAudio(noteItem, e)}
-                        className="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-semibold flex items-center gap-1 hover:bg-rose-500/30 transition-colors"
+                        className="px-2.5 py-1 rounded-lg bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--border-accent)] text-[10px] font-semibold flex items-center gap-1 hover:brightness-110 transition-colors"
                       >
                         {isPlayingThisAudio ? (
                           <Pause className="w-3 h-3 fill-current" />
@@ -637,8 +637,8 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
         </div>
       ) : (
         /* Empty State */
-        <div className="py-12 px-6 text-center bg-[#140b07] border border-white/5 rounded-3xl space-y-6 max-w-xl mx-auto">
-          <div className="w-16 h-16 rounded-3xl bg-[#FF5C00]/15 text-[#FF5C00] flex items-center justify-center mx-auto shadow-inner">
+        <div className="py-12 px-6 text-center bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-3xl space-y-6 max-w-xl mx-auto shadow-md">
+          <div className="w-16 h-16 rounded-3xl bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] flex items-center justify-center mx-auto shadow-inner">
             <FileText className="w-8 h-8" />
           </div>
 
@@ -646,7 +646,7 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
             <h3 className="text-lg font-bold font-serif-display text-white">
               {searchQuery ? 'No matching notes found' : 'Your Conference Notebook is Ready'}
             </h3>
-            <p className="text-xs text-[#e4beb1]/80 max-w-md mx-auto leading-relaxed">
+            <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto leading-relaxed">
               Capture keynote insights, brainstorm ideas, organize follow-up tasks, or let Gemini prepare strategic questions for any speaker.
             </p>
           </div>
@@ -654,27 +654,27 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 text-left">
             <button
               onClick={() => handleOpenNewNote({ category: 'Keynote', title: 'Opening Keynote Notes' })}
-              className="p-3 bg-[#1e100a] hover:bg-[#2e160c] border border-white/10 rounded-2xl transition-colors flex items-center gap-2.5"
+              className="p-3 bg-[var(--bg-surface-subtle)] hover:bg-white/[0.06] border border-[var(--border-subtle)] rounded-2xl transition-colors flex items-center gap-2.5"
             >
-              <div className="w-8 h-8 rounded-xl bg-[#FF5C00]/20 text-[#FF5C00] flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-xl bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] flex items-center justify-center font-bold">
                 <Sparkles className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-xs font-bold text-[#fadcd2]">Keynote Reflection</p>
-                <p className="text-[10px] text-[#e4beb1]/60">Template with AI takeaway</p>
+                <p className="text-xs font-bold text-white">Keynote Reflection</p>
+                <p className="text-[10px] text-[var(--text-secondary)]">Template with AI takeaway</p>
               </div>
             </button>
 
             <button
               onClick={() => setIsQuestionGenOpen(true)}
-              className="p-3 bg-[#1e100a] hover:bg-[#2e160c] border border-white/10 rounded-2xl transition-colors flex items-center gap-2.5"
+              className="p-3 bg-[var(--bg-surface-subtle)] hover:bg-white/[0.06] border border-[var(--border-subtle)] rounded-2xl transition-colors flex items-center gap-2.5"
             >
               <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
                 <HelpCircle className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-xs font-bold text-[#fadcd2]">Speaker Q&A Prep</p>
-                <p className="text-[10px] text-[#e4beb1]/60">Generate sharp questions</p>
+                <p className="text-xs font-bold text-white">Speaker Q&A Prep</p>
+                <p className="text-[10px] text-[var(--text-secondary)]">Generate sharp questions</p>
               </div>
             </button>
           </div>

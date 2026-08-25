@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { Connection, Moment } from '../types';
+import { Connection, Moment, NfcExchangeLog } from '../types';
 import { generateQuickMessage, summarizeConnection } from '../services/aiService';
+import { createNfcExchangeLog } from '../services/nfcService';
+import { triggerHaptic } from '../services/haptics';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { 
@@ -17,7 +19,11 @@ import {
   Star, 
   Calendar, 
   ExternalLink,
-  Plus
+  Plus,
+  Smartphone,
+  Radio,
+  Clock,
+  CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -45,6 +51,7 @@ export const ConnectionDetailModal: React.FC<ConnectionDetailModalProps> = ({
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [selectedPhotoPreview, setSelectedPhotoPreview] = useState<string | null>(null);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [bumpToast, setBumpToast] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   if (!connection) return null;
@@ -62,6 +69,31 @@ export const ConnectionDetailModal: React.FC<ConnectionDetailModalProps> = ({
       followUpStatus: editedStatus,
     });
     setIsEditing(false);
+  };
+
+  const handleLogAnotherBump = () => {
+    triggerHaptic('nfc_handshake');
+    const newLog = createNfcExchangeLog(
+      'bump',
+      connection.eventId,
+      connection.eventContext,
+      `Re-encounter bump at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+    );
+
+    const updatedHistory = [...(connection.nfcExchangeHistory || []), newLog];
+    const updatedTags = Array.from(new Set([...(connection.tags || []), '#NFCBump']));
+
+    const updated: Connection = {
+      ...connection,
+      isNfcCaptured: true,
+      nfcTimestamp: connection.nfcTimestamp || new Date().toISOString(),
+      nfcExchangeHistory: updatedHistory,
+      tags: updatedTags,
+    };
+
+    onUpdateConnection(updated);
+    setBumpToast(`Logged NFC re-encounter bump with ${connection.name}!`);
+    setTimeout(() => setBumpToast(null), 3500);
   };
 
   const handleAddPhoto = (newPhotoUrl: string) => {
@@ -191,6 +223,12 @@ export const ConnectionDetailModal: React.FC<ConnectionDetailModalProps> = ({
                   >
                     {connection.relationship}
                   </span>
+                  {connection.isNfcCaptured && (
+                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#FF5C00]/20 text-[#ffb59a] border border-[#FF5C00]/40 font-bold flex items-center gap-1">
+                      <Smartphone className="w-3 h-3 text-[#FF5C00]" />
+                      <span>NFC Verified</span>
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm text-[#FF5C00] font-medium mt-0.5">
                   {connection.profession} • {connection.company}
@@ -282,6 +320,99 @@ export const ConnectionDetailModal: React.FC<ConnectionDetailModalProps> = ({
 
           {/* Scrollable Body */}
           <div className="p-6 overflow-y-auto space-y-6 flex-1">
+            {/* NFC Bump Toast Banner */}
+            <AnimatePresence>
+              {bumpToast && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="p-3 rounded-2xl bg-emerald-950/90 border border-emerald-500/50 text-emerald-200 text-xs font-semibold flex items-center gap-2 shadow-lg"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{bumpToast}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* NFC Contact Exchange & Bump History Section */}
+            <div className="bg-[#180b06] border border-[#FF5C00]/30 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 text-[#FF5C00]" />
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#fadcd2] flex items-center gap-1.5">
+                      <span>NFC Bump & Handshake Log</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#FF5C00]/20 text-[#ffb59a] font-mono">
+                        {(connection.nfcExchangeHistory?.length || (connection.isNfcCaptured ? 1 : 0))} Exchanges
+                      </span>
+                    </h3>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleLogAnotherBump}
+                  className="px-2.5 py-1.5 rounded-xl bg-[#FF5C00]/20 hover:bg-[#FF5C00]/30 text-[#FF5C00] border border-[#FF5C00]/40 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
+                >
+                  <Radio className="w-3.5 h-3.5 animate-pulse" />
+                  <span>Log Re-encounter Bump</span>
+                </button>
+              </div>
+
+              {/* Chronological History Log */}
+              {connection.nfcExchangeHistory && connection.nfcExchangeHistory.length > 0 ? (
+                <div className="space-y-2 pt-1">
+                  {connection.nfcExchangeHistory.map((log, idx) => (
+                    <div
+                      key={log.id || idx}
+                      className="p-2.5 rounded-xl bg-[#221008] border border-white/5 flex items-start justify-between gap-3 text-xs"
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-[#FF5C00]/20 text-[#FF5C00] flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">
+                          #{idx + 1}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-[#fadcd2] flex items-center gap-2">
+                            <span>{log.notes || 'NFC Contact Beam'}</span>
+                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/10 text-[#e4beb1]/70 font-mono">
+                              {log.deviceType || 'Handset'}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-[#e4beb1]/60 mt-0.5">
+                            Venue: {log.eventName || connection.eventContext || 'Conference Hall'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <div className="text-[11px] font-mono font-bold text-[#ffb59a]">
+                          {log.timeFormatted || log.timestamp?.slice(11, 16)}
+                        </div>
+                        <div className="text-[9px] text-[#e4beb1]/50">
+                          {log.dateFormatted || log.timestamp?.slice(0, 10)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : connection.isNfcCaptured ? (
+                <div className="p-2.5 rounded-xl bg-[#221008] border border-white/5 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-[#FF5C00]" />
+                    <span className="text-[#fadcd2] font-semibold">Initial Web-NFC Handshake</span>
+                  </div>
+                  <span className="text-[10px] text-[#ffb59a] font-mono">
+                    {connection.nfcTimestamp ? new Date(connection.nfcTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : connection.metTimestamp}
+                  </span>
+                </div>
+              ) : (
+                <p className="text-[11px] text-[#e4beb1]/60 italic bg-[#140804] p-2.5 rounded-xl border border-white/5">
+                  No NFC bump logged yet. Tap "Log Re-encounter Bump" when you bump phones with {connection.name}.
+                </p>
+              )}
+            </div>
+
             {/* Photos & Badges Section */}
             <div className="bg-[#180b06] border border-white/10 rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between">

@@ -85,13 +85,23 @@ Momentum categorizes all functionality into three clear operational states: **Im
 ├──────────────────────────────┬─────────────────────────────┬────────────────────────────┤
 │     CURRENT / IMPLEMENTED    │         EXPERIMENTAL        │      PLANNED / ROADMAP     │
 ├──────────────────────────────┼─────────────────────────────┼────────────────────────────┤
-│ • Universal Event Hub &      │ • WebAuthn Face/Touch ID    │ • Client-Side OCR Engine   │
-│   Multi-Event Switcher       │ • Web Speech Dictation      │ • Dynamic Agenda Scraping  │
-│ • AI Agenda Parser (1-Click) │ • Battery API Power Saver   │ • Web NFC Real Hardware IO │
-│ • Preset Catalog (Tech/TEDx/ │ • Multi-Device SSE Stream   │ • WhatsApp Cloud API Hook  │
-│   Summit/Hackathon/Mastermind│ • Browser Notification API  │                            │
-│ • Constellation Force Radar  │   Follow-Up Push Reminders  │                            │
-│ • AI Warm Intro Matchmaker   │ • Live Audio Segmentation   │                            │
+│ • Web-NFC "Phone Bump" &     │ • WebAuthn Face/Touch ID    │ • Client-Side OCR Engine   │
+│   Contact Handshake Exchange │ • Web Speech Dictation      │ • Dynamic Agenda Scraping  │
+│ • NFC Collision Detection &  │ • Battery API Power Saver   │ • WhatsApp Cloud API Hook  │
+│   Smart Lead Merge UI        │ • Multi-Device SSE Stream   │ • Direct Bluetooth Mesh    │
+│ • Global NFC Power Switch &  │ • Browser Notification API  │                            │
+│   Battery Conservation Mode  │   Follow-Up Push Reminders  │                            │
+│ • Chronological NFC History  │ • Live Audio Segmentation   │                            │
+│   Timeline & Multi-Bump Log  │                             │                            │
+│ • Filtered NFC-Captured CSV  │                             │                            │
+│   Export with Metadata Tags  │                             │                            │
+│ • Universal Event Hub &      │                             │                            │
+│   Multi-Event Switcher       │                             │                            │
+│ • AI Agenda Parser (1-Click) │                             │                            │
+│ • Preset Catalog (Tech/TEDx/ │                             │                            │
+│   Summit/Hackathon/Mastermind│                             │                            │
+│ • Constellation Force Radar  │                             │                            │
+│   & AI Warm Intro Matchmaker │                             │                            │
 │ • AI Pitch Arena & Coach     │                             │                            │
 │ • 3D Holographic NFC Pass    │                             │                            │
 │ • Live Copilot & Venue Kit   │                             │                            │
@@ -118,12 +128,19 @@ Momentum categorizes all functionality into three clear operational states: **Im
 
 ### 2.1 Implemented User Flows
 
-#### Flow A: 15-Second Hallway Connection Capture
-1. Tap the floating **`+ Quick Connect`** action button on the mobile navbar.
-2. Enter Name, Organization, and select Relationship (`Lead`, `Speaker`, `Mentor`, `Peer`).
-3. Tap **`Camera`** to snap a photo of the person or their event badge (downsampled on an offscreen HTML5 canvas from ~8MB to ~150KB in milliseconds).
-4. Tap **`Auto-Summarize with AI`** to generate structured memory points and hashtags from quick notes.
-5. Tap **`Save Connection`** $\rightarrow$ Instant local persistence, haptic vibration, and queueing for Supabase sync.
+#### Flow A: 15-Second Hallway Connection Capture & Web-NFC Phone Bump
+1. Tap the floating **`+ Quick Connect`** action button on the mobile navbar or the pulsating **`NFC Bump`** trigger.
+2. **Contactless Phone Bump (`Web-NFC NDEFReader`):** Bump device backs against another attendee's smartphone.
+   - The app reads standard vCard 3.0 / JSON NDEF records from the peer device.
+   - Triggers tactile haptic feedback via `navigator.vibrate([25, 45, 25, 80])` upon handshake confirmation.
+   - Parses the contact payload and pre-fills the Name, Role, Organization, Phone, Email, and LinkedIn directly into the form.
+   - Dispatches an immediate emerald toast notification (`Parsed NFC contact for [Name]!`).
+3. **Collision Detection UI:** If an attendee with the same phone, email, or name already exists in your database:
+   - Launches `NfcCollisionModal` displaying a side-by-side comparison of the existing contact vs incoming bump payload.
+   - Provides 1-tap resolution options: **Update Existing Contact with New Data**, **Log Re-encounter Bump Event**, or **Save as Separate Record**.
+4. **Battery-Saving Global Toggle:** Enable or disable the Web-NFC scanner anytime inside the Contingency & Health Hub to save battery during lengthy keynote sessions.
+5. **Multi-Bump History Log:** In `ConnectionDetailModal`, view the chronological history of every physical NFC bump encounter with timestamps, venue context, and serial identifiers.
+6. **Dedicated CSV Export:** In `ExportsView`, download a dedicated CSV containing all verified NFC-bumped connections clearly marked to distinguish from manual entries.
 
 #### Flow B: Constellation Force Radar & AI Warm Matchmaking
 1. Launch the **`Constellation Network`** radar visualizer from the Dashboard or More drawer.
@@ -610,6 +627,8 @@ Momentum was built with a build-in-public mindset. Here are **28 concrete conten
 - **Gamification Depth**: 5 progression levels, 7 unlockable badges, and 4 XP award categories (`src/services/gamification.ts`).
 - **Supported Channels**: 3 instant outreach integrations (WhatsApp deep-links, LinkedIn messaging, Email).
 - **Security Tiers**: 3 independent layers (Supabase JWT Auth + Email Whitelist, WebAuthn Biometrics, 4-digit SHA-256 PIN).
+- **Theme Palettes**: 4 refined modern colorways (Cyber Cobalt, Nordic Emerald, Royal Iris, Sunset Ember).
+- **Guest Sandbox Mode**: 24-hour trial with 12MB storage quota, 30MB bandwidth transfer limiter, and safe entity guardrails.
 
 ---
 

@@ -2,28 +2,107 @@
 
 @layer base {
   :root {
-    --font-headline: 'Playfair Display', Georgia, serif;
-    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-headline: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    
+    /* Default: Cyber Cobalt (Refined Obsidian & Electric Blue) */
+    --bg-canvas: #090d14;
+    --bg-surface-card: #0e1420;
+    --bg-surface-subtle: #141c2d;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-accent: rgba(56, 189, 248, 0.35);
+    --accent-primary: #38bdf8;
+    --accent-secondary: #6366f1;
+    --accent-glow: rgba(56, 189, 248, 0.12);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-accent: #38bdf8;
+  }
+
+  /* Theme variations */
+  [data-theme="cyber_cobalt"] {
+    --bg-canvas: #090d14;
+    --bg-surface-card: #0e1420;
+    --bg-surface-subtle: #141c2d;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-accent: rgba(56, 189, 248, 0.35);
+    --accent-primary: #38bdf8;
+    --accent-secondary: #6366f1;
+    --accent-glow: rgba(56, 189, 248, 0.12);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-accent: #38bdf8;
+  }
+
+  [data-theme="nordic_emerald"] {
+    --bg-canvas: #080f0c;
+    --bg-surface-card: #0e1814;
+    --bg-surface-subtle: #14241e;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-accent: rgba(52, 211, 153, 0.35);
+    --accent-primary: #34d399;
+    --accent-secondary: #059669;
+    --accent-glow: rgba(52, 211, 153, 0.12);
+    --text-primary: #f0fdf4;
+    --text-secondary: #94a3b8;
+    --text-accent: #34d399;
+  }
+
+  [data-theme="royal_iris"] {
+    --bg-canvas: #0a0814;
+    --bg-surface-card: #110d24;
+    --bg-surface-subtle: #191436;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-accent: rgba(129, 140, 248, 0.35);
+    --accent-primary: #818cf8;
+    --accent-secondary: #a78bfa;
+    --accent-glow: rgba(129, 140, 248, 0.12);
+    --text-primary: #f8fafc;
+    --text-secondary: #a5b4fc;
+    --text-accent: #818cf8;
+  }
+
+  [data-theme="sunset_ember"] {
+    --bg-canvas: #0d0907;
+    --bg-surface-card: #150f0c;
+    --bg-surface-subtle: #211712;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-accent: rgba(249, 115, 22, 0.35);
+    --accent-primary: #f97316;
+    --accent-secondary: #ef4444;
+    --accent-glow: rgba(249, 115, 22, 0.12);
+    --text-primary: #fdf6f0;
+    --text-secondary: #c7b3a9;
+    --text-accent: #f97316;
   }
 
   body {
-    background-color: #0A0A0A;
-    color: #fadcd2;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
     font-family: var(--font-body);
     overflow-x: hidden;
+    letter-spacing: -0.011em;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   h1, h2, h3, h4, .font-headline {
     font-family: var(--font-headline);
+    letter-spacing: -0.025em;
   }
 }
 
 .font-serif-display {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: var(--font-headline);
+  letter-spacing: -0.025em;
 }
 
 .font-sans-ui {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
+}
+
+.font-mono-data {
+  font-family: var(--font-mono);
 }
 
 /* Material symbols styling */
@@ -37,34 +116,37 @@
   font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-/* Custom visual utilities */
+/* Custom visual utilities mapping to theme variables */
 .bg-oled {
-  background-color: #0A0A0A;
+  background-color: var(--bg-canvas);
 }
 
 .bg-surface-card {
-  background-color: #1A1A1A;
+  background-color: var(--bg-surface-card);
 }
 
 .bg-surface-subtle {
-  background-color: #141414;
+  background-color: var(--bg-surface-subtle);
 }
 
 .border-subtle {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-subtle);
 }
 
-.border-tangerine-glow {
-  border-color: rgba(255, 92, 0, 0.4);
-  box-shadow: 0 0 15px rgba(255, 92, 0, 0.15);
+.border-theme-accent {
+  border-color: var(--border-accent);
 }
 
-.text-tangerine {
-  color: #FF5C00;
+.text-theme-accent {
+  color: var(--accent-primary);
 }
 
-.bg-tangerine {
-  background-color: #FF5C00;
+.bg-theme-accent {
+  background-color: var(--accent-primary);
+}
+
+.theme-glow {
+  box-shadow: 0 0 20px var(--accent-glow);
 }
 
 /* Progress ring animation */
@@ -92,7 +174,7 @@
   padding-top: max(1rem, env(safe-area-inset-top));
 }
 
-/* Ultra Power Saver Mode (Reduces GPU compositing and background animation overhead) */
+/* Ultra Power Saver Mode */
 .ultra-power-saver * {
   animation-duration: 0.001ms !important;
   animation-iteration-count: 1 !important;
@@ -100,4 +182,3 @@
   backdrop-filter: none !important;
   box-shadow: none !important;
 }
-

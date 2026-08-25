@@ -19,6 +19,8 @@ export function exportConnectionsCSV(connections: Connection[]): void {
     'Met Time',
     'Tags',
     'Notes',
+    'Is NFC Bumped',
+    'NFC Bumps Count',
   ];
 
   const rows = connections.map(c => [
@@ -37,13 +39,83 @@ export function exportConnectionsCSV(connections: Connection[]): void {
     `"${c.metTimestamp || ''}"`,
     `"${(c.tags || []).join(';')}"`,
     `"${(c.notes || '').replace(/"/g, '""')}"`,
+    `"${c.isNfcCaptured ? 'YES' : 'NO'}"`,
+    `"${(c.nfcExchangeHistory?.length || (c.isNfcCaptured ? 1 : 0))}"`,
   ]);
 
   const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement('a');
   link.setAttribute('href', encodedUri);
-  link.setAttribute('download', `TEDxAkure2026_Connections_${new Date().toISOString().slice(0, 10)}.csv`);
+  link.setAttribute('download', `Momentum_Connections_${new Date().toISOString().slice(0, 10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+/**
+ * Dedicated CSV export for all Web-NFC captured connections, marking them clearly
+ * to distinguish 'bumped' leads from manual entries.
+ */
+export function exportNfcConnectionsCSV(connections: Connection[]): void {
+  const nfcConnections = connections.filter(
+    (c) => c.isNfcCaptured || (c.nfcExchangeHistory && c.nfcExchangeHistory.length > 0) || (c.tags && c.tags.includes('#NFCBump'))
+  );
+
+  const headers = [
+    'Lead ID',
+    'Capture Channel',
+    'Full Name',
+    'Profession / Title',
+    'Organization / Company',
+    'Relationship Tier',
+    'Priority Level',
+    'Phone Number',
+    'WhatsApp Direct',
+    'Email Address',
+    'LinkedIn Profile',
+    'First Bump Timestamp',
+    'Total NFC Handshakes',
+    'Latest Interaction Time',
+    'NFC Handshake Details',
+    'Event Venue Context',
+    'Notes & Transcripts',
+  ];
+
+  const rows = (nfcConnections.length > 0 ? nfcConnections : connections).map((c) => {
+    const totalBumps = c.nfcExchangeHistory?.length || (c.isNfcCaptured ? 1 : 0);
+    const firstBump = c.nfcTimestamp || c.nfcExchangeHistory?.[0]?.timestamp || c.metTimestamp || 'N/A';
+    const latestBump = c.nfcExchangeHistory?.[c.nfcExchangeHistory.length - 1]?.timestamp || firstBump;
+    const details = (c.nfcExchangeHistory || [])
+      .map((l, i) => `Bump #${i + 1}: ${l.dateFormatted || ''} ${l.timeFormatted || ''} [${l.deviceType || 'Device'}] ${l.notes || ''}`)
+      .join(' | ') || 'Contactless Web-NFC phone bump';
+
+    return [
+      `"${c.id}"`,
+      `"WEB-NFC BUMP (Verified)"`,
+      `"${(c.name || '').replace(/"/g, '""')}"`,
+      `"${(c.profession || '').replace(/"/g, '""')}"`,
+      `"${(c.company || '').replace(/"/g, '""')}"`,
+      `"${c.relationship}"`,
+      `"${c.priority}"`,
+      `"${c.phone || ''}"`,
+      `"${c.whatsapp || ''}"`,
+      `"${c.email || ''}"`,
+      `"${c.linkedin || ''}"`,
+      `"${firstBump}"`,
+      `"${totalBumps}"`,
+      `"${latestBump}"`,
+      `"${details.replace(/"/g, '""')}"`,
+      `"${(c.eventContext || 'Conference 2026').replace(/"/g, '""')}"`,
+      `"${(c.notes || '').replace(/"/g, '""')}"`,
+    ];
+  });
+
+  const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `Momentum_NFC_Bumped_Connections_${new Date().toISOString().slice(0, 10)}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

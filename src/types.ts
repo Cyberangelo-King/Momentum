@@ -411,3 +411,55 @@ export interface SecuritySettings {
   isBiometricEnabled?: boolean;
   biometricCredentialId?: string | null;
 }
+
+export type ThemeId = 'cyber_cobalt' | 'nordic_emerald' | 'royal_iris' | 'sunset_ember';
+
+export interface ThemeConfig {
+  id: ThemeId;
+  name: string;
+  category: string;
+  description: string;
+  accentColor: string;
+  accentSecondary: string;
+  previewColors: [string, string, string];
+}
+
+export interface GuestTrialSession {
+  trialId: string;
+  guestName: string;
+  guestEmail?: string;
+  startedAt: string;
+  expiresAt: string;
+  isActive: boolean;
+  storageQuotaBytes: number;
+  bandwidthQuotaBytes: number;
+  bandwidthUsedBytes: number;
+  maxConnections: number;
+  maxMoments: number;
+  maxIdeas: number;
+  maxNotes: number;
+  maxPhotos: number;
+}
+
+export interface TrialQuotaMetrics {
+  isTrial: boolean;
+  guestName: string;
+  remainingTimeMs: number;
+  remainingTimeFormatted: string;
+  isExpired: boolean;
+  storageUsedBytes: number;
+  storageQuotaBytes: number;
+  storagePercent: number;
+  bandwidthUsedBytes: number;
+  bandwidthQuotaBytes: number;
+  bandwidthPercent: number;
+  connectionsCount: number;
+  maxConnections: number;
+  momentsCount: number;
+  maxMoments: number;
+  ideasCount: number;
+  maxIdeas: number;
+  notesCount: number;
+  maxNotes: number;
+}
+

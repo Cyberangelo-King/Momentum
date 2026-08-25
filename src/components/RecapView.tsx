@@ -81,21 +81,21 @@ export const RecapView: React.FC<RecapViewProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <span className="text-[11px] font-bold text-[#FF5C00] tracking-widest uppercase">
+          <span className="text-[11px] font-bold text-[var(--accent-primary)] tracking-widest uppercase font-mono">
             Reflection & Impact
           </span>
-          <h1 className="text-2xl sm:text-3xl font-bold font-serif-display text-[#fadcd2] mt-0.5">
+          <h1 className="text-2xl sm:text-3xl font-bold font-serif-display text-white mt-0.5">
             Event Recap & Synthesis
           </h1>
-          <p className="text-xs text-[#e4beb1]/70 mt-1">
-            "I came to TEDxAkure to meet 50 people. I captured the people, moments, and ideas — and I know what to do next."
+          <p className="text-xs text-[var(--text-secondary)] mt-1">
+            "I captured the people, moments, and ideas — and I know what to do next."
           </p>
         </div>
 
         <button
           onClick={loadRecap}
           disabled={isLoadingRecap}
-          className="p-2.5 rounded-xl bg-[#28130a] text-[#ffb59a] hover:bg-[#381a0e] border border-white/10 text-xs font-semibold flex items-center gap-1.5"
+          className="p-2.5 rounded-xl bg-[var(--bg-surface-card)] text-[var(--text-primary)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] text-xs font-semibold flex items-center gap-1.5 transition-colors"
           title="Regenerate Synthesis"
         >
           <RotateCw className={`w-3.5 h-3.5 ${isLoadingRecap ? 'animate-spin' : ''}`} />
@@ -106,29 +106,29 @@ export const RecapView: React.FC<RecapViewProps> = ({
       {/* 50-Connection Milestone Card */}
       <div
         onClick={handleTriggerMilestoneConfetti}
-        className="bg-gradient-to-br from-[#2b1207] via-[#1a0c06] to-[#0A0A0A] border border-[#FF5C00]/40 rounded-2xl p-6 relative overflow-hidden shadow-2xl cursor-pointer group"
+        className="bg-[var(--bg-surface-card)] border border-[var(--border-accent)] rounded-2xl p-6 relative overflow-hidden shadow-2xl cursor-pointer group"
       >
         <div className="flex items-center justify-between relative z-10">
           <div className="space-y-1 max-w-md">
             <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-[#FF5C00] text-black flex items-center justify-center font-bold text-xs">
+              <span className="w-6 h-6 rounded-full bg-[var(--accent-primary)] text-black flex items-center justify-center font-bold text-xs">
                 ★
               </span>
-              <span className="text-xs font-bold uppercase tracking-widest text-[#FF5C00]">
+              <span className="text-xs font-bold uppercase tracking-widest text-[var(--accent-primary)] font-mono">
                 {isGoalMet ? 'Milestone Completed' : 'Progressing to Goal'}
               </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold font-serif-display text-[#fadcd2]">
+            <h2 className="text-2xl sm:text-3xl font-bold font-serif-display text-white">
               {total} of {target} Connections Met
             </h2>
-            <p className="text-xs text-[#e4beb1]/75 leading-relaxed">
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
               {isGoalMet
-                ? 'Incredible work! You reached your goal of 50 new relationships at TEDxAkure 2026. Tap to celebrate!'
+                ? 'Incredible work! You reached your goal of new relationships. Tap to celebrate!'
                 : `You are currently at ${Math.round((total / target) * 100)}% of your connection target. Keep the momentum going!`}
             </p>
           </div>
 
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#FF5C00] text-black flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[var(--accent-primary)] text-black flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
             <Flame className="w-8 h-8 sm:w-10 sm:h-10 stroke-[2.5]" />
           </div>
         </div>
@@ -136,66 +136,66 @@ export const RecapView: React.FC<RecapViewProps> = ({
 
       {/* Bento Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-[#140b07] border border-white/10 rounded-2xl p-4 flex flex-col justify-between h-28">
-          <span className="text-[11px] font-semibold text-[#e4beb1]/70">Connections</span>
+        <div className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl p-4 flex flex-col justify-between h-28">
+          <span className="text-[11px] font-semibold text-[var(--text-secondary)]">Connections</span>
           <div>
-            <span className="text-2xl sm:text-3xl font-bold font-serif-display text-[#fadcd2]">
+            <span className="text-2xl sm:text-3xl font-bold font-serif-display text-white">
               {total}
             </span>
-            <span className="text-xs text-[#FF5C00] font-bold ml-1">/ 50</span>
+            <span className="text-xs text-[var(--accent-primary)] font-bold ml-1 font-mono">/ {target}</span>
           </div>
         </div>
 
-        <div className="bg-[#140b07] border border-white/10 rounded-2xl p-4 flex flex-col justify-between h-28">
-          <span className="text-[11px] font-semibold text-[#e4beb1]/70">Moments Logged</span>
+        <div className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl p-4 flex flex-col justify-between h-28">
+          <span className="text-[11px] font-semibold text-[var(--text-secondary)]">Moments Logged</span>
           <div>
-            <span className="text-2xl sm:text-3xl font-bold font-serif-display text-[#fadcd2]">
+            <span className="text-2xl sm:text-3xl font-bold font-serif-display text-white">
               {moments.length}
             </span>
-            <span className="text-xs text-[#e4beb1]/50 ml-1">photos & vids</span>
+            <span className="text-xs text-[var(--text-secondary)] ml-1 font-mono">photos & vids</span>
           </div>
         </div>
 
-        <div className="bg-[#140b07] border border-white/10 rounded-2xl p-4 flex flex-col justify-between h-28">
-          <span className="text-[11px] font-semibold text-[#e4beb1]/70">Talk Insights</span>
+        <div className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl p-4 flex flex-col justify-between h-28">
+          <span className="text-[11px] font-semibold text-[var(--text-secondary)]">Talk Insights</span>
           <div>
-            <span className="text-2xl sm:text-3xl font-bold font-serif-display text-[#fadcd2]">
+            <span className="text-2xl sm:text-3xl font-bold font-serif-display text-white">
               {ideas.length}
             </span>
-            <span className="text-xs text-[#e4beb1]/50 ml-1">quotes</span>
+            <span className="text-xs text-[var(--text-secondary)] ml-1 font-mono">quotes</span>
           </div>
         </div>
 
-        <div className="bg-[#140b07] border border-white/10 rounded-2xl p-4 flex flex-col justify-between h-28">
-          <span className="text-[11px] font-semibold text-[#e4beb1]/70">Follow-ups Due</span>
+        <div className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl p-4 flex flex-col justify-between h-28">
+          <span className="text-[11px] font-semibold text-[var(--text-secondary)]">Follow-ups Due</span>
           <div>
-            <span className="text-2xl sm:text-3xl font-bold font-serif-display text-[#fadcd2]">
+            <span className="text-2xl sm:text-3xl font-bold font-serif-display text-white">
               {connections.filter((c) => c.followUpStatus === 'today' || c.followUpStatus === 'overdue').length}
             </span>
-            <span className="text-xs text-red-400 font-bold ml-1">active</span>
+            <span className="text-xs text-red-400 font-bold ml-1 font-mono">active</span>
           </div>
         </div>
       </div>
 
       {/* AI Daily Synthesis Card */}
-      <div className="bg-[#180b06] border border-white/10 rounded-2xl p-6 space-y-4 shadow-xl">
+      <div className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl p-6 space-y-4 shadow-xl">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#FF5C00]" />
-          <h3 className="text-xs font-bold uppercase tracking-wider text-[#e4beb1]">
-            Gemini Daily Synthesis
+          <Sparkles className="w-4 h-4 text-[var(--accent-primary)]" />
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] font-mono">
+            AI Daily Synthesis
           </h3>
         </div>
 
         {isLoadingRecap ? (
-          <div className="py-8 flex flex-col items-center justify-center text-xs text-[#e4beb1]/60 gap-2">
-            <span className="w-6 h-6 border-2 border-[#FF5C00] border-t-transparent rounded-full animate-spin"></span>
-            <span>Synthesizing your conference journey...</span>
+          <div className="py-8 flex flex-col items-center justify-center text-xs text-[var(--text-secondary)] gap-2">
+            <span className="w-6 h-6 border-2 border-[var(--accent-primary)] border-t-transparent rounded-full animate-spin"></span>
+            <span>Synthesizing your event journey...</span>
           </div>
         ) : (
           <>
-            <p className="text-sm text-[#fadcd2] font-serif-display leading-relaxed">
+            <p className="text-sm text-[var(--text-primary)] font-serif-display leading-relaxed">
               {recapData?.dailySynthesis ||
-                `Your interactions today clustered around two powerful themes: Pan-African logistics and AI ethics in emerging markets. You established ${total} key touchpoints with speakers leading these discussions.`}
+                `Your interactions today clustered around key innovation and collaboration topics. You established ${total} key touchpoints with leaders driving these discussions.`}
             </p>
 
             {/* Theme Pills */}
@@ -204,7 +204,7 @@ export const RecapView: React.FC<RecapViewProps> = ({
                 (theme, i) => (
                   <span
                     key={i}
-                    className="text-xs px-3 py-1 rounded-full bg-[#271812] text-[#ffb59a] border border-[#FF5C00]/30 font-semibold"
+                    className="text-xs px-3 py-1 rounded-full bg-[var(--bg-surface-subtle)] text-[var(--accent-primary)] border border-[var(--border-accent)] font-semibold font-mono"
                   >
                     #{theme}
                   </span>
@@ -216,47 +216,47 @@ export const RecapView: React.FC<RecapViewProps> = ({
       </div>
 
       {/* LinkedIn Shareable Post Card */}
-      <div className="bg-[#140b07] border border-white/10 rounded-2xl p-5 space-y-3">
+      <div className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl p-5 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Share2 className="w-4 h-4 text-[#0A66C2]" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#e4beb1]">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] font-mono">
               LinkedIn Event Reflection
             </h3>
           </div>
 
           <button
             onClick={handleCopyPost}
-            className="px-3 py-1.5 rounded-lg bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] flex items-center gap-1.5 shadow"
+            className="px-3 py-1.5 rounded-lg bg-[var(--accent-primary)] text-black font-bold text-xs hover:brightness-110 flex items-center gap-1.5 shadow transition-all"
           >
             {copiedPost ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
             {copiedPost ? 'Copied to Clipboard' : 'Copy Post'}
           </button>
         </div>
 
-        <div className="bg-[#0d0603] p-4 rounded-xl border border-white/10 text-xs text-[#fadcd2] leading-relaxed whitespace-pre-line font-mono">
+        <div className="bg-[var(--bg-canvas)] p-4 rounded-xl border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] leading-relaxed whitespace-pre-line font-mono">
           {recapData?.linkedInPost}
         </div>
       </div>
 
       {/* 5-Pillar Comprehensive Synthesis Trigger */}
       {onOpenPostEventReview && (
-        <div className="p-5 rounded-2xl bg-gradient-to-r from-[#2c1308] via-[#1a0c06] to-[#120703] border border-[#FF5C00]/40 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="p-5 rounded-2xl bg-[var(--bg-surface-card)] border border-[var(--border-accent)] shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#FF5C00] text-black flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-lg shadow-[#FF5C00]/30">
+            <div className="w-12 h-12 rounded-2xl bg-[var(--accent-primary)] text-black flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-lg">
               <Sparkles className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FF5C00]/20 text-[#FF5C00] uppercase tracking-wider">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] uppercase tracking-wider font-mono">
                   5-Pillar Framework
                 </span>
-                <span className="text-xs text-[#e4beb1]/60">Gemini Powered</span>
+                <span className="text-xs text-[var(--text-secondary)]">AI Powered</span>
               </div>
               <h3 className="text-base font-bold text-white font-serif-display mt-0.5">
                 Deep Post-Event Reflection & Forward Strategy
               </h3>
-              <p className="text-xs text-[#e4beb1]/80">
+              <p className="text-xs text-[var(--text-secondary)]">
                 1. What happened • 2. What I learned • 3. Mindset shifts • 4. Action commitments • 5. Key follow-ups
               </p>
             </div>
@@ -264,7 +264,7 @@ export const RecapView: React.FC<RecapViewProps> = ({
 
           <button
             onClick={onOpenPostEventReview}
-            className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] transition-all flex items-center justify-center gap-2 flex-shrink-0 shadow-lg shadow-[#FF5C00]/20 min-h-[44px]"
+            className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[var(--accent-primary)] text-black font-bold text-xs hover:brightness-110 transition-all flex items-center justify-center gap-2 flex-shrink-0 shadow-lg min-h-[44px]"
           >
             <span>Open 5-Pillar Review</span>
             <ChevronRight className="w-4 h-4" />
@@ -276,13 +276,13 @@ export const RecapView: React.FC<RecapViewProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
         <button
           onClick={onOpenExports}
-          className="p-4 rounded-2xl bg-[#28130a] hover:bg-[#381a0e] border border-white/10 flex items-center justify-between transition-colors text-left"
+          className="p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] hover:border-[var(--border-accent)] flex items-center justify-between transition-colors text-left"
         >
           <div className="flex items-center gap-3">
-            <FileText className="w-6 h-6 text-[#FF5C00]" />
+            <FileText className="w-6 h-6 text-[var(--accent-primary)]" />
             <div>
-              <h4 className="text-sm font-bold text-[#fadcd2]">Export Journal PDF</h4>
-              <p className="text-[11px] text-[#e4beb1]/60">Full formatted conference archive</p>
+              <h4 className="text-sm font-bold text-white">Export Journal PDF</h4>
+              <p className="text-[11px] text-[var(--text-secondary)]">Full formatted conference archive</p>
             </div>
           </div>
           <ChevronRight className="w-5 h-5 text-white/50" />
@@ -290,13 +290,13 @@ export const RecapView: React.FC<RecapViewProps> = ({
 
         <button
           onClick={onOpenCollage}
-          className="p-4 rounded-2xl bg-[#28130a] hover:bg-[#381a0e] border border-white/10 flex items-center justify-between transition-colors text-left"
+          className="p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] hover:border-[var(--border-accent)] flex items-center justify-between transition-colors text-left"
         >
           <div className="flex items-center gap-3">
-            <LayoutGrid className="w-6 h-6 text-[#ffb59a]" />
+            <LayoutGrid className="w-6 h-6 text-[var(--accent-primary)]" />
             <div>
-              <h4 className="text-sm font-bold text-[#fadcd2]">Photo Collage Generator</h4>
-              <p className="text-[11px] text-[#e4beb1]/60">High-res shareable image</p>
+              <h4 className="text-sm font-bold text-white">Photo Collage Generator</h4>
+              <p className="text-[11px] text-[var(--text-secondary)]">High-res shareable image</p>
             </div>
           </div>
           <ChevronRight className="w-5 h-5 text-white/50" />

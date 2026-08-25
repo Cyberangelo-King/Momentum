@@ -529,17 +529,17 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Bar */}
-        <div className="p-3.5 sm:p-4 bg-[#1e100a] border-b border-white/10 flex items-center justify-between gap-3">
+        <div className="p-3.5 sm:p-4 bg-[var(--bg-surface-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-[#FF5C00]/20 text-[#FF5C00] flex items-center justify-center font-bold shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] flex items-center justify-center font-bold shrink-0 border border-[var(--border-accent)]">
               <FileText className="w-4 h-4" />
             </div>
             <div className="truncate">
-              <h2 className="text-sm sm:text-base font-bold font-serif-display text-[#fadcd2] truncate">
+              <h2 className="text-sm sm:text-base font-bold font-serif-display text-white truncate">
                 {note ? 'Edit Note & AI Copilot' : 'New Smart Note'}
               </h2>
-              <p className="text-[10px] text-[#e4beb1]/70 truncate">
-                TEDxAkure 2026 • AI-Powered Note-Taking & Q&A Prep
+              <p className="text-[10px] text-[var(--text-secondary)] truncate">
+                AI-Powered Note-Taking & Q&A Prep
               </p>
             </div>
           </div>
@@ -553,8 +553,8 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
               }}
               className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-1 transition-colors ${
                 isPinned
-                  ? 'bg-[#FF5C00] text-black border-[#FF5C00]'
-                  : 'bg-white/5 text-[#e4beb1]/70 border-white/10 hover:text-white'
+                  ? 'bg-[var(--accent-primary)] text-black border-[var(--accent-primary)]'
+                  : 'bg-white/5 text-[var(--text-secondary)] border-white/10 hover:text-white'
               }`}
               title={isPinned ? 'Unpin note' : 'Pin note to top'}
             >
@@ -564,7 +564,7 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
             <button
               type="button"
               onClick={handleCopyNoteMarkdown}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-[#e4beb1] hover:text-white transition-colors"
+              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-[var(--text-primary)] hover:text-white transition-colors"
               title="Copy as Markdown"
             >
               <Copy className="w-3.5 h-3.5" />
@@ -583,7 +583,7 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
 
         {/* Status Toast Banner */}
         {statusMessage && (
-          <div className="bg-[#FF5C00]/20 border-b border-[#FF5C00]/40 px-4 py-2 text-xs font-medium text-[#FF8246] flex items-center justify-between animate-in fade-in">
+          <div className="bg-[var(--accent-primary)]/20 border-b border-[var(--border-accent)] px-4 py-2 text-xs font-medium text-[var(--accent-primary)] flex items-center justify-between animate-in fade-in">
             <div className="flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5 animate-spin" />
               <span>{statusMessage}</span>
@@ -602,22 +602,22 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Note Title (e.g. Scaling Tech Ecosystems in Ondo State)"
-              className="w-full bg-transparent border-b border-white/10 pb-2 text-lg sm:text-xl font-bold font-serif-display text-[#fadcd2] focus:border-[#FF5C00] focus:outline-none placeholder:text-white/30"
+              placeholder="Note Title..."
+              className="w-full bg-transparent border-b border-[var(--border-subtle)] pb-2 text-lg sm:text-xl font-bold font-serif-display text-white focus:border-[var(--accent-primary)] focus:outline-none placeholder:text-white/30"
             />
           </div>
 
           {/* Metadata Row: Category, Speaker, Location */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-[#110703] border border-white/5 rounded-2xl">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] rounded-2xl">
             {/* Category Selector */}
             <div>
-              <label className="block text-[10px] font-bold text-[#e4beb1]/70 uppercase tracking-wider mb-1">
+              <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1 font-mono">
                 Category
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as NoteCategory)}
-                className="w-full bg-[#1e100a] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-[#fadcd2] focus:border-[#FF5C00] focus:outline-none"
+                className="w-full bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-[var(--accent-primary)] focus:outline-none"
               >
                 {categories.map((cat) => (
                   <option key={cat} value={cat}>
@@ -629,7 +629,7 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
 
             {/* Speaker Name */}
             <div>
-              <label className="block text-[10px] font-bold text-[#e4beb1]/70 uppercase tracking-wider mb-1">
+              <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1 font-mono">
                 Speaker / Host
               </label>
               <div className="relative">
@@ -637,16 +637,16 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
                   type="text"
                   value={speaker}
                   onChange={(e) => setSpeaker(e.target.value)}
-                  placeholder="e.g. Dr. Folashade Adeyemi"
-                  className="w-full bg-[#1e100a] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-[#fadcd2] focus:border-[#FF5C00] focus:outline-none pl-7"
+                  placeholder="Speaker name"
+                  className="w-full bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-[var(--accent-primary)] focus:outline-none pl-7"
                 />
-                <User className="w-3.5 h-3.5 text-[#FF5C00] absolute left-2 top-2" />
+                <User className="w-3.5 h-3.5 text-[var(--accent-primary)] absolute left-2 top-2" />
               </div>
             </div>
 
             {/* Location / Stage */}
             <div>
-              <label className="block text-[10px] font-bold text-[#e4beb1]/70 uppercase tracking-wider mb-1">
+              <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1 font-mono">
                 Stage / Location
               </label>
               <div className="relative">
@@ -654,18 +654,18 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g. Main Auditorium"
-                  className="w-full bg-[#1e100a] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-[#fadcd2] focus:border-[#FF5C00] focus:outline-none pl-7"
+                  placeholder="Location"
+                  className="w-full bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-[var(--accent-primary)] focus:outline-none pl-7"
                 />
-                <MapPin className="w-3.5 h-3.5 text-[#FF5C00] absolute left-2 top-2" />
+                <MapPin className="w-3.5 h-3.5 text-[var(--accent-primary)] absolute left-2 top-2" />
               </div>
             </div>
           </div>
 
           {/* Quick AI & Voice Action Toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-[#1a0e08] border border-[#FF5C00]/30 rounded-2xl shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-[var(--bg-surface-subtle)] border border-[var(--border-accent)] rounded-2xl shadow-sm">
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-bold text-[#FF8246] flex items-center gap-1 px-2">
+              <span className="text-[11px] font-bold text-[var(--accent-primary)] flex items-center gap-1 px-2 font-mono">
                 <Sparkles className="w-3.5 h-3.5 fill-current" />
                 <span>AI Copilot:</span>
               </span>
@@ -675,7 +675,7 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
                 type="button"
                 onClick={handleEnhanceWithGemini}
                 disabled={isEnhancing}
-                className="py-1.5 px-3 rounded-xl bg-[#FF5C00]/20 hover:bg-[#FF5C00]/30 text-[#FF8246] border border-[#FF5C00]/40 text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                className="py-1.5 px-3 rounded-xl bg-[var(--accent-primary)]/20 hover:bg-[var(--accent-primary)]/30 text-[var(--accent-primary)] border border-[var(--border-accent)] text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
                 title="Structure messy notes, summarize & extract tasks"
               >
                 {isEnhancing ? (
@@ -691,13 +691,13 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
                 type="button"
                 onClick={handleGenerateQuestions}
                 disabled={isGeneratingQuestions}
-                className="py-1.5 px-3 rounded-xl bg-[#28130a] hover:bg-[#381a0e] text-[#fadcd2] border border-white/10 text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                className="py-1.5 px-3 rounded-xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] text-white border border-[var(--border-subtle)] text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
                 title="Generate sharp questions for the speaker"
               >
                 {isGeneratingQuestions ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <HelpCircle className="w-3.5 h-3.5 text-[#FF5C00]" />
+                  <HelpCircle className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                 )}
                 <span>Speaker Questions</span>
               </button>
@@ -925,12 +925,12 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
                 onChange={(e) => setNewActionText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddActionItem()}
                 placeholder="Add follow-up task or reminder..."
-                className="flex-1 bg-[#0c0502] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-[#fadcd2] focus:border-[#FF5C00] focus:outline-none"
+                className="flex-1 bg-[var(--bg-canvas)] border border-[var(--border-subtle)] rounded-xl px-3 py-1.5 text-xs text-white focus:border-[var(--accent-primary)] focus:outline-none"
               />
               <select
                 value={newActionPriority}
                 onChange={(e) => setNewActionPriority(e.target.value as any)}
-                className="bg-[#1e100a] border border-white/10 rounded-xl px-2 py-1.5 text-xs text-[#fadcd2] focus:outline-none"
+                className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -939,7 +939,7 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
               <button
                 type="button"
                 onClick={handleAddActionItem}
-                className="p-2 rounded-xl bg-[#FF5C00] text-black hover:bg-[#ff7a33] font-bold"
+                className="p-2 rounded-xl bg-[var(--accent-primary)] text-black hover:brightness-110 font-bold"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
@@ -948,9 +948,9 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
 
           {/* Suggested Speaker Questions Section */}
           {suggestedQuestions.length > 0 && (
-            <div className="p-3.5 bg-[#1b0e08] border border-[#FF5C00]/30 rounded-2xl space-y-2.5">
+            <div className="p-3.5 bg-[var(--bg-surface-subtle)] border border-[var(--border-accent)] rounded-2xl space-y-2.5">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-[#FF8246] flex items-center gap-1.5">
+                <h4 className="text-xs font-bold text-[var(--accent-primary)] flex items-center gap-1.5 font-mono">
                   <HelpCircle className="w-3.5 h-3.5" />
                   <span>Prepared Speaker Questions ({suggestedQuestions.length})</span>
                 </h4>
@@ -960,10 +960,10 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
                 {suggestedQuestions.map((q, idx) => (
                   <div
                     key={idx}
-                    className="p-3 bg-[#0d0603] rounded-xl border border-white/10 space-y-1.5"
+                    className="p-3 bg-[var(--bg-surface-card)] rounded-xl border border-[var(--border-subtle)] space-y-1.5"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-xs font-bold text-[#fadcd2]">
+                      <p className="text-xs font-bold text-white">
                         "{q.question}"
                       </p>
                       <button
@@ -974,15 +974,15 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
                           setStatusMessage('Copied question!');
                           setTimeout(() => setStatusMessage(null), 2000);
                         }}
-                        className="p-1 text-[#e4beb1]/70 hover:text-white rounded hover:bg-white/5"
+                        className="p-1 text-[var(--text-secondary)] hover:text-white rounded hover:bg-white/5"
                         title="Copy question"
                       >
                         <Copy className="w-3.5 h-3.5" />
                       </button>
                     </div>
                     {q.context && (
-                      <p className="text-[11px] text-[#e4beb1]/70 leading-tight">
-                        <strong className="text-[#FF8246]">Strategic context:</strong> {q.context}
+                      <p className="text-[11px] text-[var(--text-secondary)] leading-tight">
+                        <strong className="text-[var(--accent-primary)]">Strategic context:</strong> {q.context}
                       </p>
                     )}
                   </div>
@@ -993,14 +993,14 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
 
           {/* Tags Row */}
           <div>
-            <label className="block text-xs font-semibold text-[#e4beb1] mb-1.5">
+            <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1.5">
               Tags & Key Topics
             </label>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className="px-2.5 py-1 rounded-lg bg-[#28130a] border border-[#FF5C00]/30 text-[11px] text-[#FF8246] flex items-center gap-1"
+                  className="px-2.5 py-1 rounded-lg bg-[var(--bg-surface-subtle)] border border-[var(--border-accent)] text-[11px] text-[var(--accent-primary)] flex items-center gap-1 font-mono"
                 >
                   <Tag className="w-2.5 h-2.5" />
                   <span>{tag}</span>
@@ -1020,8 +1020,8 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                placeholder="Add custom tag (e.g. AI Infra, Ondo State, Clean Energy)..."
-                className="flex-1 bg-[#0d0603] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-[#fadcd2] focus:border-[#FF5C00] focus:outline-none"
+                placeholder="Add custom tag..."
+                className="flex-1 bg-[var(--bg-canvas)] border border-[var(--border-subtle)] rounded-xl px-3 py-1.5 text-xs text-white focus:border-[var(--accent-primary)] focus:outline-none"
               />
               <button
                 type="button"
@@ -1035,7 +1035,7 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
         </div>
 
         {/* Footer Bar */}
-        <div className="p-3.5 sm:p-4 bg-[#180b06] border-t border-white/10 flex items-center justify-between gap-3">
+        <div className="p-3.5 sm:p-4 bg-[var(--bg-surface-subtle)] border-t border-[var(--border-subtle)] flex items-center justify-between gap-3">
           {note && onDeleteNote ? (
             <button
               type="button"
@@ -1057,14 +1057,14 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="py-2.5 px-4 rounded-xl border border-white/10 text-xs font-semibold text-[#fadcd2] hover:bg-white/5 transition-colors"
+              className="py-2.5 px-4 rounded-xl border border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-secondary)] hover:bg-white/5 transition-colors"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className="py-2.5 px-5 rounded-xl bg-[#FF5C00] text-black font-bold text-xs hover:bg-[#ff7a33] flex items-center gap-2 shadow-lg shadow-[#FF5C00]/25 active:scale-95 transition-all"
+              className="py-2.5 px-5 rounded-xl bg-[var(--accent-primary)] text-black font-bold text-xs hover:brightness-110 flex items-center gap-2 shadow-lg active:scale-95 transition-all"
             >
               <Check className="w-4 h-4 stroke-[2.5]" />
               <span>Save Note</span>

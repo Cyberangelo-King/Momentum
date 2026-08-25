@@ -530,4 +530,55 @@ To elevate Momentum from an elite personal CRM into an unstoppable conference su
 
 ---
 
+## 12. The Web-NFC 'Bump' Protocol & Contactless Hardware Exchange
+
+Physical networking at technology conferences should be as seamless as touching two phones together. In this release, we engineered a complete **Web-NFC Hardware Integration & Contact Handshake Protocol**:
+
+### 1. Dual Hardware & Virtual NDEF Pipeline (`nfcService.ts`)
+- **Native Web-NFC (`NDEFReader`):** Accesses device Near Field Communication hardware on supported Android Chrome browsers to scan and write contactless NDEF messages containing vCard 3.0 and JSON contact manifests.
+- **Graceful Fallback Radar:** When Web-NFC is unavailable (e.g. desktop browsers, iOS Safari restrictions), Momentum automatically spins up a virtual bump simulator allowing users to experience the full contact exchange flow.
+
+### 2. Multi-Pattern Tactile Haptic Feedback (`haptics.ts`)
+- Leveraged `navigator.vibrate` with distinct rhythmic signatures:
+  - **`nfc_bump`:** `[30, 40, 30]` for initial antenna contact.
+  - **`nfc_handshake`:** `[25, 45, 25, 80]` providing a satisfying, tactile confirmation when the cryptographic payload is successfully decrypted.
+
+### 3. Collision Detection & Smart Resolution UI (`NfcCollisionModal.tsx`)
+- Detects existing contacts across multiple identifiers (Exact Email, Normalized Phone Number, LinkedIn Handle, Full Name).
+- Prompts the user with three clean resolution choices:
+  - **Merge / Update:** Enrich existing connection profile with updated contact info.
+  - **Log Re-encounter:** Add a timestamped encounter entry without overwriting notes.
+  - **Keep Separate:** Create a distinct connection profile.
+
+### 4. Battery-Aware Global Hardware Toggle
+- Added a dedicated power switch in `ContingencyHubModal.tsx` and `NfcBumpModal.tsx` allowing attendees to suspend background NFC scanning during keynotes to maximize battery longevity.
+
+### 5. Multi-Encounter History Timeline & Dedicated CSV Export
+- **Timeline in `ConnectionDetailModal.tsx`:** Displays a chronological log of physical bump interactions with timestamp, venue tags, and serial numbers.
+- **Dedicated Export in `ExportsView.tsx`:** Generates a filtered CSV (`exportNfcConnectionsCSV`) marking NFC-captured leads with full encounter metadata.
+
+---
+
+## 13. Refined Visual Aesthetics & 24-Hour Guest Trial Guardrails
+
+In response to user feedback on visual comfort and multi-user evaluation needs, we engineered two foundational systems:
+
+### 1. Refined CSS Variable Theming System (`themeService.ts`, `index.css`, `ThemeSelectorModal.tsx`)
+- **Tamed the Palette:** Replaced overly loud neon accents with four meticulously calibrated, modern colorways:
+  - **Cyber Cobalt (Default):** Deep dark canvas (`#070b14`) with electric blue (`#0284c7` / `#38bdf8`) accents and cool silver text.
+  - **Nordic Emerald:** Rich evergreen canvas (`#06130d`) with mint/emerald (`#059669` / `#34d399`) glow.
+  - **Royal Iris:** Deep midnight violet (`#0d0818`) with amethyst/indigo (`#7c3aed` / `#a78bfa`) accents.
+  - **Sunset Ember:** Subtle obsidian amber (`#110905`) with warm peach/terracotta highlights.
+- **Dynamic DOM Skinning:** Uses CSS custom properties (`--bg-canvas`, `--bg-surface-card`, `--accent-primary`, `--text-primary`, `--border-subtle`) applied globally via `data-theme` attributes on `<html>`, with instant persistence across reloads.
+
+### 2. Multi-User 24-Hour Guest Trial Sandbox (`trialService.ts`, `TrialManagerModal.tsx`, `TrialHeaderPill.tsx`)
+- **24-Hour Automated Expiry:** Allows anyone to test the full Momentum Event OS for 1 day without needing master owner credentials.
+- **Strict Anti-Damage Resource Quotas:**
+  - **Storage Cap (12 MB):** Constrains local storage footprint with real-time UTF-16 byte estimation.
+  - **Bandwidth Transfer Limiter (30 MB):** Tracks and throttles network usage during photo uploads, sync events, and data transfers.
+  - **Entity Guardrails:** Enforces safe caps (35 connections, 25 moments, 25 ideas, 25 notes, 15 photos) to prevent device memory exhaustion.
+- **Frictionless Backup & Transition:** Includes 1-click JSON backup and CSV export in the trial modal so guest users never lose their captured conference contacts.
+
+---
+
 *This journal represents the foundational narrative, technical truth, and 1,000,000x compounding journey of Momentum. It is the permanent record of why, how, and for whom this software was crafted.*

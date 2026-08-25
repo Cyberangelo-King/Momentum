@@ -16,11 +16,18 @@ import {
   RefreshCw,
   Share2,
   Lock,
-  Sparkles
+  Sparkles,
+  Smartphone,
+  Radio
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { triggerHaptic } from '../services/haptics';
 import { useBatteryStatus } from '../hooks/useBatteryStatus';
+import { 
+  getNfcServiceEnabled, 
+  setNfcServiceEnabled, 
+  isWebNfcSupported 
+} from '../services/nfcService';
 import { 
   downloadEmergencyBackup, 
   createEmergencySnapshot, 
@@ -56,16 +63,30 @@ export const ContingencyHubModal: React.FC<ContingencyHubModalProps> = ({
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false);
   const [restoredSuccessMsg, setRestoredSuccessMsg] = useState<string | null>(null);
   const [syncState, setSyncState] = useState(syncManager.getState());
+  const [isNfcEnabled, setIsNfcEnabled] = useState(getNfcServiceEnabled());
 
   useEffect(() => {
     if (isOpen) {
       setSnapshots(getStoredSnapshots());
       getStorageMetrics().then(setStorageInfo);
       setSyncState(syncManager.getState());
+      setIsNfcEnabled(getNfcServiceEnabled());
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const handleToggleNfc = (nextState: boolean) => {
+    triggerHaptic('light');
+    setIsNfcEnabled(nextState);
+    setNfcServiceEnabled(nextState);
+    setRestoredSuccessMsg(
+      nextState
+        ? 'Web-NFC scanner activated for attendee phone bumps'
+        : 'Web-NFC scanner paused to conserve device battery'
+    );
+    setTimeout(() => setRestoredSuccessMsg(null), 3500);
+  };
 
   const handleCreateSnapshot = () => {
     triggerHaptic('medium');
@@ -277,6 +298,40 @@ export const ContingencyHubModal: React.FC<ContingencyHubModalProps> = ({
               }`}
             >
               {isUltraPowerSaver ? 'Enabled' : 'Enable'}
+            </button>
+          </div>
+
+          {/* Section 2.5: Global Web-NFC Hardware Toggle (Battery Conservation) */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#1a0c06] border border-white/10 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isNfcEnabled ? 'bg-[#FF5C00]/20 text-[#FF5C00]' : 'bg-white/10 text-white/40'}`}>
+                <Smartphone className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-[#fadcd2]">Web-NFC Bump Scanner</h3>
+                  <span className={`text-[10px] px-2 py-0.2 rounded-full font-bold uppercase tracking-wider ${
+                    isNfcEnabled ? 'bg-[#FF5C00]/20 text-[#ffb59a] border border-[#FF5C00]/30' : 'bg-white/10 text-white/50'
+                  }`}>
+                    {isNfcEnabled ? 'ACTIVE & LISTENING' : 'PAUSED (SAVING BATTERY)'}
+                  </span>
+                </div>
+                <p className="text-xs text-[#e4beb1]/70 mt-0.5">
+                  Allows physical phone-to-phone contact bumping. Turn off to preserve battery when not networking.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handleToggleNfc(!isNfcEnabled)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all min-h-[40px] ${
+                isNfcEnabled
+                  ? 'bg-[#FF5C00] text-black hover:bg-[#ff7a33]'
+                  : 'bg-white/10 hover:bg-white/20 text-[#fadcd2]'
+              }`}
+            >
+              {isNfcEnabled ? 'Enabled' : 'Disabled'}
             </button>
           </div>
 

@@ -1,5 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Connection, Moment, Idea, EventSession, UserProfile, SecuritySettings, Note, EventConfig, EventTemplatePreset } from './types';
+import { 
+  Connection, 
+  Moment, 
+  Idea, 
+  EventSession, 
+  UserProfile, 
+  SecuritySettings, 
+  Note, 
+  EventConfig, 
+  EventTemplatePreset,
+  TrialQuotaMetrics
+} from './types';
 import {
   loadConnections,
   saveConnections,
@@ -18,16 +29,34 @@ import {
   permanentlyDeleteConnection,
   permanentlyDeleteIdea,
   permanentlyDeleteNote,
-  loadEventsCatalog,
-  saveEventsCatalog,
+  loadEvents,
+  saveEvents,
   loadActiveEventId,
   saveActiveEventId,
-  loadActiveEventConfig,
   createEventFromPreset,
+  duplicateEvent,
+  deleteEvent
 } from './services/storage';
-import { loadSecuritySettings, saveSecuritySettings, setAppLockState, getVerifiedOwnerSession, subscribeToAuthChanges, logoutOwner } from './services/authService';
+import { 
+  loadSecuritySettings, 
+  saveSecuritySettings, 
+  setAppLockState, 
+  getVerifiedOwnerSession, 
+  subscribeToAuthChanges, 
+  logoutOwner 
+} from './services/authService';
+import { getStoredTheme, applyThemeToDOM } from './services/themeService';
+import { 
+  isTrialActive, 
+  getTrialSession, 
+  getTrialMetrics, 
+  checkTrialGuardrail, 
+  recordBandwidthUsage, 
+  endTrialSession 
+} from './services/trialService';
 import { calculateGamification } from './services/gamification';
 import { syncManager } from './services/syncManager';
+import { triggerHaptic } from './services/haptics';
 import { motion, AnimatePresence } from 'motion/react';
 
 import { Navigation, NavTab } from './components/Navigation';
@@ -64,8 +93,8 @@ import { PitchSimulatorModal } from './components/PitchSimulatorModal';
 import { DigitalBadgeModal } from './components/DigitalBadgeModal';
 import { LiveCopilotModal } from './components/LiveCopilotModal';
 import { EventAnalyticsModal } from './components/EventAnalyticsModal';
-import { InstantCaptureBar } from './components/InstantCaptureBar';
-import { createEmergencySnapshot } from './services/contingencyService';
+import { ThemeSelectorModal } from './components/ThemeSelectorModal';
+import { TrialManagerModal } from './components/TrialManagerModal';
 import { 
   ShieldCheck, 
   ChevronRight, 
@@ -79,7 +108,9 @@ import {
   LayoutGrid, 
   WifiOff,
   LogOut,
-  Globe
+  Globe,
+  Palette,
+  Sparkles
 } from 'lucide-react';
 
 /**
@@ -88,7 +119,6 @@ import {
 const getTabFromUrl = (): NavTab => {
   if (typeof window === 'undefined') return 'home';
 
-  // Normalize pathname, stripping leading and trailing slashes
   const path = window.location.pathname.toLowerCase().replace(/^\/+|\/+$/g, '');
   if (path === 'people' || path === 'connections') return 'people';
   if (path === 'capture') return 'capture';
@@ -99,14 +129,12 @@ const getTabFromUrl = (): NavTab => {
   if (path === 'export' || path === 'exports') return 'export';
   if (path === 'more') return 'more';
 
-  // Check query parameter (?tab=ideas or ?tab=followups)
   const params = new URLSearchParams(window.location.search);
   const tabParam = params.get('tab')?.toLowerCase();
   if (['home', 'people', 'capture', 'moments', 'ideas', 'followups', 'recap', 'export', 'more'].includes(tabParam || '')) {
     return tabParam as NavTab;
   }
 
-  // Check hash fragment (#ideas or #/ideas)
   const hash = window.location.hash.toLowerCase().replace(/^[#/]+/, '');
   if (['home', 'people', 'capture', 'moments', 'ideas', 'followups', 'recap', 'export', 'more'].includes(hash)) {
     return hash as NavTab;
@@ -116,8 +144,14 @@ const getTabFromUrl = (): NavTab => {
 };
 
 export const App: React.FC = () => {
-  // Primary Supabase Authentication & Single-Owner Gatekeeper
-  type AuthState = 'loading' | 'unauthenticated' | 'authenticated' | 'unauthorized';
+  // Theme initialization on boot
+  useEffect(() => {
+    const stored = getStoredTheme();
+    applyThemeToDOM(stored);
+  }, []);
+
+  // Primary Supabase Authentication & Single-Owner / 1-Day Trial Gatekeeper
+  type AuthState = 'loading' | 'unauthenticated' | 'authenticated' | 'unauthorized' | 'trial';
   const [authState, setAuthState] = useState<AuthState>('loading');
   const [unauthorizedEmail, setUnauthorizedEmail] = useState<string | null>(null);
   const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState<boolean>(false);
@@ -131,6 +165,15 @@ export const App: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile>(loadProfile);
   const [security, setSecurity] = useState<SecuritySettings>(loadSecuritySettings);
   const [isLocked, setIsLocked] = useState<boolean>(security.isLocked);
+
+  // 1-Day Trial and Theme Modals State
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState<boolean>(false);
+  const [isTrialModalOpen, setIsTrialModalOpen] = useState<boolean>(false);
+  const [trialToastMessage, setTrialToastMessage] = useState<string | null>(null);
+
+  const trialMetrics = useMemo(() => {
+    return getTrialMetrics(connections, moments, ideas, notes);
+  }, [connections, moments, ideas, notes]);
 
   // Sync state tracking from SyncManager
   const [syncState, setSyncState] = useState(syncManager.getState());
@@ -149,14 +192,26 @@ export const App: React.FC = () => {
           setAuthState('authenticated');
           setUnauthorizedEmail(null);
         } else if (session && !isOwner) {
-          setAuthState('unauthorized');
-          setUnauthorizedEmail(user?.email || null);
+          if (isTrialActive()) {
+            setAuthState('trial');
+          } else {
+            setAuthState('unauthorized');
+            setUnauthorizedEmail(user?.email || null);
+          }
         } else {
-          setAuthState('unauthenticated');
+          if (isTrialActive()) {
+            setAuthState('trial');
+          } else {
+            setAuthState('unauthenticated');
+          }
         }
       } catch (err) {
         if (!isMounted) return;
-        setAuthState('unauthenticated');
+        if (isTrialActive()) {
+          setAuthState('trial');
+        } else {
+          setAuthState('unauthenticated');
+        }
       }
     }
 
@@ -170,14 +225,26 @@ export const App: React.FC = () => {
           setAuthState('authenticated');
           setUnauthorizedEmail(null);
         } else if (session && !isOwner) {
-          setAuthState('unauthorized');
-          setUnauthorizedEmail(session.user?.email || null);
+          if (isTrialActive()) {
+            setAuthState('trial');
+          } else {
+            setAuthState('unauthorized');
+            setUnauthorizedEmail(session.user?.email || null);
+          }
         } else {
-          setAuthState('unauthenticated');
+          if (isTrialActive()) {
+            setAuthState('trial');
+          } else {
+            setAuthState('unauthenticated');
+          }
         }
       } else if (event === 'SIGNED_OUT') {
-        setAuthState('unauthenticated');
-        setUnauthorizedEmail(null);
+        if (isTrialActive()) {
+          setAuthState('trial');
+        } else {
+          setAuthState('unauthenticated');
+          setUnauthorizedEmail(null);
+        }
       }
     });
 
@@ -188,6 +255,13 @@ export const App: React.FC = () => {
   }, []);
 
   const handleLogout = async () => {
+    if (isTrialActive()) {
+      endTrialSession();
+      setAuthState('unauthenticated');
+      setIsConfirmLogoutOpen(false);
+      triggerHaptic('medium');
+      return;
+    }
     await logoutOwner();
     setAuthState('unauthenticated');
     setIsConfirmLogoutOpen(false);
@@ -215,135 +289,116 @@ export const App: React.FC = () => {
   const [isEventAnalyticsOpen, setIsEventAnalyticsOpen] = useState(false);
 
   // Multi-Event Management System
-  const [events, setEvents] = useState<EventConfig[]>(loadEventsCatalog);
+  const [events, setEvents] = useState<EventConfig[]>(loadEvents);
   const [activeEventId, setActiveEventId] = useState<string>(loadActiveEventId);
 
   const activeEvent = useMemo(() => {
-    return events.find((e) => e.id === activeEventId) || events[0] || loadActiveEventConfig();
+    return events.find((e) => e.id === activeEventId) || events[0];
   }, [events, activeEventId]);
-
-  useEffect(() => {
-    saveEventsCatalog(events);
-  }, [events]);
-
-  useEffect(() => {
-    saveActiveEventId(activeEventId);
-  }, [activeEventId]);
 
   const handleSelectEvent = (event: EventConfig) => {
     setActiveEventId(event.id);
     saveActiveEventId(event.id);
-    setIsEventHubOpen(false);
   };
 
   const handleCreateFromPreset = (preset: EventTemplatePreset, overrides?: Partial<EventConfig>) => {
     const newEvent = createEventFromPreset(preset, overrides);
-    setEvents((prev) => [newEvent, ...prev]);
+    const updated = [newEvent, ...events];
+    setEvents(updated);
+    saveEvents(updated);
     setActiveEventId(newEvent.id);
     saveActiveEventId(newEvent.id);
-    setIsEventHubOpen(false);
   };
 
   const handleCreateCustomEvent = (eventData: Omit<EventConfig, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newEvent: EventConfig = {
       ...eventData,
-      id: `event-custom-${Date.now().toString(36)}`,
+      id: `evt-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    setEvents((prev) => [newEvent, ...prev]);
+
+    const updated = [newEvent, ...events];
+    setEvents(updated);
+    saveEvents(updated);
     setActiveEventId(newEvent.id);
     saveActiveEventId(newEvent.id);
-    setIsEventHubOpen(false);
-  };
-
-  const handleDuplicateEvent = (eventId: string) => {
-    const source = events.find((e) => e.id === eventId);
-    if (!source) return;
-    const duplicated: EventConfig = {
-      ...source,
-      id: `event-copy-${Date.now().toString(36)}`,
-      name: `${source.name} (Copy)`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setEvents((prev) => [duplicated, ...prev]);
   };
 
   const handleUpdateEvent = (updated: EventConfig) => {
-    setEvents((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+    const updatedList = events.map((e) => (e.id === updated.id ? { ...updated, updatedAt: new Date().toISOString() } : e));
+    setEvents(updatedList);
+    saveEvents(updatedList);
   };
 
   const handleDeleteEvent = (eventId: string) => {
-    setEvents((prev) => {
-      const nextEvents = prev.filter((e) => e.id !== eventId);
-      if (activeEventId === eventId) {
-        const nextActive = nextEvents[0]?.id || 'event_tedx_akure_2026';
-        setActiveEventId(nextActive);
-        saveActiveEventId(nextActive);
-      }
-      return nextEvents;
-    });
+    const result = deleteEvent(eventId);
+    setEvents(result.updatedEvents);
+    setActiveEventId(result.newActiveEvent.id);
   };
 
-  const [isUltraPowerSaver, setIsUltraPowerSaver] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('momentum_ultra_power_saver') === 'true';
-    } catch {
-      return false;
-    }
-  });
-  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
-
-  // Power saver mode persistence
-  const handleToggleUltraPowerSaver = (enabled: boolean) => {
-    setIsUltraPowerSaver(enabled);
-    try {
-      localStorage.setItem('momentum_ultra_power_saver', enabled ? 'true' : 'false');
-    } catch {}
+  const handleDuplicateEvent = (eventId: string) => {
+    const duplicated = duplicateEvent(eventId);
+    setEvents(loadEvents());
+    setActiveEventId(duplicated.id);
   };
 
-  // Reload all storage state when restoring a contingency snapshot
-  const handleReloadFromStorage = () => {
-    setConnections(loadConnections());
-    setMoments(loadMoments());
-    setIdeas(loadIdeas());
-    setNotes(loadNotes());
-    setProfile(loadProfile());
-    setEvents(loadEventsCatalog());
-    setActiveEventId(loadActiveEventId());
-  };
+  const [isUltraPowerSaver, setIsUltraPowerSaver] = useState<boolean>(false);
+  const [isOnline, setIsOnline] = useState<boolean>(
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
 
-  // Automated 15-minute emergency snapshot timer
+  // Sync Manager Subscription
   useEffect(() => {
-    // Take initial snapshot on boot after 5 seconds
-    const initialTimer = setTimeout(() => {
-      createEmergencySnapshot();
-    }, 5000);
+    const unsubscribe = syncManager.subscribe((state) => {
+      setSyncState(state);
+      if (state.lastSyncedAt && !state.isSyncing && !state.error) {
+        setShowSyncSuccessToast(true);
+        setTimeout(() => setShowSyncSuccessToast(false), 3000);
+      }
+    });
 
-    // Then schedule recurring auto-snapshot every 15 minutes
-    const interval = setInterval(() => {
-      createEmergencySnapshot();
-    }, 15 * 60 * 1000);
+    return unsubscribe;
+  }, []);
+
+  // Online / Offline Detection
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      syncManager.flushQueue().catch(() => {});
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
     return () => {
-      clearTimeout(initialTimer);
-      clearInterval(interval);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, []);
 
-  // Navigation tab handler that updates URL path history
-  const handleSelectTab = (tab: NavTab) => {
-    setCurrentTab(tab);
-    if (typeof window !== 'undefined') {
-      const targetPath = tab === 'home' ? '/' : `/${tab}`;
-      if (window.location.pathname !== targetPath) {
-        window.history.pushState({ tab }, '', targetPath);
-      }
-    }
-  };
+  // Auto-save connections to storage
+  useEffect(() => {
+    saveConnections(connections);
+  }, [connections]);
 
-  // Browser back/forward button popstate listener
+  // Auto-save moments to storage
+  useEffect(() => {
+    saveMoments(moments);
+  }, [moments]);
+
+  // Auto-save ideas to storage
+  useEffect(() => {
+    saveIdeas(ideas);
+  }, [ideas]);
+
+  // Auto-save notes to storage
+  useEffect(() => {
+    saveNotes(notes);
+  }, [notes]);
+
+  // URL Tab state listener for Browser Back/Forward navigation
   useEffect(() => {
     const handlePopState = () => {
       setCurrentTab(getTabFromUrl());
@@ -352,91 +407,44 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Subscribe to SyncManager state updates (offline-first push to Supabase)
-  useEffect(() => {
-    let prevIsSyncing = false;
-    const unsubscribe = syncManager.subscribe((state) => {
-      if (prevIsSyncing && !state.isSyncing && !state.error) {
-        setShowSyncSuccessToast(true);
-        setTimeout(() => setShowSyncSuccessToast(false), 3000);
-      }
-      prevIsSyncing = state.isSyncing;
-      setSyncState(state);
-    });
-    return unsubscribe;
-  }, []);
+  // Update browser URL query/history when active tab changes
+  const handleSelectTab = (tab: NavTab) => {
+    setCurrentTab(tab);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tab);
+      window.history.pushState({}, '', url.toString());
+    }
+  };
 
-  // Filter out trashed items from active tab views
-  const activeConnections = connections.filter((c) => !c.inTrash);
-  const activeMoments = moments.filter((m) => !m.inTrash);
-  const activeIdeas = ideas.filter((i) => !i.inTrash);
-
-  // Calculate real-time gamification stats
-  const gamificationStats = calculateGamification(
-    activeConnections,
-    activeMoments,
-    activeIdeas,
-    profile.targetConnections || 50
-  );
-
-  // Sync to local storage
-  useEffect(() => {
-    saveConnections(connections);
+  const activeConnections = useMemo(() => {
+    return connections.filter((c) => !c.inTrash);
   }, [connections]);
 
-  useEffect(() => {
-    saveMoments(moments);
+  const activeMoments = useMemo(() => {
+    return moments.filter((m) => !m.inTrash);
   }, [moments]);
 
-  useEffect(() => {
-    saveIdeas(ideas);
+  const activeIdeas = useMemo(() => {
+    return ideas.filter((i) => !i.inTrash);
   }, [ideas]);
 
-  useEffect(() => {
-    saveNotes(notes);
-  }, [notes]);
+  const gamificationStats = useMemo(() => {
+    return calculateGamification(activeConnections, activeMoments, activeIdeas, profile.targetConnections);
+  }, [activeConnections, activeMoments, activeIdeas, profile.targetConnections]);
 
-  useEffect(() => {
-    saveProfile(profile);
-  }, [profile]);
+  const handleToggleUltraPowerSaver = () => {
+    setIsUltraPowerSaver(!isUltraPowerSaver);
+  };
 
-  // Online / Offline monitor
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+  const handleReloadFromStorage = () => {
+    setConnections(loadConnections());
+    setMoments(loadMoments());
+    setIdeas(loadIdeas());
+    setNotes(loadNotes());
+    setProfile(loadProfile());
+  };
 
-  // Keyboard Shortcuts (Ctrl/Cmd + K = Search, Ctrl/Cmd + N = Quick Connect, Ctrl/Cmd + P = Portfolio QR, Ctrl/Cmd + L = Lock)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsSearchOpen((prev) => !prev);
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
-        e.preventDefault();
-        setIsQuickConnectOpen(true);
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
-        e.preventDefault();
-        setIsPortfolioOpen((prev) => !prev);
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'l' && security.isLockEnabled) {
-        e.preventDefault();
-        handleLockApp();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [security.isLockEnabled]);
-
-  // Lock App
   const handleLockApp = () => {
     setAppLockState(true);
     setIsLocked(true);
@@ -448,8 +456,28 @@ export const App: React.FC = () => {
     setSecurity((prev) => ({ ...prev, isLocked: false }));
   };
 
-  // Handlers
+  // Guardrail helper for 1-Day Trial guest protection
+  const verifyTrialAllowance = (
+    action: 'connection' | 'moment' | 'idea' | 'note' | 'photo' | 'bandwidth',
+    sizeBytes = 1000
+  ): boolean => {
+    if (!trialMetrics.isTrial) return true;
+
+    const guard = checkTrialGuardrail(action, trialMetrics, sizeBytes);
+    if (!guard.allowed) {
+      triggerHaptic('error');
+      setTrialToastMessage(guard.reason || '1-Day Trial limit reached.');
+      setIsTrialModalOpen(true);
+      return false;
+    }
+    return true;
+  };
+
+  // Handlers with Trial Guardrails
   const handleSaveConnection = (newConn: Connection) => {
+    if (!verifyTrialAllowance('connection', 500)) return;
+
+    recordBandwidthUsage(350);
     const isCurrentlyOffline = !isOnline || (typeof navigator !== 'undefined' && !navigator.onLine);
     const itemToSave = isCurrentlyOffline 
       ? { ...newConn, isOfflineCaptured: true, savedOfflineAt: new Date().toISOString() } 
@@ -467,6 +495,7 @@ export const App: React.FC = () => {
   };
 
   const handleUpdateConnection = (updated: Connection) => {
+    recordBandwidthUsage(200);
     setConnections((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
     if (selectedConnection && selectedConnection.id === updated.id) {
       setSelectedConnection(updated);
@@ -491,6 +520,9 @@ export const App: React.FC = () => {
   };
 
   const handleSaveNote = (newNote: Note) => {
+    if (!verifyTrialAllowance('note', 1200)) return;
+
+    recordBandwidthUsage(400);
     const isCurrentlyOffline = !isOnline || (typeof navigator !== 'undefined' && !navigator.onLine);
     const itemToSave = isCurrentlyOffline
       ? { ...newNote, isOfflineCaptured: true, savedOfflineAt: new Date().toISOString() }
@@ -499,6 +531,7 @@ export const App: React.FC = () => {
   };
 
   const handleUpdateNote = (updated: Note) => {
+    recordBandwidthUsage(250);
     setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
   };
 
@@ -519,6 +552,10 @@ export const App: React.FC = () => {
   };
 
   const handleAddMoment = (newMoment: Moment) => {
+    const photoSizeEstimate = newMoment.mediaUrl ? 15000 : 1000;
+    if (!verifyTrialAllowance('moment', photoSizeEstimate)) return;
+
+    recordBandwidthUsage(photoSizeEstimate);
     const isCurrentlyOffline = !isOnline || (typeof navigator !== 'undefined' && !navigator.onLine);
     const itemToSave = isCurrentlyOffline 
       ? { ...newMoment, isOfflineCaptured: true, savedOfflineAt: new Date().toISOString() } 
@@ -527,6 +564,9 @@ export const App: React.FC = () => {
   };
 
   const handleAddIdea = (newIdea: Idea) => {
+    if (!verifyTrialAllowance('idea', 600)) return;
+
+    recordBandwidthUsage(300);
     const isCurrentlyOffline = !isOnline || (typeof navigator !== 'undefined' && !navigator.onLine);
     const itemToSave = isCurrentlyOffline 
       ? { ...newIdea, isOfflineCaptured: true, savedOfflineAt: new Date().toISOString() } 
@@ -548,6 +588,7 @@ export const App: React.FC = () => {
   };
 
   const handleMarkFollowUpComplete = (connectionId: string, message: string) => {
+    recordBandwidthUsage(150);
     setConnections((prev) =>
       prev.map((c) =>
         c.id === connectionId
@@ -580,31 +621,37 @@ export const App: React.FC = () => {
     (c) => c.followUpStatus === 'overdue' || c.followUpStatus === 'today'
   ).length;
 
-  // Supabase Auth Gatekeeper: Restrict entire UI to verified single owner
+  // Supabase Auth & Trial Gatekeeper
   if (authState === 'loading') {
     return <AuthLoadingSplash />;
   }
 
-  if (authState === 'unauthorized') {
+  if (authState === 'unauthorized' && !isTrialActive()) {
     return (
       <AccessDeniedView
         unauthorizedEmail={unauthorizedEmail}
         onReturnToLogin={() => setAuthState('unauthenticated')}
+        onStartGuestTrial={() => {
+          setAuthState('trial');
+        }}
       />
     );
   }
 
-  if (authState === 'unauthenticated') {
+  if (authState === 'unauthenticated' && !isTrialActive()) {
     return (
       <LoginView
         onLoginSuccess={() => setAuthState('authenticated')}
+        onStartGuestTrial={() => {
+          setAuthState('trial');
+        }}
         unauthorizedAttemptEmail={unauthorizedEmail}
       />
     );
   }
 
   return (
-    <div className={`min-h-screen bg-[#0A0A0A] text-[#fadcd2] flex flex-col md:flex-row antialiased selection:bg-[#FF5C00] selection:text-black ${isUltraPowerSaver ? 'ultra-power-saver' : ''}`}>
+    <div className={`min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col md:flex-row antialiased selection:bg-[var(--accent-primary)] selection:text-black ${isUltraPowerSaver ? 'ultra-power-saver' : ''}`}>
       {/* Navigation Layout */}
       <Navigation
         currentTab={currentTab}
@@ -623,6 +670,9 @@ export const App: React.FC = () => {
         onOpenSecurity={() => setIsSecurityOpen(true)}
         onOpenTrashModal={() => setIsTrashModalOpen(true)}
         onOpenContingencyHub={() => setIsContingencyOpen(true)}
+        onOpenThemeModal={() => setIsThemeModalOpen(true)}
+        trialMetrics={trialMetrics}
+        onOpenTrialModal={() => setIsTrialModalOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
         security={security}
         onLockNow={handleLockApp}
@@ -633,14 +683,14 @@ export const App: React.FC = () => {
       <main className="flex-1 md:ml-64 px-4 sm:px-8 pt-20 md:pt-8 max-w-5xl mx-auto w-full min-h-screen flex flex-col">
         {/* Offline Banner if disconnected */}
         {!isOnline && (
-          <div className="mb-4 p-2.5 bg-[#28130a] border border-[#FF5C00]/40 rounded-xl text-xs text-[#ffb59a] flex items-center justify-between">
+          <div className="mb-4 p-2.5 bg-amber-950/40 border border-amber-500/40 rounded-xl text-xs text-amber-200 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <WifiOff className="w-4 h-4 text-[#FF5C00]" />
+              <WifiOff className="w-4 h-4 text-amber-400" />
               <span>
-                <strong>Offline Mode Active:</strong> All changes, snaps & notes saved locally and will sync when reconnected.
+                <strong>Offline Mode Active:</strong> All changes, snaps & notes saved locally in protected memory.
               </span>
             </div>
-            <span className="text-[10px] uppercase font-bold text-[#FF5C00]">Zero Latency</span>
+            <span className="text-[10px] uppercase font-bold text-amber-400">Zero Latency</span>
           </div>
         )}
 
@@ -767,64 +817,129 @@ export const App: React.FC = () => {
         {currentTab === 'more' && (
           <div className="space-y-6 max-w-lg mx-auto pb-24">
             <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold font-serif-display text-[#fadcd2]">
+              <h1 className="text-2xl font-bold font-serif-display text-white">
                 Event OS Features
               </h1>
               <button
                 onClick={() => setIsPortfolioOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FF4D00]/20 hover:bg-[#FF4D00]/30 text-[#FF8246] border border-[#FF4D00]/40 rounded-xl text-xs font-semibold transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 rounded-xl text-xs font-semibold transition-colors"
               >
-                <span>Angelo's QR</span>
+                <span>Attendee Pass</span>
               </button>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
+              {/* Theme & Palette Switcher */}
               <button
-                onClick={() => setIsEventHubOpen(true)}
-                className="w-full p-4 rounded-2xl bg-gradient-to-r from-[#2a1307] to-[#1a0a03] hover:from-[#3d1808] hover:to-[#250d03] border border-[#FF5C00]/50 flex items-center justify-between text-left transition-colors group"
+                onClick={() => {
+                  triggerHaptic('light');
+                  setIsThemeModalOpen(true);
+                }}
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-accent)] flex items-center justify-between text-left transition-colors group shadow-md"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/20 text-[#FF5C00] flex items-center justify-center font-bold text-lg flex-shrink-0 group-hover:scale-105 transition-transform">
-                    <Globe className="w-5 h-5 text-[#FF5C00]" />
+                  <div className="w-10 h-10 rounded-xl bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] flex items-center justify-center font-bold text-lg flex-shrink-0 group-hover:scale-105 transition-transform">
+                    <Palette className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-white">Theme & Color Palette</h3>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] font-bold">
+                        Cool & Modern
+                      </span>
+                    </div>
+                    <p className="text-xs text-[var(--text-secondary)]">Cyber Cobalt, Nordic Emerald, Royal Iris, Sunset</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-[var(--text-secondary)] group-hover:text-white transition-colors" />
+              </button>
+
+              {/* 1-Day Trial Manager */}
+              <button
+                onClick={() => {
+                  triggerHaptic('light');
+                  setIsTrialModalOpen(true);
+                }}
+                className={`w-full p-4 rounded-2xl border flex items-center justify-between text-left transition-colors group shadow-md ${
+                  trialMetrics.isTrial 
+                    ? 'bg-sky-950/40 border-sky-500/40 hover:bg-sky-950/60' 
+                    : 'bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border-[var(--border-subtle)]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg flex-shrink-0 group-hover:scale-105 transition-transform ${
+                    trialMetrics.isTrial ? 'bg-sky-500/20 text-sky-400' : 'bg-white/10 text-white/70'
+                  }`}>
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-white">
+                        {trialMetrics.isTrial ? '1-Day Guest Pass (Active)' : '1-Day Guest Trial Sandbox'}
+                      </h3>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                        trialMetrics.isTrial ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40' : 'bg-white/10 text-white/60'
+                      }`}>
+                        {trialMetrics.isTrial ? trialMetrics.remainingTimeFormatted : 'Safe Limits'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      {trialMetrics.isTrial 
+                        ? `${trialMetrics.storagePercent}% Storage used · ${trialMetrics.bandwidthPercent}% Bandwidth` 
+                        : 'Allow multiple guests to test Momentum for 24h safely'}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-[var(--text-secondary)] group-hover:text-white transition-colors" />
+              </button>
+
+              {/* Event Hub & Switcher */}
+              <button
+                onClick={() => setIsEventHubOpen(true)}
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] flex items-center justify-center font-bold text-lg flex-shrink-0 group-hover:scale-105 transition-transform">
+                    <Globe className="w-5 h-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-bold text-white">Event Hub & Switcher</h3>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FF5C00]/20 text-[#FF8246] font-bold">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] font-bold">
                         {activeEvent?.name || 'Active'}
                       </span>
                     </div>
-                    <p className="text-xs text-[#ffb59a]/70">Manage multiple conferences, hackathons & summits</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Manage multiple conferences, hackathons & summits</p>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-[#FF5C00]/60 group-hover:text-[#FF5C00] transition-colors" />
+                <ChevronRight className="w-5 h-5 text-[var(--text-secondary)] group-hover:text-white transition-colors" />
               </button>
 
-              {/* 1,000,000x AI Suite & Toolkit Entries */}
+              {/* AI Suite Entries */}
               <button
                 onClick={() => setIsConstellationOpen(true)}
-                className="w-full p-4 rounded-2xl bg-gradient-to-r from-[#241006] to-[#140803] hover:from-[#351608] hover:to-[#200c05] border border-[#FF5C00]/40 flex items-center justify-between text-left transition-colors"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/20 text-[#FF5C00] flex items-center justify-center font-bold text-lg flex-shrink-0">
-                    <Globe className="w-5 h-5 text-[#FF5C00]" />
+                  <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-lg flex-shrink-0">
+                    <Globe className="w-5 h-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-bold text-white">Constellation Radar & Matchmaker</h3>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FF5C00]/20 text-[#FF8246] font-bold">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-bold">
                         AI Match
                       </span>
                     </div>
-                    <p className="text-xs text-[#ffb59a]/70">Visual network gravity & automated warm introductions</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Visual network gravity & automated introductions</p>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-[#FF5C00]" />
+                <ChevronRight className="w-5 h-5 text-sky-400" />
               </button>
 
               <button
                 onClick={() => setIsPitchSimulatorOpen(true)}
-                className="w-full p-4 rounded-2xl bg-gradient-to-r from-[#241006] to-[#140803] hover:from-[#351608] hover:to-[#200c05] border border-amber-500/40 flex items-center justify-between text-left transition-colors"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg flex-shrink-0">
@@ -837,7 +952,7 @@ export const App: React.FC = () => {
                         Sparring
                       </span>
                     </div>
-                    <p className="text-xs text-[#ffb59a]/70">Simulate 30s elevator pitches against Tier-1 VC & tech personas</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Simulate 30s elevator pitches against Tier-1 VC personas</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-amber-400" />
@@ -845,7 +960,7 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setIsDigitalBadgeOpen(true)}
-                className="w-full p-4 rounded-2xl bg-gradient-to-r from-[#241006] to-[#140803] hover:from-[#351608] hover:to-[#200c05] border border-emerald-500/40 flex items-center justify-between text-left transition-colors"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg flex-shrink-0">
@@ -853,12 +968,12 @@ export const App: React.FC = () => {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-bold text-white">3D Holographic Pass & NFC Studio</h3>
+                      <h3 className="text-sm font-bold text-white">3D Pass & NFC Bump Studio</h3>
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
                         NFC Ready
                       </span>
                     </div>
-                    <p className="text-xs text-[#ffb59a]/70">Interactive tilt lanyard, instant vCard download & NFC wave</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Interactive tilt pass, instant vCard download & NFC wave</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-emerald-400" />
@@ -866,7 +981,7 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setIsLiveCopilotOpen(true)}
-                className="w-full p-4 rounded-2xl bg-gradient-to-r from-[#241006] to-[#140803] hover:from-[#351608] hover:to-[#200c05] border border-purple-500/40 flex items-center justify-between text-left transition-colors"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-lg flex-shrink-0">
@@ -879,7 +994,7 @@ export const App: React.FC = () => {
                         Real-Time HUD
                       </span>
                     </div>
-                    <p className="text-xs text-[#ffb59a]/70">WiFi cheatsheets, stage timers, & contextual hallway icebreakers</p>
+                    <p className="text-xs text-[var(--text-secondary)]">WiFi cheatsheets, stage timers, & contextual icebreakers</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-purple-400" />
@@ -887,41 +1002,41 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setIsEventAnalyticsOpen(true)}
-                className="w-full p-4 rounded-2xl bg-gradient-to-r from-[#241006] to-[#140803] hover:from-[#351608] hover:to-[#200c05] border border-[#FF5C00]/40 flex items-center justify-between text-left transition-colors"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/20 text-[#FF5C00] flex items-center justify-center font-bold text-lg flex-shrink-0">
-                    <ShieldCheck className="w-5 h-5 text-[#FF5C00]" />
+                  <div className="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-lg flex-shrink-0">
+                    <ShieldCheck className="w-5 h-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-bold text-white">Executive ROI & Relationship Scorecard</h3>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FF5C00]/20 text-[#FF8246] font-bold">
+                      <h3 className="text-sm font-bold text-white">Executive ROI & Scorecard</h3>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 font-bold">
                         AI Analytics
                       </span>
                     </div>
-                    <p className="text-xs text-[#ffb59a]/70">Quantify pipeline velocity, relationship equity & investor readiness</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Quantify pipeline velocity, relationship equity & outcomes</p>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-[#FF5C00]" />
+                <ChevronRight className="w-5 h-5 text-teal-400" />
               </button>
 
               <button
                 onClick={() => setIsContingencyOpen(true)}
-                className="w-full p-4 rounded-2xl bg-gradient-to-r from-[#2c1206] to-[#1c0a04] hover:from-[#3a1808] hover:to-[#2c1206] border border-[#FF5C00]/40 flex items-center justify-between text-left transition-colors"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/20 text-[#FF5C00] flex items-center justify-center font-bold text-lg flex-shrink-0">
-                    <ShieldCheck className="w-5 h-5 text-[#FF5C00]" />
+                  <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-lg flex-shrink-0">
+                    <ShieldCheck className="w-5 h-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-bold text-white">Event Contingency & Health Hub</h3>
-                      <span className="text-[10px] px-2 py-0.2 rounded-full bg-[#25D366]/20 text-[#25D366] font-bold">
+                      <span className="text-[10px] px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
                         Protected
                       </span>
                     </div>
-                    <p className="text-xs text-[#ffb59a]/70">Zero-Wi-Fi safe, 1-click backups & power saver</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Zero-Wi-Fi safe, 1-click backups & power saver</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-white/40" />
@@ -929,15 +1044,15 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setIsProfileOpen(true)}
-                className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full border border-[#FF5C00]/40 overflow-hidden bg-black flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full border border-[var(--accent-primary)] overflow-hidden bg-black flex-shrink-0">
                     <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#fadcd2]">Edit My Profile & Photo</h3>
-                    <p className="text-xs text-[#e4beb1]/60">Change picture, headline, and bio</p>
+                    <h3 className="text-sm font-bold text-white">Edit My Profile & Photo</h3>
+                    <p className="text-xs text-[var(--text-secondary)]">Change picture, headline, and bio</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-white/40" />
@@ -945,15 +1060,15 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setIsGamificationOpen(true)}
-                className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/15 text-[#FF5C00] flex items-center justify-center font-bold text-lg flex-shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] flex items-center justify-center font-bold text-lg flex-shrink-0">
                     {gamificationStats.levelBadge}
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#fadcd2]">Badges & Achievements</h3>
-                    <p className="text-xs text-[#e4beb1]/60">Level {gamificationStats.level} • {gamificationStats.totalXp} XP</p>
+                    <h3 className="text-sm font-bold text-white">Badges & Achievements</h3>
+                    <p className="text-xs text-[var(--text-secondary)]">Level {gamificationStats.level} • {gamificationStats.totalXp} XP</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-white/40" />
@@ -961,15 +1076,15 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setIsPortfolioOpen(true)}
-                className="w-full p-4 rounded-2xl bg-gradient-to-r from-[#221008] to-[#170a04] hover:from-[#2e150b] hover:to-[#221008] border border-[#FF4D00]/30 flex items-center justify-between text-left transition-colors"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#FF4D00]/10 text-[#FF5C00] flex items-center justify-center flex-shrink-0">
-                    <QrCode className="w-5 h-5 text-[#FF5C00]" />
+                  <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center flex-shrink-0">
+                    <QrCode className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white">Angelo's Portfolio QR Code</h3>
-                    <p className="text-xs text-[#FF8246]/80 font-mono">angelo-tedxakure-portfolio.netlify.app</p>
+                    <h3 className="text-sm font-bold text-white">Attendee Portfolio QR Code</h3>
+                    <p className="text-xs text-sky-300 font-mono">Instant digital card exchange</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-white/40" />
@@ -977,15 +1092,15 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setIsTrashModalOpen(true)}
-                className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center flex-shrink-0">
-                    <Trash2 className="w-5 h-5 text-rose-400" />
+                    <Trash2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#fadcd2]">Demo Data & Clean Slate</h3>
-                    <p className="text-xs text-[#e4beb1]/60">Wipe demo records or move to trash</p>
+                    <h3 className="text-sm font-bold text-white">Demo Data & Clean Slate</h3>
+                    <p className="text-xs text-[var(--text-secondary)]">Wipe demo records or move to trash</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-white/40" />
@@ -993,15 +1108,15 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setIsSecurityOpen(true)}
-                className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center flex-shrink-0">
                     <Lock className="w-5 h-5 text-amber-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#fadcd2]">Privacy & Passcode Lock</h3>
-                    <p className="text-xs text-[#e4beb1]/60">Restrict workspace to Angelo (faithakinboyejo@gmail.com)</p>
+                    <h3 className="text-sm font-bold text-white">Privacy & Passcode Lock</h3>
+                    <p className="text-xs text-[var(--text-secondary)]">Restrict workspace with PIN & Biometrics</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-white/40" />
@@ -1009,15 +1124,15 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setCurrentTab('ideas')}
-                className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center flex-shrink-0">
-                    <Lightbulb className="w-5 h-5 text-[#FF5C00]" />
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center flex-shrink-0">
+                    <Lightbulb className="w-5 h-5 text-amber-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#fadcd2]">Talk Insights & Quotes</h3>
-                    <p className="text-xs text-[#e4beb1]/60">Captured theses and speaker notes</p>
+                    <h3 className="text-sm font-bold text-white">Talk Insights & Quotes</h3>
+                    <p className="text-xs text-[var(--text-secondary)]">Captured theses and speaker notes</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-white/40" />
@@ -1025,15 +1140,15 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setCurrentTab('followups')}
-                className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center flex-shrink-0">
-                    <Clock className="w-5 h-5 text-[#FF5C00]" />
+                  <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-5 h-5 text-sky-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#fadcd2]">Follow-ups Tracker</h3>
-                    <p className="text-xs text-[#e4beb1]/60">Overdue, today, and upcoming messages</p>
+                    <h3 className="text-sm font-bold text-white">Follow-ups Tracker</h3>
+                    <p className="text-xs text-[var(--text-secondary)]">Overdue, today, and upcoming messages</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-white/40" />
@@ -1041,15 +1156,15 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setCurrentTab('recap')}
-                className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center flex-shrink-0">
-                    <Flame className="w-5 h-5 text-[#FF5C00]" />
+                  <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center flex-shrink-0">
+                    <Flame className="w-5 h-5 text-rose-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#fadcd2]">Milestones & AI Recap</h3>
-                    <p className="text-xs text-[#e4beb1]/60">50-Goal celebration and LinkedIn post</p>
+                    <h3 className="text-sm font-bold text-white">Milestones & AI Recap</h3>
+                    <p className="text-xs text-[var(--text-secondary)]">Goal celebration and LinkedIn post</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-white/40" />
@@ -1057,15 +1172,15 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setCurrentTab('export')}
-                className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center flex-shrink-0">
-                    <Download className="w-5 h-5 text-[#FF5C00]" />
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                    <Download className="w-5 h-5 text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#fadcd2]">Export CSV, JSON & PDF</h3>
-                    <p className="text-xs text-[#e4beb1]/60">Download complete conference memory</p>
+                    <h3 className="text-sm font-bold text-white">Export CSV, JSON & PDF</h3>
+                    <p className="text-xs text-[var(--text-secondary)]">Download complete conference memory</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-white/40" />
@@ -1073,15 +1188,15 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setIsCollageOpen(true)}
-                className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-[#20100a] border border-white/10 flex items-center justify-between text-left transition-colors"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#ffb59a] flex items-center justify-center flex-shrink-0">
-                    <LayoutGrid className="w-5 h-5 text-[#ffb59a]" />
+                  <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center flex-shrink-0">
+                    <LayoutGrid className="w-5 h-5 text-indigo-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#fadcd2]">Photo Collage Generator</h3>
-                    <p className="text-xs text-[#e4beb1]/60">Social media multi-photo creator</p>
+                    <h3 className="text-sm font-bold text-white">Photo Collage Generator</h3>
+                    <p className="text-xs text-[var(--text-secondary)]">Social media multi-photo creator</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-white/40" />
@@ -1089,15 +1204,19 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setIsConfirmLogoutOpen(true)}
-                className="w-full p-4 rounded-2xl bg-[#140b07] hover:bg-rose-950/20 border border-white/10 hover:border-rose-500/40 flex items-center justify-between text-left transition-colors mt-4"
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-rose-950/20 border border-[var(--border-subtle)] hover:border-rose-500/40 flex items-center justify-between text-left transition-colors mt-4"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center flex-shrink-0">
                     <LogOut className="w-5 h-5 text-rose-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#fadcd2]">Sign Out of Momentum</h3>
-                    <p className="text-xs text-[#e4beb1]/60">Terminate active Supabase session</p>
+                    <h3 className="text-sm font-bold text-white">
+                      {trialMetrics.isTrial ? 'Exit 1-Day Guest Trial' : 'Sign Out of Momentum'}
+                    </h3>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      {trialMetrics.isTrial ? 'End your 24-hour guest session' : 'Terminate active Supabase session'}
+                    </p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-white/40" />
@@ -1246,7 +1365,7 @@ export const App: React.FC = () => {
         }}
       />
 
-      {/* Post-Event 5-Pillar Reflection Modal (REFLECT Stage) */}
+      {/* Post-Event Reflection Modal (REFLECT Stage) */}
       <PostEventReflectionModal
         isOpen={isPostEventReviewOpen}
         onClose={() => setIsPostEventReviewOpen(false)}
@@ -1309,6 +1428,32 @@ export const App: React.FC = () => {
         activeEvent={activeEvent}
       />
 
+      {/* Theme Selector Modal */}
+      <ThemeSelectorModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
+      />
+
+      {/* 1-Day Trial Manager & Quota Protection Modal */}
+      <TrialManagerModal
+        isOpen={isTrialModalOpen}
+        onClose={() => {
+          setIsTrialModalOpen(false);
+          setTrialToastMessage(null);
+        }}
+        metrics={trialMetrics}
+        connections={connections}
+        moments={moments}
+        ideas={ideas}
+        notes={notes}
+        profile={profile}
+        onEndTrial={() => {
+          endTrialSession();
+          setAuthState('unauthenticated');
+          setIsTrialModalOpen(false);
+        }}
+      />
+
       {/* Persistent Non-Intrusive Syncing & Status Indicator */}
       <AnimatePresence>
         {syncState.isSyncing && (
@@ -1316,9 +1461,9 @@ export const App: React.FC = () => {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-20 md:bottom-6 right-4 sm:right-8 z-40 px-4 py-2 rounded-full bg-[#180b06]/90 backdrop-blur-md border border-[#FF5C00]/50 shadow-2xl text-[#fadcd2] text-xs font-semibold flex items-center gap-2.5 select-none pointer-events-none"
+            className="fixed bottom-20 md:bottom-6 right-4 sm:right-8 z-40 px-4 py-2 rounded-full bg-[var(--bg-surface-card)]/90 backdrop-blur-md border border-[var(--border-subtle)] shadow-2xl text-[var(--text-primary)] text-xs font-semibold flex items-center gap-2.5 select-none pointer-events-none"
           >
-            <div className="w-3.5 h-3.5 border-2 border-[#FF5C00] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+            <div className="w-3.5 h-3.5 border-2 border-[var(--accent-primary)] border-t-transparent rounded-full animate-spin flex-shrink-0" />
             <span>
               Syncing {syncState.pendingCount > 0 ? `(${syncState.pendingCount} pending)` : ''} to Supabase...
             </span>
@@ -1330,25 +1475,30 @@ export const App: React.FC = () => {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-20 md:bottom-6 right-4 sm:right-8 z-40 px-4 py-2 rounded-full bg-[#0d2112]/90 backdrop-blur-md border border-[#25D366]/40 shadow-2xl text-[#c4f8d4] text-xs font-semibold flex items-center gap-2 select-none pointer-events-none"
+            className="fixed bottom-20 md:bottom-6 right-4 sm:right-8 z-40 px-4 py-2 rounded-full bg-emerald-950/90 backdrop-blur-md border border-emerald-500/40 shadow-2xl text-emerald-200 text-xs font-semibold flex items-center gap-2 select-none pointer-events-none"
           >
-            <span className="text-[#25D366] font-bold text-sm leading-none">✓</span>
+            <span className="text-emerald-400 font-bold text-sm leading-none">✓</span>
             <span>Synced to Supabase</span>
           </motion.div>
         )}
       </AnimatePresence>
+
       {/* Logout Confirmation Modal */}
       {isConfirmLogoutOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-          <div className="w-full max-w-sm bg-[#120906] border border-white/10 rounded-3xl p-6 sm:p-7 shadow-2xl text-center space-y-4">
+          <div className="w-full max-w-sm bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-3xl p-6 sm:p-7 shadow-2xl text-center space-y-4">
             <div className="w-14 h-14 rounded-2xl bg-rose-950/80 border border-rose-500/40 text-rose-400 flex items-center justify-center mx-auto shadow-lg shadow-rose-950/50">
               <LogOut className="w-6 h-6 stroke-[2.2]" />
             </div>
 
             <div className="space-y-1.5">
-              <h3 className="text-lg font-bold text-white font-serif-display">Sign Out of Momentum?</h3>
-              <p className="text-xs text-[#e4beb1]/70 leading-relaxed">
-                This will end your active Supabase session on this device. You will need to enter your password to sign back in.
+              <h3 className="text-lg font-bold text-white font-serif-display">
+                {trialMetrics.isTrial ? 'Exit 1-Day Guest Trial?' : 'Sign Out of Momentum?'}
+              </h3>
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                {trialMetrics.isTrial
+                  ? 'Your guest session will be concluded. You can download all your leads & notes first if you wish.'
+                  : 'This will end your active Supabase session on this device. You will need your master credentials to sign back in.'}
               </p>
             </div>
 
@@ -1366,7 +1516,7 @@ export const App: React.FC = () => {
                 className="py-3 px-4 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-2xl transition-colors shadow-lg shadow-rose-600/20 cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span>Sign Out</span>
+                <span>{trialMetrics.isTrial ? 'Exit Trial' : 'Sign Out'}</span>
               </button>
             </div>
           </div>

@@ -17,7 +17,11 @@ import {
   Loader2,
   Fingerprint,
   RefreshCw,
-  Send
+  Send,
+  Palette,
+  Clock,
+  UserCheck,
+  X
 } from 'lucide-react';
 import { 
   loginWithOwnerCredentials, 
@@ -30,15 +34,19 @@ import {
   authenticateWithBiometrics, 
   BiometricAvailability 
 } from '../services/biometricService';
+import { startGuestTrial } from '../services/trialService';
 import { triggerHaptic } from '../services/haptics';
+import { ThemeSelectorModal } from './ThemeSelectorModal';
 
 interface LoginViewProps {
   onLoginSuccess: () => void;
+  onStartGuestTrial?: () => void;
   unauthorizedAttemptEmail?: string | null;
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({
   onLoginSuccess,
+  onStartGuestTrial,
   unauthorizedAttemptEmail,
 }) => {
   const configuredOwnerEmail = getOwnerEmail();
@@ -60,6 +68,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
   const [biometricInfo, setBiometricInfo] = useState<BiometricAvailability | null>(null);
   const [isBioScanning, setIsBioScanning] = useState<boolean>(false);
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState<boolean>(false);
+  const [isTrialPromptOpen, setIsTrialPromptOpen] = useState<boolean>(false);
+  const [guestNameInput, setGuestNameInput] = useState<string>('');
 
   useEffect(() => {
     checkBiometricAvailability().then(setBiometricInfo);
@@ -157,81 +168,124 @@ export const LoginView: React.FC<LoginViewProps> = ({
     }
   };
 
-  return (
-    <div className="min-h-screen w-full bg-[#070403] text-[#fadcd2] flex flex-col justify-between items-center px-4 py-8 relative overflow-hidden selection:bg-[#FF5C00] selection:text-black">
-      {/* Subtle Background Glows */}
-      <div 
-        aria-hidden="true"
-        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#FF5C00]/10 rounded-full blur-3xl pointer-events-none" 
-      />
-      <div 
-        aria-hidden="true"
-        className="absolute bottom-10 right-10 w-80 h-80 bg-[#E62B1E]/5 rounded-full blur-3xl pointer-events-none" 
-      />
+  const handleActivateGuestTrial = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    triggerHaptic('success');
+    const guestName = guestNameInput.trim() || 'Guest Explorer';
+    startGuestTrial(guestName);
+    setIsTrialPromptOpen(false);
+    if (onStartGuestTrial) {
+      onStartGuestTrial();
+    } else {
+      onLoginSuccess();
+    }
+  };
 
-      {/* Top Header Badge */}
-      <header className="w-full max-w-md flex items-center justify-between z-10 pt-2">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#FF5C00] to-[#E62B1E] flex items-center justify-center text-black font-black text-sm shadow-md shadow-[#FF5C00]/20">
+  return (
+    <div className="min-h-screen w-full bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col justify-between items-center px-4 py-8 relative">
+      {/* Top Header */}
+      <header className="w-full max-w-md flex items-center justify-between z-10">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/10 flex items-center justify-center text-white font-bold text-sm">
             M
           </div>
-          <span className="font-serif-display font-bold text-lg text-white tracking-tight">
-            Momentum <span className="text-[#FF5C00] text-xs font-mono font-normal">OS</span>
+          <span className="font-semibold text-base text-white tracking-tight">
+            Momentum
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono text-[#e4beb1]/80">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#FF5C00]" />
-          <span>SECURITY V1</span>
+        <div className="flex items-center gap-2">
+          {/* Theme Switcher */}
+          <button
+            type="button"
+            onClick={() => setIsThemeModalOpen(true)}
+            className="p-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-[var(--text-secondary)] hover:text-white transition-colors"
+            title="Appearance settings"
+            aria-label="Theme settings"
+          >
+            <Palette className="w-4 h-4 text-[var(--accent-primary)]" />
+          </button>
+
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/[0.08] text-[11px] font-mono text-[var(--text-secondary)]">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Encrypted</span>
+          </div>
         </div>
       </header>
 
       {/* Main Login Card */}
       <main className="w-full max-w-md my-auto py-6 z-10">
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="bg-[#120906]/90 border border-white/10 rounded-3xl p-7 sm:p-8 shadow-2xl backdrop-blur-xl space-y-6"
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+          className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl p-6 sm:p-7 shadow-xl space-y-6"
         >
-          {/* Card Title & Icon */}
-          <div className="text-center space-y-2">
-            <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#FF5C00]/20 to-[#E62B1E]/20 border border-[#FF5C00]/40 flex items-center justify-center text-[#FF5C00] shadow-lg shadow-[#FF5C00]/10">
-              <Lock className="w-7 h-7 stroke-[2.2]" />
+          {/* Card Title */}
+          <div className="space-y-1 text-left">
+            <h1 className="text-xl font-semibold tracking-tight text-white">
+              Sign In
+            </h1>
+            <p className="text-xs text-[var(--text-secondary)]">
+              Access your offline-ready event companion and network directory.
+            </p>
+          </div>
+
+          {/* Guest Trial Option */}
+          <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-2.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+                  <h3 className="text-xs font-semibold text-white">
+                    24-Hour Guest Trial
+                  </h3>
+                </div>
+                <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                  Evaluate Momentum for today's event with offline capture and export capabilities.
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight text-white font-serif-display">
-                Private Workspace
-              </h1>
-              <p className="text-xs text-[#e4beb1]/70 max-w-xs mx-auto">
-                Single-owner terminal for <strong className="text-white">TEDxAkure 2026</strong>.
-              </p>
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsTrialPromptOpen(true)}
+              className="w-full py-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] text-white font-medium text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>Launch Guest Session</span>
+              <ArrowRight className="w-3.5 h-3.5 text-white/60" />
+            </button>
+          </div>
+
+          <div className="relative flex items-center justify-center">
+            <div className="border-t border-white/[0.08] w-full" />
+            <span className="bg-[var(--bg-surface-card)] px-2.5 text-[10px] uppercase tracking-wider font-mono text-[var(--text-secondary)]">
+              Account Login
+            </span>
           </div>
 
           {/* Offline Warning Banner */}
           {!isOnline && (
-            <div className="p-3 bg-amber-950/60 border border-amber-500/40 rounded-2xl flex items-center gap-2.5 text-xs text-amber-200">
+            <div className="p-3 bg-amber-950/40 border border-amber-500/30 rounded-xl flex items-center gap-2.5 text-xs text-amber-200">
               <WifiOff className="w-4 h-4 text-amber-400 shrink-0" />
               <span>
-                <strong>Offline:</strong> Connect to internet to authenticate. If already logged in on this device, refresh will restore your cached session.
+                <strong>Offline:</strong> Connect to authenticate. Cached sessions are preserved locally.
               </span>
             </div>
           )}
 
-          {/* Success Banner (e.g. for resend confirmation) */}
+          {/* Success Banner */}
           <AnimatePresence>
             {resendSuccessMessage && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="p-3.5 rounded-2xl border bg-emerald-950/80 border-emerald-500/50 text-emerald-200 text-xs leading-relaxed flex items-start gap-2.5"
+                className="p-3 rounded-xl border bg-emerald-950/40 border-emerald-500/30 text-emerald-200 text-xs leading-relaxed flex items-start gap-2.5"
               >
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="font-bold">Confirmation Email Sent</p>
+                <div className="space-y-0.5">
+                  <p className="font-semibold">Confirmation Email Sent</p>
                   <p className="text-[11px] opacity-90">{resendSuccessMessage}</p>
                 </div>
               </motion.div>
@@ -245,42 +299,41 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className={`p-3.5 rounded-2xl border flex flex-col gap-2 text-xs leading-relaxed ${
+                className={`p-3 rounded-xl border flex flex-col gap-2 text-xs leading-relaxed ${
                   isUnauthorized
-                    ? 'bg-rose-950/80 border-rose-500/50 text-rose-200'
-                    : 'bg-[#260f08] border-[#FF5C00]/40 text-[#ffc5b2]'
+                    ? 'bg-rose-950/40 border-rose-500/30 text-rose-200'
+                    : 'bg-amber-950/40 border-amber-500/30 text-amber-200'
                 }`}
               >
                 <div className="flex items-start gap-2.5">
                   {isUnauthorized ? (
                     <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                   ) : (
-                    <AlertCircle className="w-4 h-4 text-[#FF5C00] shrink-0 mt-0.5" />
+                    <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                   )}
                   <div className="space-y-0.5 flex-1">
-                    <p className="font-bold">
-                      {isUnauthorized ? 'Access Denied' : 'Authentication Notice'}
+                    <p className="font-semibold">
+                      {isUnauthorized ? 'Access Restricted' : 'Authentication Error'}
                     </p>
                     <p className="text-[11px] opacity-90">{errorMessage}</p>
                   </div>
                 </div>
 
-                {/* If unconfirmed email, show one-click resend button */}
                 {isUnconfirmed && (
                   <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
-                    <span className="text-[10px] text-white/50">Need a new link?</span>
+                    <span className="text-[10px] text-white/50">Need a link?</span>
                     <button
                       type="button"
                       onClick={handleResendConfirmation}
                       disabled={isResending}
-                      className="px-3 py-1.5 bg-[#FF5C00]/20 hover:bg-[#FF5C00]/30 text-[#FF5C00] border border-[#FF5C00]/40 rounded-xl text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      className="px-2.5 py-1 bg-white/10 hover:bg-white/15 text-white border border-white/15 rounded-lg text-[11px] font-medium flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                     >
                       {isResending ? (
                         <Loader2 className="w-3 h-3 animate-spin" />
                       ) : (
                         <Send className="w-3 h-3" />
                       )}
-                      <span>Resend Confirmation Email</span>
+                      <span>Resend confirmation</span>
                     </button>
                   </div>
                 )}
@@ -288,32 +341,32 @@ export const LoginView: React.FC<LoginViewProps> = ({
             )}
           </AnimatePresence>
 
-          {/* Biometric Quick Unlock (if paired on this device) */}
+          {/* Biometric Quick Unlock */}
           {biometricInfo?.isRegistered && (
             <button
               type="button"
               onClick={handleBiometricQuickUnlock}
               disabled={isBioScanning}
-              className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-2xl text-xs transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+              className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <Fingerprint className="w-4 h-4 stroke-[2.2]" />
+              <Fingerprint className="w-4 h-4" />
               <span>{isBioScanning ? 'Scanning Sensor...' : `Unlock with ${biometricInfo.biometricLabel}`}</span>
             </button>
           )}
 
           {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3.5">
             {/* Email Field */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <label 
                 htmlFor="owner-email-input"
-                className="text-xs font-semibold text-[#e4beb1] flex items-center justify-between"
+                className="text-xs font-medium text-[var(--text-secondary)] flex items-center justify-between"
               >
-                <span>Owner Email</span>
-                <span className="text-[10px] text-[#FF5C00] font-mono">Single Owner</span>
+                <span>Email Address</span>
+                <span className="text-[10px] text-[var(--text-secondary)] font-mono">Owner</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-white/40">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-white/40">
                   <Mail className="w-4 h-4" />
                 </div>
                 <input
@@ -326,23 +379,22 @@ export const LoginView: React.FC<LoginViewProps> = ({
                     setEmail(e.target.value);
                     if (errorMessage) setErrorMessage(null);
                   }}
-                  placeholder="owner@domain.com"
-                  className="w-full bg-[#1c0d08] border border-white/10 focus:border-[#FF5C00] rounded-2xl pl-10 pr-4 py-3.5 text-sm text-white placeholder-white/20 focus:outline-none transition-colors font-mono"
+                  placeholder="name@domain.com"
+                  className="w-full bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] focus:border-[var(--accent-primary)] rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none transition-colors"
                 />
               </div>
             </div>
 
             {/* Password Field */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <label 
                 htmlFor="owner-password-input"
-                className="text-xs font-semibold text-[#e4beb1] flex items-center justify-between"
+                className="text-xs font-medium text-[var(--text-secondary)] flex items-center justify-between"
               >
-                <span>Supabase Password</span>
-                <span className="text-[10px] text-white/40 font-mono">Encrypted</span>
+                <span>Password</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-white/40">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-white/40">
                   <KeyRound className="w-4 h-4" />
                 </div>
                 <input
@@ -356,12 +408,12 @@ export const LoginView: React.FC<LoginViewProps> = ({
                     if (errorMessage) setErrorMessage(null);
                   }}
                   placeholder="••••••••••••"
-                  className="w-full bg-[#1c0d08] border border-white/10 focus:border-[#FF5C00] rounded-2xl pl-10 pr-11 py-3.5 text-sm text-white placeholder-white/20 focus:outline-none transition-colors font-mono"
+                  className="w-full bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] focus:border-[var(--accent-primary)] rounded-xl pl-9 pr-10 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-white/40 hover:text-white transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-white/40 hover:text-white transition-colors"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -373,39 +425,133 @@ export const LoginView: React.FC<LoginViewProps> = ({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-4 bg-gradient-to-r from-[#FF5C00] to-[#E62B1E] hover:from-[#ff7324] hover:to-[#FF5C00] text-black font-bold rounded-2xl text-sm transition-all shadow-lg shadow-[#FF5C00]/20 flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none mt-2 cursor-pointer"
+              className="w-full py-2.5 bg-sky-500 hover:bg-sky-400 text-black font-semibold rounded-xl text-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none mt-1 cursor-pointer"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin text-black" />
-                  <span>Authenticating Owner...</span>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-black" />
+                  <span>Authenticating...</span>
                 </>
               ) : (
                 <>
-                  <span>Sign In to Momentum</span>
-                  <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                  <span>Sign In</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Redirect Destination & Environment Indicator */}
-          <div className="pt-2 border-t border-white/5 space-y-2 text-center">
-            <div className="flex items-center justify-center gap-1.5 text-[11px] font-mono text-[#e4beb1]/60">
-              <Terminal className="w-3 h-3 text-[#FF5C00]" />
-              <span>Redirect Target: <strong className="text-white">{currentRedirectUrl.replace('https://', '').replace('http://', '')}</strong></span>
+          {/* Environment Indicator */}
+          <div className="pt-2 border-t border-white/[0.06] text-center">
+            <div className="flex items-center justify-center gap-1.5 text-[11px] font-mono text-[var(--text-secondary)]">
+              <Terminal className="w-3 h-3 opacity-60" />
+              <span>Momentum Workspace</span>
             </div>
-            <p className="text-[10px] text-white/30 leading-normal max-w-xs mx-auto">
-              All attendee contacts, voice transcripts, memories, and conference insights are strictly isolated and private to the verified owner.
-            </p>
           </div>
         </motion.div>
       </main>
 
-      {/* Footer System Status */}
-      <footer className="w-full max-w-md text-center text-[11px] text-white/40 py-2 z-10">
-        <p>Momentum OS · TEDxAkure 2026 · Confidential & Proprietary</p>
+      {/* Footer */}
+      <footer className="w-full max-w-md text-center text-[11px] text-[var(--text-secondary)] py-2 z-10">
+        <p>Momentum OS · Event Intelligence Terminal · Safe Sandbox Protected</p>
       </footer>
+
+      {/* Theme Selector Modal */}
+      <ThemeSelectorModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
+      />
+
+      {/* 1-Day Trial Guest Activation Modal */}
+      <AnimatePresence>
+        {isTrialPromptOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsTrialPromptOpen(false)}
+              className="fixed inset-0 bg-black/80 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              className="relative w-full max-w-md bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] rounded-2xl p-6 shadow-2xl z-10 text-[var(--text-primary)] space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-400/20 flex items-center justify-center text-sky-400">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-white">
+                      Start Guest Session
+                    </h3>
+                    <p className="text-xs text-[var(--text-secondary)]">24-hour evaluation with local export</p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsTrialPromptOpen(false)}
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleActivateGuestTrial} className="space-y-3 pt-1">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-[var(--text-secondary)]">
+                    Name or Alias
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-white/40">
+                      <UserCheck className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      value={guestNameInput}
+                      onChange={(e) => setGuestNameInput(e.target.value)}
+                      placeholder="e.g. Alex Rivers"
+                      autoFocus
+                      className="w-full bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] focus:border-sky-400 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-white/20 focus:outline-none transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] text-[var(--text-secondary)] text-[11px] leading-relaxed space-y-1">
+                  <div className="font-medium text-white/90">Session Parameters:</div>
+                  <ul className="space-y-0.5 text-[10px] text-white/70">
+                    <li>• Active for 24 hours from activation</li>
+                    <li>• 12MB isolated client storage quota</li>
+                    <li>• 30MB client bandwidth transfer guardrail</li>
+                    <li>• 1-click export to CSV and JSON anytime</li>
+                  </ul>
+                </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsTrialPromptOpen(false)}
+                    className="w-1/3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-medium text-white/70 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="w-2/3 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-semibold text-xs transition-colors shadow-sm"
+                  >
+                    Start Session
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
