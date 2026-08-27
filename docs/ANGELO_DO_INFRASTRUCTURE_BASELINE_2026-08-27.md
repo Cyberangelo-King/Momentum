@@ -8,13 +8,22 @@
 
 Momentum is deployed and operational, but infrastructure is **NOT YET PRODUCTION-READY**. The immediate blocker is credential exposure in the repository. Additional hardening is required across Supabase security, CI/CD, environment separation, monitoring, backup verification, and disaster recovery.
 
+## Work completed in this pass
+
+- Added this infrastructure baseline report to the repository.
+- Opened GitHub Issue #1 for the P0 credential rotation/remediation.
+- Removed live credential values from the current `.env.example`.
+- Added a baseline GitHub Actions validation workflow at `.github/workflows/ci.yml` covering `npm ci`, typecheck, and build on pull requests and pushes to `main`.
+
+**Important:** removing a secret from the current file does not remove it from Git history. The exposed Gemini credential must still be revoked/rotated and historical exposure assessed.
+
 ## P0 — Immediate
 
 ### 1. Credential exposure
 
-A Gemini API credential was found committed in `.env.example`. The same credential is configured in Netlify as `GEMINI_API_KEY` and was not marked secret at the time of inspection.
+A Gemini API credential was found committed in `.env.example`. The same credential was configured in Netlify as `GEMINI_API_KEY` and was not marked secret at the time of inspection.
 
-**Action:** revoke/rotate the exposed Gemini credential immediately; replace the Netlify value with the rotated credential and mark it secret; remove the credential from repository history/current example files; scan history for reuse.
+**Action:** revoke/rotate the exposed Gemini credential immediately; replace the Netlify value with the rotated credential and mark it secret; search history for reuse and purge where appropriate.
 
 > Never copy the exposed credential into documentation, issues, logs, or commits.
 
@@ -22,9 +31,9 @@ A Gemini API credential was found committed in `.env.example`. The same credenti
 
 - Site: `angelomomentum`
 - Production URL: `https://angelomomentum.netlify.app`
-- Latest production deployment: `ready`
+- Latest observed production deployment: `ready`
 - Framework: Vite
-- Latest observed production commit: `7cd06e873137513f9aeda0197b177d0b1f1379f3`
+- Latest observed production commit before this hardening pass: `7cd06e873137513f9aeda0197b177d0b1f1379f3`
 - SSL URL is available.
 - No Netlify Functions or Edge Functions were deployed in the observed deployment.
 
@@ -35,8 +44,9 @@ Repository: `Cyberangelo-King/Momentum`
 - Visibility: public
 - Default branch: `main`
 - Connected integration reports admin/maintain/push access.
-- GitHub Actions currently showed no recorded workflow runs at the time of the baseline.
-- Branch protection/ruleset state must be explicitly verified.
+- Before this pass, GitHub Actions showed no recorded workflow runs.
+- A CI workflow has now been committed; its first successful run must be verified.
+- Branch protection/ruleset state must still be explicitly verified.
 
 ## Supabase
 
@@ -60,11 +70,11 @@ No recorded Supabase development migrations were observed during the baseline. E
 
 ## CI/CD target
 
-Implement and verify:
+Baseline CI is now committed:
 
-`PR -> typecheck -> tests -> build -> security checks -> review -> main -> production deploy -> health verification -> rollback if required`
+`PR/push -> npm ci -> typecheck -> build`
 
-Production should not depend on unverified manual deployment steps.
+Next step is to verify the workflow and extend it with tests, security checks, deployment gates, production health verification, and rollback procedures.
 
 ## Environment strategy
 
@@ -104,7 +114,7 @@ Backups must be verified by restoration, not merely existence. Establish documen
 ### P1
 1. Harden `SECURITY DEFINER` function and RLS.
 2. Enable appropriate leaked-password protection.
-3. Establish GitHub Actions CI/CD.
+3. Verify GitHub Actions CI.
 4. Verify/protect `main`.
 5. Establish Supabase migrations and controlled promotion.
 
