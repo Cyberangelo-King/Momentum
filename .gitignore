@@ -36,3 +36,7 @@ pnpm-debug.log*
 !.vscode/extensions.json
 .idea
 
+# AI Agent Skills & Temp Artifacts
+.skills/
+
+

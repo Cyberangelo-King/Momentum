@@ -51,6 +51,7 @@ interface NavigationProps {
   onOpenThemeModal?: () => void;
   trialMetrics?: TrialQuotaMetrics;
   onOpenTrialModal?: () => void;
+  onOpenOnboarding?: () => void;
   security: SecuritySettings;
   onLockNow: () => void;
   onOpenProfile?: () => void;
@@ -76,6 +77,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   onOpenThemeModal,
   trialMetrics,
   onOpenTrialModal,
+  onOpenOnboarding,
   security,
   onLockNow,
   onOpenProfile,
@@ -497,6 +499,20 @@ export const Navigation: React.FC<NavigationProps> = ({
 
           {/* Quick utility controls */}
           <div className="pt-2 mt-1 border-t border-[var(--border-subtle)] space-y-1">
+            {onOpenOnboarding && (
+              <button
+                id="sidebar-onboarding-btn"
+                onClick={() => {
+                  triggerHaptic('light');
+                  onOpenOnboarding();
+                }}
+                className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 transition-colors text-left"
+              >
+                <Sparkles className="w-4 h-4 text-[var(--accent-primary)]" />
+                <span>OS Tour & Guide</span>
+              </button>
+            )}
+
             {onOpenContingencyHub && (
               <button
                 onClick={() => {

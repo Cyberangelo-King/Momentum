@@ -100,6 +100,14 @@ Momentum categorizes all functionality into three clear operational states: **Im
 │ • AI Agenda Parser (1-Click) │                             │                            │
 │ • Preset Catalog (Tech/TEDx/ │                             │                            │
 │   Summit/Hackathon/Mastermind│                             │                            │
+│ • Interactive 6-Step Tour &  │                             │                            │
+│   Onboarding Guide Modal     │                             │                            │
+│ • 4-Colorway Dynamic Theme   │                             │                            │
+│   Engine (Cobalt/Emerald/Iris│                             │                            │
+│ • 24-Hour Guest Sandbox Mode │                             │                            │
+│   w/ Storage & Bandwidth Caps│                             │                            │
+│ • UI/UX Pro Max Design Token │                             │                            │
+│   Architecture & dvh Modals  │                             │                            │
 │ • Constellation Force Radar  │                             │                            │
 │   & AI Warm Intro Matchmaker │                             │                            │
 │ • AI Pitch Arena & Coach     │                             │                            │
@@ -562,9 +570,13 @@ Momentum is pre-configured for seamless deployment to Netlify via `netlify.toml`
 
 ### 10.2 Roadmap & Future Milestones
 
-- [ ] **Client-Side OCR for Business Cards**: Integrate lightweight WebAssembly Tesseract.js for offline physical card scanning.
+- [x] **Web-NFC "Phone Bump" Hardware Protocol**: Touchless physical contact exchange via device Near Field Communication.
+- [x] **Constellation Force Radar & AI Matchmaker**: Graph visualizer for discovering network synergies and drafting warm intros.
+- [x] **AI Pitch Arena & Sparring Simulator**: Real-time teleprompter, speech evaluation, and 5 distinct stakeholder personas.
+- [x] **Multi-Event Switcher & Preset Catalog**: Rapid 1-click onboarding for any tech conference, summit, or hackathon.
+- [x] **UI/UX Pro Max Design Token Refactor**: Dynamic viewport units (`dvh`), semantic theme variables, and tactile micro-interactions.
+- [ ] **Client-Side OCR for Physical Business Cards**: Integrate lightweight WebAssembly Tesseract.js for offline card scanning.
 - [ ] **PWA Background Sync API**: Enable background service worker queue flushing when the browser tab is closed.
-- [ ] **NFC / BLE Tap Exchange**: Support Web NFC for instant phone-to-phone contact passing.
 - [ ] **WhatsApp Cloud API Webhook Integration**: Direct automated delivery of scheduled follow-ups without opening native apps.
 
 ---
@@ -619,8 +631,8 @@ Momentum was built with a build-in-public mindset. Here are **28 concrete conten
 
 *All metrics derived directly from the current codebase:*
 
-- **Core React Components**: 29 modular views and modals (`src/components/`).
-- **Domain Services**: 13 TypeScript service modules (`src/services/`).
+- **Core React Components**: 48 modular views, cards, and modals (`src/components/`).
+- **Domain Services**: 19 TypeScript service modules (`src/services/`).
 - **Data Models**: 100% strictly typed TypeScript interfaces (`src/types.ts`).
 - **Target Connections Goal**: 50 verified attendees (`DashboardView.tsx`).
 - **Export Formats Supported**: 5 distinct formats (A4 PDF, ZIP Media Archive, CSV Spreadsheet, CRM JSON, 1:1 Canvas Collage).
@@ -629,6 +641,7 @@ Momentum was built with a build-in-public mindset. Here are **28 concrete conten
 - **Security Tiers**: 3 independent layers (Supabase JWT Auth + Email Whitelist, WebAuthn Biometrics, 4-digit SHA-256 PIN).
 - **Theme Palettes**: 4 refined modern colorways (Cyber Cobalt, Nordic Emerald, Royal Iris, Sunset Ember).
 - **Guest Sandbox Mode**: 24-hour trial with 12MB storage quota, 30MB bandwidth transfer limiter, and safe entity guardrails.
+- **Interactive Onboarding**: 6-step guided walkthrough covering compounding loop, multimodal ingestion, and NFC protocols.
 
 ---
 

@@ -219,26 +219,26 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4 overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4 overflow-y-auto animate-fade-in">
         <motion.div
           initial={{ opacity: 0, y: 24, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 24, scale: 0.96 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
-          className="bg-[#120804] border border-white/10 sm:rounded-3xl rounded-t-3xl w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh] shadow-2xl"
+          className="bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] sm:rounded-3xl rounded-t-3xl w-full max-w-lg overflow-hidden flex flex-col max-h-[92dvh] shadow-2xl my-auto text-white"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="p-5 bg-gradient-to-r from-[#220f06] to-[#150803] border-b border-white/10 flex items-center justify-between">
+          <div className="p-5 bg-[var(--bg-surface-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#FF5C00] text-black flex items-center justify-center font-bold shadow-lg shadow-[#FF5C00]/20">
+              <div className="w-10 h-10 rounded-2xl bg-[var(--accent-primary)] text-black flex items-center justify-center font-bold shadow-lg shrink-0">
                 <Bolt className="w-5 h-5 fill-current" />
               </div>
               <div>
-                <h2 className="text-base sm:text-lg font-bold text-[#fadcd2] font-serif-display">
+                <h2 className="text-base sm:text-lg font-bold text-white font-serif-display">
                   Quick Connect
                 </h2>
-                <p className="text-xs text-[#e4beb1]/60">
+                <p className="text-xs text-[var(--text-secondary)]">
                   Connection #{existingCount + 1} of 50 Target
                 </p>
               </div>
@@ -249,13 +249,13 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
                 <button
                   type="button"
                   onClick={onOpenNfcScanner}
-                  className="relative p-2 rounded-xl bg-[#FF5C00]/20 hover:bg-[#FF5C00]/30 text-[#FF5C00] border border-[#FF5C00]/40 transition-all flex items-center gap-1.5 text-xs font-bold"
+                  className="relative p-2 rounded-xl bg-[var(--accent-primary)]/15 hover:bg-[var(--accent-primary)]/25 text-[var(--accent-primary)] border border-[var(--border-accent)] transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer"
                   title="Bump Phone with Attendee"
                 >
                   {/* Subtle Pulse Animation */}
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF5C00] opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF5C00]"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-primary)] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--accent-primary)]"></span>
                   </span>
                   <Smartphone className="w-4 h-4 animate-pulse" />
                   <span className="hidden sm:inline">NFC Bump</span>
@@ -264,7 +264,8 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
 
               <button
                 onClick={onClose}
-                className="text-white/60 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors"
+                aria-label="Close Quick Connect"
+                className="text-[var(--text-secondary)] hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -297,27 +298,27 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
             {onOpenNfcScanner && !isNfcBumped && (
               <div 
                 onClick={onOpenNfcScanner}
-                className="p-3 rounded-2xl bg-gradient-to-r from-[#200e05] to-[#160a03] border border-[#FF5C00]/30 hover:border-[#FF5C00]/60 cursor-pointer transition-all flex items-center justify-between group"
+                className="p-3 rounded-2xl bg-[var(--bg-surface-subtle)] border border-[var(--border-accent)] hover:brightness-110 cursor-pointer transition-all flex items-center justify-between group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="relative w-9 h-9 rounded-xl bg-[#FF5C00]/20 text-[#FF5C00] flex items-center justify-center">
+                  <div className="relative w-9 h-9 rounded-xl bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] flex items-center justify-center">
                     <Smartphone className="w-4 h-4" />
                     <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF5C00] opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FF5C00]"></span>
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-primary)] opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--accent-primary)]"></span>
                     </span>
                   </div>
                   <div>
                     <div className="text-xs font-bold text-white flex items-center gap-1.5">
                       <span>Bump Phones to Auto-Fill</span>
-                      <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-[#FF5C00]/20 text-[#ffb59a] font-mono">Web-NFC</span>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] font-mono">Web-NFC</span>
                     </div>
-                    <p className="text-[11px] text-[#e4beb1]/60">Touch attendee's phone or badge to populate form</p>
+                    <p className="text-[11px] text-[var(--text-secondary)]">Touch attendee's phone or badge to populate form</p>
                   </div>
                 </div>
                 <button
                   type="button"
-                  className="px-3 py-1.5 rounded-xl bg-[#FF5C00] text-black font-bold text-xs group-hover:brightness-110 transition-all flex items-center gap-1"
+                  className="px-3 py-1.5 rounded-xl bg-[var(--accent-primary)] text-black font-bold text-xs group-hover:brightness-110 transition-all flex items-center gap-1 cursor-pointer"
                 >
                   <Radio className="w-3.5 h-3.5 animate-pulse" />
                   <span>Scan</span>
@@ -326,24 +327,25 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
             )}
 
             {isNfcBumped && (
-              <div className="p-2.5 rounded-xl bg-[#241208] border border-[#FF5C00]/40 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 text-[#ffb59a]">
-                  <Smartphone className="w-4 h-4 text-[#FF5C00]" />
+              <div className="p-2.5 rounded-xl bg-[var(--bg-surface-subtle)] border border-[var(--border-accent)] flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-[var(--accent-primary)]">
+                  <Smartphone className="w-4 h-4" />
                   <span className="font-bold">Verified NFC Contact Exchange</span>
                 </div>
-                <span className="text-[10px] text-[#e4beb1]/70 font-mono">
+                <span className="text-[10px] text-[var(--text-secondary)] font-mono">
                   {nfcLog?.timeFormatted || 'Captured'}
                 </span>
               </div>
             )}
+
             {/* Photos & Badge Attachments Section */}
-            <div className="p-4 rounded-2xl bg-[#180b06] border border-white/5 space-y-3">
+            <div className="p-4 rounded-2xl bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xs font-bold text-[#fadcd2] uppercase tracking-wider">
+                  <h3 className="text-xs font-bold text-white uppercase tracking-wider">
                     Attendee Photos & Lanyard Badges
                   </h3>
-                  <p className="text-[11px] text-[#e4beb1]/60">
+                  <p className="text-[11px] text-[var(--text-secondary)]">
                     Snap badge, selfie, or business card
                   </p>
                 </div>
@@ -351,7 +353,7 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsCameraOpen(true)}
-                    className="p-2 rounded-xl bg-[#FF5C00]/10 hover:bg-[#FF5C00]/20 text-[#FF5C00] border border-[#FF5C00]/30 transition-colors flex items-center gap-1 text-xs font-semibold"
+                    className="p-2 rounded-xl bg-[var(--accent-primary)]/10 hover:bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--border-accent)] transition-colors flex items-center gap-1 text-xs font-semibold cursor-pointer"
                     title="Take Photo"
                   >
                     <Camera className="w-4 h-4" />
@@ -361,10 +363,10 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-[#fadcd2] border border-white/10 transition-colors flex items-center gap-1 text-xs font-semibold"
+                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10 transition-colors flex items-center gap-1 text-xs font-semibold cursor-pointer"
                     title="Import Image"
                   >
-                    <ImageIcon className="w-4 h-4 text-[#ffb59a]" />
+                    <ImageIcon className="w-4 h-4 text-[var(--accent-primary)]" />
                     <span className="hidden sm:inline">Upload</span>
                   </button>
                 </div>
@@ -380,14 +382,14 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
                     >
                       <img src={imgUrl} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
                       {avatarUrl === imgUrl && (
-                        <div className="absolute top-1 left-1 bg-[#FF5C00] text-black text-[8px] font-bold px-1 rounded">
+                        <div className="absolute top-1 left-1 bg-[var(--accent-primary)] text-black text-[8px] font-bold px-1 rounded">
                           Main
                         </div>
                       )}
                       <button
                         type="button"
                         onClick={() => handleRemovePhoto(idx)}
-                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-rose-400 transition-opacity"
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-rose-400 transition-opacity cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -397,20 +399,20 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-16 h-16 rounded-xl border border-dashed border-white/20 hover:border-[#FF5C00] flex flex-col items-center justify-center text-[#e4beb1]/60 hover:text-white transition-colors flex-shrink-0"
+                    className="w-16 h-16 rounded-xl border border-dashed border-white/20 hover:border-[var(--accent-primary)] flex flex-col items-center justify-center text-[var(--text-secondary)] hover:text-white transition-colors flex-shrink-0 cursor-pointer"
                   >
-                    <Plus className="w-4 h-4 text-[#FF5C00]" />
+                    <Plus className="w-4 h-4 text-[var(--accent-primary)]" />
                     <span className="text-[9px] mt-0.5 font-medium">Add</span>
                   </button>
                 </div>
               ) : (
                 <div
                   onClick={() => setIsCameraOpen(true)}
-                  className="w-full py-4 border border-dashed border-white/15 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#FF5C00]/60 transition-colors bg-[#130703]"
+                  className="w-full py-4 border border-dashed border-white/15 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[var(--accent-primary)]/60 transition-colors bg-black/30"
                 >
-                  <Camera className="w-6 h-6 text-[#FF5C00] mb-1" />
-                  <p className="text-xs font-semibold text-[#fadcd2]">Take Photo or Pick from Gallery</p>
-                  <p className="text-[10px] text-[#e4beb1]/50">Helps with instant face & name recall</p>
+                  <Camera className="w-6 h-6 text-[var(--accent-primary)] mb-1" />
+                  <p className="text-xs font-semibold text-white">Take Photo or Pick from Gallery</p>
+                  <p className="text-[10px] text-[var(--text-secondary)]">Helps with instant face & name recall</p>
                 </div>
               )}
 
@@ -426,44 +428,44 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
 
             {/* Essential Fields */}
             <div>
-              <label className="block text-xs font-semibold text-[#e4beb1] mb-1">Full Name *</label>
+              <label className="block text-xs font-semibold text-neutral-300 mb-1">Full Name *</label>
               <input
                 type="text"
                 required
                 placeholder="e.g. Dr. Amina Yusuf"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full bg-[#160a05] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-[#fadcd2] focus:outline-none focus:border-[#FF5C00] transition-colors"
+                className="w-full bg-black/40 border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--accent-primary)] transition-colors"
                 autoFocus
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-[#e4beb1] mb-1">Company / Org</label>
+                <label className="block text-xs font-semibold text-neutral-300 mb-1">Company / Org</label>
                 <input
                   type="text"
                   placeholder="e.g. Future Africa"
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
-                  className="w-full bg-[#160a05] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-[#fadcd2] focus:outline-none focus:border-[#FF5C00] transition-colors"
+                  className="w-full bg-black/40 border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--accent-primary)] transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#e4beb1] mb-1">Role / Profession</label>
+                <label className="block text-xs font-semibold text-neutral-300 mb-1">Role / Profession</label>
                 <input
                   type="text"
                   placeholder="e.g. Founder & CTO"
                   value={profession}
                   onChange={(e) => setProfession(e.target.value)}
-                  className="w-full bg-[#160a05] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-[#fadcd2] focus:outline-none focus:border-[#FF5C00] transition-colors"
+                  className="w-full bg-black/40 border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--accent-primary)] transition-colors"
                 />
               </div>
             </div>
 
             {/* Relationship Chips */}
             <div>
-              <label className="block text-xs font-semibold text-[#e4beb1] mb-1.5">
+              <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
                 Relationship Type
               </label>
               <div className="grid grid-cols-4 gap-2">
@@ -472,10 +474,10 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
                     key={rel}
                     type="button"
                     onClick={() => setRelationship(rel)}
-                    className={`py-2 text-xs font-bold rounded-xl uppercase tracking-wider transition-all ${
+                    className={`py-2 text-xs font-bold rounded-xl uppercase tracking-wider transition-all cursor-pointer ${
                       relationship === rel
-                        ? 'bg-[#FF5C00] text-black shadow-md'
-                        : 'bg-[#1e0f08] text-[#e4beb1]/70 hover:text-white border border-white/5'
+                        ? 'bg-[var(--accent-primary)] text-black shadow-md'
+                        : 'bg-white/5 text-neutral-300 hover:text-white border border-white/5'
                     }`}
                   >
                     {rel}
@@ -487,11 +489,11 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
             {/* Priority & Follow-up Date */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-[#e4beb1] mb-1">Priority</label>
+                <label className="block text-xs font-semibold text-neutral-300 mb-1">Priority</label>
                 <select
                   value={priority}
                   onChange={(e) => setPriority(e.target.value as PriorityLevel)}
-                  className="w-full bg-[#160a05] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-[#fadcd2] focus:outline-none focus:border-[#FF5C00]"
+                  className="w-full bg-black/40 border border-[var(--border-subtle)] rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[var(--accent-primary)] cursor-pointer"
                 >
                   <option value="high">★ High Priority</option>
                   <option value="medium">Medium Priority</option>
@@ -500,19 +502,19 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#e4beb1] mb-1">Follow-up Date</label>
+                <label className="block text-xs font-semibold text-neutral-300 mb-1">Follow-up Date</label>
                 <input
                   type="date"
                   value={followUpDate}
                   onChange={(e) => setFollowUpDate(e.target.value)}
-                  className="w-full bg-[#160a05] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-[#fadcd2] focus:outline-none focus:border-[#FF5C00]"
+                  className="w-full bg-black/40 border border-[var(--border-subtle)] rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[var(--accent-primary)]"
                 />
               </div>
             </div>
 
             {/* Quick Context Notes */}
             <div>
-              <label className="block text-xs font-semibold text-[#e4beb1] mb-1">
+              <label className="block text-xs font-semibold text-neutral-300 mb-1">
                 Conversation Memory & Key Insights
               </label>
               <textarea
@@ -520,7 +522,7 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
                 placeholder="What did you discuss? (e.g. Collaborating on AI computer vision pilot)"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full bg-[#160a05] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-[#fadcd2] focus:outline-none focus:border-[#FF5C00] resize-none"
+                className="w-full bg-black/40 border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[var(--accent-primary)] resize-none"
               />
             </div>
 
@@ -528,7 +530,7 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
             <button
               type="button"
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className="text-xs text-[#FF5C00] font-semibold flex items-center gap-1 hover:underline pt-1"
+              className="text-xs text-[var(--accent-primary)] font-semibold flex items-center gap-1 hover:underline pt-1 cursor-pointer"
             >
               {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               <span>{showAdvanced ? 'Hide Additional Channels' : 'Add WhatsApp, LinkedIn, Email'}</span>
@@ -537,7 +539,7 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
             {showAdvanced && (
               <div className="space-y-3 pt-1 border-t border-white/5 animate-in fade-in duration-150">
                 <div>
-                  <label className="block text-[11px] font-semibold text-[#e4beb1] mb-1">
+                  <label className="block text-[11px] font-semibold text-neutral-300 mb-1">
                     Phone / WhatsApp
                   </label>
                   <input
@@ -545,27 +547,27 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
                     placeholder="+234 803 000 0000"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full bg-[#160a05] border border-white/10 rounded-xl px-4 py-2 text-xs text-[#fadcd2] focus:outline-none focus:border-[#FF5C00]"
+                    className="w-full bg-black/40 border border-[var(--border-subtle)] rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-[var(--accent-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-[#e4beb1] mb-1">Email</label>
+                  <label className="block text-[11px] font-semibold text-neutral-300 mb-1">Email</label>
                   <input
                     type="email"
                     placeholder="contact@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-[#160a05] border border-white/10 rounded-xl px-4 py-2 text-xs text-[#fadcd2] focus:outline-none focus:border-[#FF5C00]"
+                    className="w-full bg-black/40 border border-[var(--border-subtle)] rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-[var(--accent-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-[#e4beb1] mb-1">LinkedIn Profile</label>
+                  <label className="block text-[11px] font-semibold text-neutral-300 mb-1">LinkedIn Profile</label>
                   <input
                     type="text"
                     placeholder="https://linkedin.com/in/username"
                     value={linkedin}
                     onChange={(e) => setLinkedin(e.target.value)}
-                    className="w-full bg-[#160a05] border border-white/10 rounded-xl px-4 py-2 text-xs text-[#fadcd2] focus:outline-none focus:border-[#FF5C00]"
+                    className="w-full bg-black/40 border border-[var(--border-subtle)] rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-[var(--accent-primary)]"
                   />
                 </div>
               </div>
@@ -576,14 +578,14 @@ export const QuickConnectModal: React.FC<QuickConnectModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-1/3 py-3 rounded-xl border border-white/10 text-[#fadcd2] font-semibold text-xs hover:bg-white/5 transition-colors"
+                className="w-1/3 py-3 rounded-xl border border-white/10 text-neutral-300 font-semibold text-xs hover:bg-white/5 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={!name.trim() || isAiSummarizing}
-                className="flex-1 py-3 rounded-xl bg-[#FF5C00] text-black font-bold text-sm hover:bg-[#ff7a33] transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg active:scale-98"
+                className="flex-1 py-3 rounded-xl bg-[var(--accent-primary)] text-black font-bold text-sm hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg active:scale-98 cursor-pointer"
               >
                 {isAiSummarizing ? (
                   <>

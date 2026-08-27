@@ -43,7 +43,6 @@ export const LiveCopilotModal: React.FC<LiveCopilotModalProps> = ({
   const [icebreakers, setIcebreakers] = useState<string[]>([]);
   const [isLoadingIcebreakers, setIsLoadingIcebreakers] = useState<boolean>(false);
 
-  const brandColor = activeEvent?.branding?.primaryColor || '#FF5C00';
   const target = activeEvent?.targetConnections || 50;
   const currentCount = connections.length;
   const remaining = Math.max(0, target - currentCount);
@@ -100,26 +99,23 @@ export const LiveCopilotModal: React.FC<LiveCopilotModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-black/85 backdrop-blur-xl animate-fade-in">
-      <div className="w-full max-w-3xl max-h-[95vh] rounded-3xl bg-[#0c0603] border border-[#FF5C00]/30 shadow-2xl flex flex-col overflow-hidden text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-xl animate-fade-in">
+      <div className="w-full max-w-3xl max-h-[92dvh] rounded-3xl bg-[var(--bg-surface-card)] border border-[var(--border-subtle)] shadow-2xl flex flex-col overflow-hidden text-white my-auto">
         {/* Header */}
-        <div className="p-4 md:p-5 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-[#1f0c04] to-[#0c0603]">
+        <div className="p-4 sm:p-5 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-surface-subtle)]">
           <div className="flex items-center gap-3">
-            <div 
-              className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg"
-              style={{ backgroundColor: `${brandColor}25`, color: brandColor }}
-            >
-              <Compass className="w-5 h-5 animate-spin" style={{ animationDuration: '10s' }} />
+            <div className="w-10 h-10 rounded-2xl bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] border border-[var(--border-accent)] flex items-center justify-center shrink-0 shadow-lg">
+              <Compass className="w-5 h-5 animate-spin" style={{ animationDuration: '12s' }} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-white tracking-tight">Live Event Copilot & Venue Kit</h2>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FF5C00] text-black font-bold uppercase">
-                  Real-Time HUD
+                <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">Live Event Copilot & Venue Kit</h2>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent-primary)] text-black font-bold uppercase tracking-wider">
+                  HUD
                 </span>
               </div>
-              <p className="text-xs text-[#ffb59a]/70">
-                Live session radar, networking pacing engine, and emergency venue survival tools
+              <p className="text-xs text-[var(--text-secondary)]">
+                Live session radar, networking pacing engine, and venue survival tools
               </p>
             </div>
           </div>
@@ -129,26 +125,27 @@ export const LiveCopilotModal: React.FC<LiveCopilotModalProps> = ({
               triggerHaptic('light');
               onClose();
             }}
-            className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-neutral-400 hover:text-white transition-colors"
+            aria-label="Close Live Copilot"
+            className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-5">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
           {/* Target Pacing Progress Strip */}
-          <div className="p-4 rounded-2xl bg-gradient-to-r from-[#220e04] to-[#120602] border border-[#FF5C00]/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="p-4 rounded-2xl bg-[var(--bg-surface-subtle)] border border-[var(--border-accent)] flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-black/60 border border-[#FF5C00]/40 flex flex-col items-center justify-center shrink-0">
-                <span className="text-lg font-black text-[#FF5C00]">{currentCount}</span>
-                <span className="text-[9px] uppercase font-bold text-neutral-400">/ {target}</span>
+              <div className="w-12 h-12 rounded-2xl bg-black/50 border border-[var(--border-accent)] flex flex-col items-center justify-center shrink-0">
+                <span className="text-lg font-black text-[var(--accent-primary)]">{currentCount}</span>
+                <span className="text-[9px] uppercase font-bold text-[var(--text-secondary)]">/ {target}</span>
               </div>
               <div>
                 <h3 className="font-bold text-sm text-white">
                   {remaining === 0 ? 'Goal Crushed! 50/50 Unlocked' : `${remaining} Connections to Goal`}
                 </h3>
-                <p className="text-xs text-[#ffb59a]">
+                <p className="text-xs text-[var(--text-secondary)]">
                   Target velocity: ~{(remaining / 3).toFixed(1)} contacts/hr to finish before closing remarks.
                 </p>
               </div>
@@ -158,9 +155,9 @@ export const LiveCopilotModal: React.FC<LiveCopilotModalProps> = ({
               onClick={() => {
                 triggerHaptic('light');
                 onClose();
-                onOpenPitchSimulator();
+                if (onOpenPitchSimulator) onOpenPitchSimulator();
               }}
-              className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#FF5C00] hover:bg-[#FF7A33] text-black font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-md shrink-0"
+              className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[var(--accent-primary)] hover:brightness-110 text-black font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-md shrink-0 cursor-pointer"
             >
               <Zap className="w-3.5 h-3.5" />
               Open Pitch Arena
@@ -169,13 +166,13 @@ export const LiveCopilotModal: React.FC<LiveCopilotModalProps> = ({
 
           {/* Live Stage Radar */}
           {liveSession && (
-            <div className="p-4 rounded-2xl bg-[#140803] border border-white/10 space-y-3">
+            <div className="p-4 rounded-2xl bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
                   <span className="text-xs font-bold text-red-400 uppercase tracking-wider">Happening Now</span>
                 </div>
-                <span className="text-xs text-neutral-400 font-medium flex items-center gap-1">
+                <span className="text-xs text-[var(--text-secondary)] font-medium flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5" />
                   {liveSession.timeStr} • {liveSession.stage}
                 </span>
@@ -189,18 +186,18 @@ export const LiveCopilotModal: React.FC<LiveCopilotModalProps> = ({
                 />
                 <div>
                   <h4 className="font-bold text-sm text-white">{liveSession.title}</h4>
-                  <p className="text-xs text-[#ffb59a] font-medium">{liveSession.speaker} ({liveSession.speakerRole})</p>
-                  <p className="text-[11px] text-neutral-400 line-clamp-2 mt-1">{liveSession.description}</p>
+                  <p className="text-xs text-[var(--accent-primary)] font-medium">{liveSession.speaker} ({liveSession.speakerRole})</p>
+                  <p className="text-[11px] text-[var(--text-secondary)] line-clamp-2 mt-1">{liveSession.description}</p>
                 </div>
               </div>
             </div>
           )}
 
           {/* Hallway Icebreaker Teleprompter */}
-          <div className="p-4 rounded-2xl bg-[#160904] border border-white/10 space-y-3">
+          <div className="p-4 rounded-2xl bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-[#FF5C00]" />
+                <MessageSquare className="w-4 h-4 text-[var(--accent-primary)]" />
                 <h3 className="font-bold text-xs text-white uppercase tracking-wider">
                   Live 30-Second Icebreakers
                 </h3>
@@ -208,9 +205,9 @@ export const LiveCopilotModal: React.FC<LiveCopilotModalProps> = ({
               <button
                 onClick={loadIcebreakers}
                 disabled={isLoadingIcebreakers}
-                className="text-[10px] text-neutral-400 hover:text-white flex items-center gap-1 active:scale-95 transition-all"
+                className="text-[10px] text-[var(--text-secondary)] hover:text-white flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
               >
-                <RefreshCw className={`w-3 h-3 ${isLoadingIcebreakers ? 'animate-spin text-[#FF5C00]' : ''}`} />
+                <RefreshCw className={`w-3 h-3 ${isLoadingIcebreakers ? 'animate-spin text-[var(--accent-primary)]' : ''}`} />
                 Refresh Prompts
               </button>
             </div>
@@ -220,12 +217,12 @@ export const LiveCopilotModal: React.FC<LiveCopilotModalProps> = ({
                 <div
                   key={idx}
                   onClick={() => handleCopyText(prompt, `ice_${idx}`)}
-                  className="p-3 rounded-xl bg-black/40 border border-white/5 hover:border-[#FF5C00]/30 cursor-pointer flex items-center justify-between gap-3 group transition-all"
+                  className="p-3 rounded-xl bg-black/30 border border-[var(--border-subtle)] hover:border-[var(--border-accent)] cursor-pointer flex items-center justify-between gap-3 group transition-all"
                 >
                   <p className="text-xs text-neutral-200 group-hover:text-white leading-relaxed">
                     "{prompt}"
                   </p>
-                  <div className="shrink-0 text-neutral-500 group-hover:text-[#FF5C00]">
+                  <div className="shrink-0 text-neutral-500 group-hover:text-[var(--accent-primary)]">
                     {copiedKey === `ice_${idx}` ? (
                       <Check className="w-3.5 h-3.5 text-emerald-400" />
                     ) : (
@@ -240,7 +237,7 @@ export const LiveCopilotModal: React.FC<LiveCopilotModalProps> = ({
           {/* Venue Survival Cheatsheet */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {/* WiFi credentials */}
-            <div className="p-4 rounded-2xl bg-black/50 border border-white/10 space-y-2.5">
+            <div className="p-4 rounded-2xl bg-black/40 border border-[var(--border-subtle)] space-y-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-white flex items-center gap-1.5">
                   <Wifi className="w-3.5 h-3.5 text-emerald-400" />
@@ -248,27 +245,29 @@ export const LiveCopilotModal: React.FC<LiveCopilotModalProps> = ({
                 </span>
                 <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">Fast</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-neutral-900 border border-white/5 flex items-center justify-between text-xs">
+              <div className="p-2.5 rounded-xl bg-[var(--bg-surface-subtle)] border border-white/5 flex items-center justify-between text-xs">
                 <div>
                   <span className="text-[10px] text-neutral-500 block">SSID</span>
                   <span className="font-mono text-white font-bold">{venueKit.wifiSsid}</span>
                 </div>
                 <button
                   onClick={() => handleCopyText(venueKit.wifiSsid || '', 'ssid')}
-                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white"
+                  aria-label="Copy WiFi SSID"
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white cursor-pointer"
                 >
                   {copiedKey === 'ssid' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
 
-              <div className="p-2.5 rounded-xl bg-neutral-900 border border-white/5 flex items-center justify-between text-xs">
+              <div className="p-2.5 rounded-xl bg-[var(--bg-surface-subtle)] border border-white/5 flex items-center justify-between text-xs">
                 <div>
                   <span className="text-[10px] text-neutral-500 block">Password</span>
-                  <span className="font-mono text-[#ffb59a] font-bold">{venueKit.wifiPassword}</span>
+                  <span className="font-mono text-[var(--accent-primary)] font-bold">{venueKit.wifiPassword}</span>
                 </div>
                 <button
                   onClick={() => handleCopyText(venueKit.wifiPassword || '', 'pass')}
-                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white"
+                  aria-label="Copy WiFi Password"
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white cursor-pointer"
                 >
                   {copiedKey === 'pass' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
@@ -276,7 +275,7 @@ export const LiveCopilotModal: React.FC<LiveCopilotModalProps> = ({
             </div>
 
             {/* Power outlets & Quiet Spots */}
-            <div className="p-4 rounded-2xl bg-black/50 border border-white/10 space-y-2.5">
+            <div className="p-4 rounded-2xl bg-black/40 border border-[var(--border-subtle)] space-y-2.5">
               <span className="text-xs font-bold text-white flex items-center gap-1.5">
                 <BatteryCharging className="w-3.5 h-3.5 text-amber-400" />
                 Power Outlets & Quiet Zones
@@ -296,8 +295,8 @@ export const LiveCopilotModal: React.FC<LiveCopilotModalProps> = ({
                 ))}
               </div>
 
-              <div className="pt-2 border-t border-white/5 text-[11px] text-neutral-400 flex items-center gap-1.5">
-                <Coffee className="w-3.5 h-3.5 text-[#FF5C00]" />
+              <div className="pt-2 border-t border-white/5 text-[11px] text-[var(--text-secondary)] flex items-center gap-1.5">
+                <Coffee className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                 <span className="truncate">{venueKit.foodNotes?.[0] || 'Coffee bar open all day'}</span>
               </div>
             </div>

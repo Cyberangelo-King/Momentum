@@ -62,6 +62,7 @@ interface DashboardViewProps {
   onOpenDigitalBadge?: () => void;
   onOpenLiveCopilot?: () => void;
   onOpenEventAnalytics?: () => void;
+  onOpenOnboarding?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -88,6 +89,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenDigitalBadge,
   onOpenLiveCopilot,
   onOpenEventAnalytics,
+  onOpenOnboarding,
 }) => {
   const [isBatteryBannerDismissed, setIsBatteryBannerDismissed] = useState(false);
   const battery = useBatteryStatus();
@@ -183,7 +185,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          {/* Onboarding Tour Trigger */}
+          {onOpenOnboarding && (
+            <button
+              id="dashboard-tour-btn"
+              onClick={() => {
+                triggerHaptic('light');
+                onOpenOnboarding();
+              }}
+              title="Open Interactive OS Guide & Feature Tour"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] text-xs font-medium text-white/90 transition-colors cursor-pointer shadow-sm active:scale-95"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+              <span>OS Tour</span>
+            </button>
+          )}
+
           {/* Event Hub Modal Trigger */}
           {onOpenEventHub && (
             <button
@@ -349,7 +367,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   triggerHaptic('light');
                   onOpenQuickConnect();
                 }}
-                className="px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+                className="px-4 py-2.5 rounded-xl bg-[var(--accent-primary)] hover:brightness-110 text-black font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
               >
                 <Bolt className="w-3.5 h-3.5 fill-current" />
                 <span>Quick Connect</span>
@@ -360,7 +378,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   triggerHaptic('light');
                   onOpenCapture();
                 }}
-                className="px-3.5 py-2.5 rounded-xl bg-[var(--bg-surface-subtle)] hover:bg-white/[0.08] text-white border border-[var(--border-subtle)] font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2.5 rounded-xl bg-[var(--bg-surface-subtle)] hover:bg-white/[0.08] text-white border border-[var(--border-subtle)] font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer active:scale-95"
               >
                 <Camera className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                 <span>Capture Photo</span>
@@ -371,7 +389,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   triggerHaptic('light');
                   onOpenAddIdea();
                 }}
-                className="px-3.5 py-2.5 rounded-xl bg-[var(--bg-surface-subtle)] hover:bg-white/[0.08] text-white border border-[var(--border-subtle)] font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2.5 rounded-xl bg-[var(--bg-surface-subtle)] hover:bg-white/[0.08] text-white border border-[var(--border-subtle)] font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer active:scale-95"
               >
                 <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
                 <span>Log Idea</span>
@@ -382,7 +400,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   triggerHaptic('light');
                   onSelectTab('notes');
                 }}
-                className="px-3.5 py-2.5 rounded-xl bg-[var(--bg-surface-subtle)] hover:bg-white/[0.08] text-white border border-[var(--border-subtle)] font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2.5 rounded-xl bg-[var(--bg-surface-subtle)] hover:bg-white/[0.08] text-white border border-[var(--border-subtle)] font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer active:scale-95"
               >
                 <FileText className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                 <span>Notes & Q&A</span>
@@ -738,7 +756,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </h3>
               <p className="text-xs text-[var(--text-secondary)] mt-0.5">Rate of contact additions over time</p>
             </div>
-            <span className="text-xs font-mono font-medium text-[var(--accent-primary)] bg-sky-500/10 px-2 py-0.5 rounded-full border border-sky-500/20">
+            <span className="text-xs font-mono font-medium text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 px-2 py-0.5 rounded-full border border-[var(--border-accent)]">
               {Math.max(1, Math.round(currentCount / 6))} / hr
             </span>
           </div>
@@ -748,8 +766,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor="var(--accent-primary)" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="var(--accent-primary)" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <XAxis
@@ -762,9 +780,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#0e1420',
-                    borderColor: 'rgba(255,255,255,0.1)',
-                    borderRadius: 8,
+                    backgroundColor: 'var(--bg-surface-card)',
+                    borderColor: 'var(--border-subtle)',
+                    borderRadius: 12,
                     fontSize: 11,
                     color: '#f8fafc',
                   }}
@@ -772,7 +790,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <Area
                   type="monotone"
                   dataKey="connections"
-                  stroke="#38bdf8"
+                  stroke="var(--accent-primary)"
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorCount)"

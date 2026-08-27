@@ -95,6 +95,7 @@ import { LiveCopilotModal } from './components/LiveCopilotModal';
 import { EventAnalyticsModal } from './components/EventAnalyticsModal';
 import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { TrialManagerModal } from './components/TrialManagerModal';
+import { OnboardingGuideModal } from './components/OnboardingGuideModal';
 import { 
   ShieldCheck, 
   ChevronRight, 
@@ -287,6 +288,10 @@ export const App: React.FC = () => {
   const [isDigitalBadgeOpen, setIsDigitalBadgeOpen] = useState(false);
   const [isLiveCopilotOpen, setIsLiveCopilotOpen] = useState(false);
   const [isEventAnalyticsOpen, setIsEventAnalyticsOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !localStorage.getItem('momentum_onboarding_completed');
+  });
 
   // Multi-Event Management System
   const [events, setEvents] = useState<EventConfig[]>(loadEvents);
@@ -673,6 +678,7 @@ export const App: React.FC = () => {
         onOpenThemeModal={() => setIsThemeModalOpen(true)}
         trialMetrics={trialMetrics}
         onOpenTrialModal={() => setIsTrialModalOpen(true)}
+        onOpenOnboarding={() => setIsOnboardingOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
         security={security}
         onLockNow={handleLockApp}
@@ -719,6 +725,7 @@ export const App: React.FC = () => {
             onOpenDigitalBadge={() => setIsDigitalBadgeOpen(true)}
             onOpenLiveCopilot={() => setIsLiveCopilotOpen(true)}
             onOpenEventAnalytics={() => setIsEventAnalyticsOpen(true)}
+            onOpenOnboarding={() => setIsOnboardingOpen(true)}
           />
         )}
 
@@ -1019,6 +1026,27 @@ export const App: React.FC = () => {
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-teal-400" />
+              </button>
+
+              <button
+                onClick={() => setIsOnboardingOpen(true)}
+                className="w-full p-4 rounded-2xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-left transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] flex items-center justify-center font-bold text-lg flex-shrink-0">
+                    <Sparkles className="w-5 h-5 text-[var(--accent-primary)]" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-white">Interactive OS Guide & Tour</h3>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] font-bold">
+                        Tour
+                      </span>
+                    </div>
+                    <p className="text-xs text-[var(--text-secondary)]">Master the 5-stage compounding workflow & AI tools</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-[var(--accent-primary)]" />
               </button>
 
               <button
@@ -1432,6 +1460,13 @@ export const App: React.FC = () => {
       <ThemeSelectorModal
         isOpen={isThemeModalOpen}
         onClose={() => setIsThemeModalOpen(false)}
+      />
+
+      {/* Interactive Onboarding Guide Modal */}
+      <OnboardingGuideModal
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+        onNavigateToTab={handleSelectTab}
       />
 
       {/* 1-Day Trial Manager & Quota Protection Modal */}

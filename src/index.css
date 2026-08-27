@@ -1,6 +1,11 @@
 @import "tailwindcss";
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   :root {
     --font-headline: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -14,10 +19,15 @@
     --border-accent: rgba(56, 189, 248, 0.35);
     --accent-primary: #38bdf8;
     --accent-secondary: #6366f1;
-    --accent-glow: rgba(56, 189, 248, 0.12);
+    --accent-glow: rgba(56, 189, 248, 0.15);
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
     --text-accent: #38bdf8;
+
+    /* Elevated Shadows */
+    --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
+    --shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    --shadow-glow: 0 0 25px var(--accent-glow);
   }
 
   /* Theme variations */
@@ -29,7 +39,7 @@
     --border-accent: rgba(56, 189, 248, 0.35);
     --accent-primary: #38bdf8;
     --accent-secondary: #6366f1;
-    --accent-glow: rgba(56, 189, 248, 0.12);
+    --accent-glow: rgba(56, 189, 248, 0.15);
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
     --text-accent: #38bdf8;
@@ -43,7 +53,7 @@
     --border-accent: rgba(52, 211, 153, 0.35);
     --accent-primary: #34d399;
     --accent-secondary: #059669;
-    --accent-glow: rgba(52, 211, 153, 0.12);
+    --accent-glow: rgba(52, 211, 153, 0.15);
     --text-primary: #f0fdf4;
     --text-secondary: #94a3b8;
     --text-accent: #34d399;
@@ -57,7 +67,7 @@
     --border-accent: rgba(129, 140, 248, 0.35);
     --accent-primary: #818cf8;
     --accent-secondary: #a78bfa;
-    --accent-glow: rgba(129, 140, 248, 0.12);
+    --accent-glow: rgba(129, 140, 248, 0.15);
     --text-primary: #f8fafc;
     --text-secondary: #a5b4fc;
     --text-accent: #818cf8;
@@ -71,7 +81,7 @@
     --border-accent: rgba(249, 115, 22, 0.35);
     --accent-primary: #f97316;
     --accent-secondary: #ef4444;
-    --accent-glow: rgba(249, 115, 22, 0.12);
+    --accent-glow: rgba(249, 115, 22, 0.15);
     --text-primary: #fdf6f0;
     --text-secondary: #c7b3a9;
     --text-accent: #f97316;
@@ -83,12 +93,44 @@
     font-family: var(--font-body);
     overflow-x: hidden;
     letter-spacing: -0.011em;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    min-height: 100vh;
+    min-height: 100dvh;
+    transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   h1, h2, h3, h4, .font-headline {
     font-family: var(--font-headline);
     letter-spacing: -0.025em;
+  }
+
+  /* Accessible Focus Rings across all interactive controls */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [role="button"]:focus-visible,
+  [tabindex="0"]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--bg-canvas), 0 0 0 4px var(--accent-primary);
+  }
+
+  /* Universal Cursor Pointer on interactive elements */
+  button,
+  a,
+  select,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="submit"] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  input:disabled,
+  select:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
 }
 
@@ -156,7 +198,26 @@
   transform-origin: 50% 50%;
 }
 
-/* Hide scrollbar */
+/* Polished Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Hide scrollbar utility */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -165,13 +226,25 @@
   scrollbar-width: none;
 }
 
-/* Safe area inset for mobile */
+/* Safe area insets for mobile & notch devices */
 .pb-safe {
   padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
 }
 
 .pt-safe {
   padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+/* Respect user's reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Ultra Power Saver Mode */
