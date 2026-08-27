@@ -96,6 +96,7 @@ import { EventAnalyticsModal } from './components/EventAnalyticsModal';
 import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { TrialManagerModal } from './components/TrialManagerModal';
 import { OnboardingGuideModal } from './components/OnboardingGuideModal';
+import { MomentumEngineModal } from './components/MomentumEngineModal';
 import { 
   ShieldCheck, 
   ChevronRight, 
@@ -111,7 +112,8 @@ import {
   LogOut,
   Globe,
   Palette,
-  Sparkles
+  Sparkles,
+  Cpu
 } from 'lucide-react';
 
 /**
@@ -288,6 +290,7 @@ export const App: React.FC = () => {
   const [isDigitalBadgeOpen, setIsDigitalBadgeOpen] = useState(false);
   const [isLiveCopilotOpen, setIsLiveCopilotOpen] = useState(false);
   const [isEventAnalyticsOpen, setIsEventAnalyticsOpen] = useState(false);
+  const [isEngineModalOpen, setIsEngineModalOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(() => {
     if (typeof window === 'undefined') return false;
     return !localStorage.getItem('momentum_onboarding_completed');
@@ -836,6 +839,32 @@ export const App: React.FC = () => {
             </div>
 
             <div className="space-y-2.5">
+              {/* Momentum Intelligence Engine Inspector */}
+              <button
+                id="open-momentum-engine-btn"
+                onClick={() => {
+                  triggerHaptic('medium');
+                  setIsEngineModalOpen(true);
+                }}
+                className="w-full p-4 rounded-2xl bg-indigo-950/40 hover:bg-indigo-900/40 border border-indigo-500/40 flex items-center justify-between text-left transition-colors group shadow-lg shadow-indigo-950/30"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg flex-shrink-0 group-hover:scale-105 transition-transform border border-indigo-500/30">
+                    <Cpu className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-white">Momentum Intelligence Engine</h3>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 font-bold">
+                        Governed v1.0
+                      </span>
+                    </div>
+                    <p className="text-xs text-indigo-200/80">Constitution (17 Laws), Capability DAG, Trust Graph & Evolution</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-indigo-400 group-hover:text-white transition-colors" />
+              </button>
+
               {/* Theme & Palette Switcher */}
               <button
                 onClick={() => {
@@ -1487,6 +1516,12 @@ export const App: React.FC = () => {
           setAuthState('unauthenticated');
           setIsTrialModalOpen(false);
         }}
+      />
+
+      {/* Governed Momentum Intelligence Engine Modal */}
+      <MomentumEngineModal
+        isOpen={isEngineModalOpen}
+        onClose={() => setIsEngineModalOpen(false)}
       />
 
       {/* Persistent Non-Intrusive Syncing & Status Indicator */}

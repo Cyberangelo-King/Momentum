@@ -3,6 +3,8 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { momentumEngine } from "./momentum-engine/core/engine";
+import { runMomentumEngineTests } from "./momentum-engine/tests/engine.test";
 
 dotenv.config();
 
@@ -1510,6 +1512,100 @@ Output ONLY the sentence.`;
     icebreaker: `I was really captivated by your points regarding ${talkTitle || "your talk"}—what was the hardest tradeoff you navigated there?`,
     source: "offline-fallback",
   });
+});
+
+// ============================================================
+// MOMENTUM INTELLIGENCE ENGINE - GOVERNED API ENDPOINTS
+// ============================================================
+
+// 1. Engine Health & Status
+app.get("/api/engine/health", (req, res) => {
+  res.json(momentumEngine.getHealth());
+});
+
+// 2. Event Observation & Ingestion
+app.post("/api/engine/observe", async (req, res) => {
+  try {
+    const result = await momentumEngine.observe(req.body);
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ accepted: false, error: err?.message });
+  }
+});
+
+// 3. Connection Value & High-Signal Prediction
+app.post("/api/engine/predict", (req, res) => {
+  try {
+    const prediction = momentumEngine.predict(req.body);
+    res.json(prediction);
+  } catch (err: any) {
+    res.status(400).json({ error: err?.message });
+  }
+});
+
+// 4. Multi-Objective Contextual Recommendations
+app.post("/api/engine/recommend", (req, res) => {
+  try {
+    const recommendations = momentumEngine.recommend(req.body);
+    res.json({ recommendations, count: recommendations.length });
+  } catch (err: any) {
+    res.status(400).json({ error: err?.message });
+  }
+});
+
+// 5. Active Hypotheses & Evidence
+app.get("/api/engine/hypotheses", (req, res) => {
+  res.json({ hypotheses: momentumEngine.hypothesisEngine.getAll() });
+});
+
+// 6. Discovered Product Opportunities
+app.get("/api/engine/opportunities", (req, res) => {
+  res.json({ opportunities: momentumEngine.discoverOpportunities() });
+});
+
+// 7. Capability DAG Graph
+app.get("/api/engine/capabilities", (req, res) => {
+  res.json({ capabilities: momentumEngine.capabilityGraph.getAll() });
+});
+
+// 8. Evolutionary Candidates & Lineage
+app.get("/api/engine/candidates", (req, res) => {
+  res.json({
+    champion: momentumEngine.evolutionEngine.getChampion(),
+    candidates: momentumEngine.evolutionEngine.getAllCandidates(),
+  });
+});
+
+// 9. Constitution & Immutable Laws
+app.get("/api/engine/constitution", (req, res) => {
+  res.json({ laws: momentumEngine.getConstitution() });
+});
+
+// 10. Security & Governance Audit Logs
+app.get("/api/engine/audit-logs", (req, res) => {
+  res.json({ logs: momentumEngine.getRecentAuditLogs(50) });
+});
+
+// 11. Trigger Sandboxed Strategy Mutation
+app.post("/api/engine/evolve", (req, res) => {
+  const candidate = momentumEngine.evolve();
+  res.json({ success: !!candidate, candidate });
+});
+
+// 12. Toggle Emergency Kill Switches
+app.post("/api/engine/kill-switch", (req, res) => {
+  const { switchName, state } = req.body;
+  if (!switchName) {
+    return res.status(400).json({ error: "Missing switchName" });
+  }
+  momentumEngine.rollbackManager.setKillSwitch(switchName, !!state, "OPERATOR_UI");
+  res.json({ success: true, killSwitches: momentumEngine.rollbackManager.getKillSwitches() });
+});
+
+// 13. Run Governed Engine Security & Verification Tests
+app.post("/api/engine/tests/run", (req, res) => {
+  const testReport = runMomentumEngineTests();
+  res.json(testReport);
 });
 
 // Setup Vite middleware in dev or static files in prod

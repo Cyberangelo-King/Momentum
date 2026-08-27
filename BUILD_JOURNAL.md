@@ -667,4 +667,85 @@ git push -u origin main
 
 ---
 
+## 17. The Governed Evolutionary Intelligence Architecture (Momentum Engine v1.0)
+
+To transition Momentum from an event operating system into an autonomous, self-refining evolutionary intelligence substrate, we architected and implemented the **Momentum Intelligence Engine** (`momentum-engine/`).
+
+This architecture addresses the fundamental challenge of building self-evolving AI systems: **ensuring safety, deterministic governance, and tamper-evident auditability while empowering continuous hypothesis-driven strategy mutation and emergent capability speciation.**
+
+### 1. The 5 Governed Security Zones & Zero-Trust Hierarchy
+
+The engine strictly partitions all data, models, and operations into five descending security zones:
+
+- **Zone 0: Immutable Governance Substrate:** The Momentum Constitution (17 Immutable Laws), cryptographic invariant checkers, and physical out-of-band kill switches. Read-only to all AI and autonomous routines.
+- **Zone 1: Deterministic Control Plane:** The Policy Engine, human gatekeepers, promotion evaluators, and instant rollback managers.
+- **Zone 2: Intelligence & Models:** Google Gemini AI gateways, contextual trust engines, predictive value estimators, hypothesis generators, and product opportunity discovery routines.
+- **Zone 3: Observability & Data Plane:** The high-throughput Event Bus, perception normalizers, anomaly detectors, and rolling memory stores.
+- **Zone 4: Isolated Evolutionary Sandbox:** The candidate mutation generator, simulated canary evaluators, and fitness scoring benchmarks. Zone 4 operates with zero write authority over production systems.
+
+```
+┌────────────────────────────────────────────────────────┐
+│ ZONE 0: CONSTITUTION (17 Immutable Laws & Kill Switches)│
+├────────────────────────────────────────────────────────┤
+│ ZONE 1: POLICY ENGINE & DETERMINISTIC GATEKEEPER       │
+├────────────────────────────────────────────────────────┤
+│ ZONE 2: INTELLIGENCE, PREDICTION & GOOGLE GEMINI AI    │
+├────────────────────────────────────────────────────────┤
+│ ZONE 3: PERCEPTION, EVENT BUS & HIGH-THROUGHPUT DATA   │
+├────────────────────────────────────────────────────────┤
+│ ZONE 4: ISOLATED EVOLUTIONARY SANDBOX (Zero Direct Mod)│
+└────────────────────────────────────────────────────────┘
+```
+
+### 2. The 17 Immutable Constitutional Laws
+
+The engine's immutable governance layer (`momentum-engine/governance/constitution.ts`) enforces 17 non-negotiable laws with hard programmatic veto capabilities:
+
+1. **Law 1 (User Primacy):** The user's explicit intent, agency, and privacy override all autonomous optimizations.
+2. **Law 2 (Zero Data Exfiltration):** Private relationship notes and credentials never leave client/private boundaries unencrypted.
+3. **Law 3 (Transparency):** Every AI-generated recommendation and priority score must provide an interpretable rationale.
+4. **Law 4 (Deterministic Verification):** Autonomous candidate mutations must pass reproducible sandbox benchmarks before canary evaluation.
+5. **Law 5 (Safe Rollback):** Any newly promoted strategy must support zero-downtime atomic rollback within 100ms.
+6. **Law 6 (Strict Bounded Autonomy):** High-stakes decisions (Level 5+) require explicit human operator approval.
+7. **Law 7 (Offline Graceful Degradation):** All core engine capabilities must function deterministically offline using cached heuristics when cloud services are unavailable.
+8. **Law 8 (Anti-Sybil & Contextual Trust):** Rapid burst interactions are capped and penalized to prevent trust graph gaming.
+9. **Law 9 (Anti-Addiction & Engagement Safety):** Engagement loops must not employ dark patterns, fake urgency, or manipulative push frequency.
+10. **Law 10 (Tamper-Evident Auditability):** All policy evaluations and zone transitions are signed with SHA-256 rolling checksums.
+11. **Law 11 (Mandatory Human Oversight):** Autonomous promotion cannot alter billing, security gates, or privacy settings without human sign-off.
+12. **Law 12 (No Self-Privilege):** Subsystems cannot elevate their own security zones or grant themselves additional permissions.
+13. **Law 13 (Fitness Multi-Objective Balance):** Optimization cannot sacrifice privacy, latency, or user satisfaction for narrow engagement metrics.
+14. **Law 14 (Canary Progression):** Strategy deployments must follow strict staged traffic progression (1% -> 5% -> 25% -> 100%).
+15. **Law 15 (Emergency Out-of-Band Kill Switches):** Physical override switches must immediately isolate and halt evolutionary sub-processes.
+16. **Law 16 (Capability Lineage & Non-Regression):** New emergent capabilities must maintain backwards compatibility with existing contracts.
+17. **Law 17 (No Uncontrolled Self-Modification):** The Evolution Engine operates strictly within this Constitution and cannot modify, bypass, or rewrite these laws.
+
+### 3. Evolutionary Sandbox & Strategy Speciation
+
+The Evolution Engine (`momentum-engine/evolution/evolution-engine.ts`) generates candidate recommendation and priority weighting strategies via simulated mutation:
+- Candidate mutations are run inside an isolated runner (`sandbox-runner.ts`) against synthetic and historical benchmark datasets.
+- Candidates must achieve a statistically significant **fitness improvement margin ($\Delta \ge +0.05$)** across personal fit, trust calibration, contextual relevance, and novelty balance.
+- If a candidate demonstrates sustained superiority, it is staged into canary progression rather than deployed abruptly.
+
+### 4. Continuous Hypothesis Generation & Opportunity Discovery
+
+The Intelligence Layer continuously formulates empirical hypotheses (`hypothesis-engine.ts`) and identifies latent product opportunities (`opportunity-engine.ts`):
+- Hypotheses transition from `PROPOSED` $\to$ `TESTING` $\to$ `SUPPORTED` or `REFUTED` based on real interaction evidence.
+- Product opportunities are dynamically ranked using the multi-factor formula:
+  $$\text{Score} = \frac{\text{Need} \times \text{Reach} \times \text{ExpectedImpact} \times \text{Confidence} \times \text{StrategicAlignment}}{\text{CostComplexity} + \text{RiskPenalty}}$$
+
+### 5. Capability DAG & Emergent Crossovers
+
+The Capability Graph (`momentum-engine/capabilities/capability-graph.ts`) maps all system capabilities as an extensible Directed Acyclic Graph (DAG):
+- Formulates crossover candidates by combining complementary capability nodes (e.g., `Smart Notes Voice Memo` $\times$ `Contextual Trust Graph` $\to$ `High-Trust Memory Synthesizer`).
+- Validates input/output type contracts and required security zones before proposing emergent nodes.
+
+### 6. Full-Stack Integration & Operator UI
+
+1. **Server Endpoints (`server.ts`):** Exposed 13 typed REST routes under `/api/engine/*` for health, observations, predictions, recommendations, hypotheses, opportunities, capabilities, evolutionary candidates, constitution laws, audit logs, and kill switches.
+2. **Client Service (`src/services/momentumEngineService.ts`):** Provided typed asynchronous methods for seamless communication.
+3. **Visual Engine Inspector Modal (`src/components/MomentumEngineModal.tsx`):** Created a comprehensive 8-tab operator modal featuring real-time health metrics, the 17 laws, capability DAG inspector, hypothesis ledger, evolution sandbox lineage, product opportunity explorer, security audit trail, and an interactive 10-group verification test suite.
+4. **Verification Test Suite (`momentum-engine/tests/engine.test.ts`):** 10 exhaustive security and governance test groups validating that Law 17 and Law 12 strictly veto autonomous self-privilege and unauthorized constitutional modifications.
+
+---
+
 *This journal represents the foundational narrative, technical truth, and 1,000,000x compounding journey of Momentum. It is the permanent record of why, how, and for whom this software was crafted.*
