@@ -208,7 +208,7 @@ export const PitchSimulatorModal: React.FC<PitchSimulatorModalProps> = ({
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-white tracking-tight">AI Pitch Arena & Charisma Coach</h2>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FF5C00]/20 text-[#FF8246] font-bold">
-                  Gemini 3.7 Sparring Engine
+                  Neural Sparring Engine
                 </span>
               </div>
               <p className="text-xs text-[#ffb59a]/70">

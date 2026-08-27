@@ -236,7 +236,7 @@ export const PostEventReflectionModal: React.FC<PostEventReflectionModalProps> =
               <Loader2 className="w-10 h-10 text-[#FF5C00] animate-spin" />
               <div className="space-y-1">
                 <p className="text-sm font-bold text-[#fadcd2]">
-                  Synthesizing TEDxAkure 5-Pillar Reflection via Gemini...
+                  Synthesizing TEDxAkure 5-Pillar Reflection via Neural Engine...
                 </p>
                 <p className="text-xs text-[#e4beb1]/60">
                   Aggregating all {connections.length} contacts, {notes.length} notes, {ideas.length} ideas, and keynote audio.

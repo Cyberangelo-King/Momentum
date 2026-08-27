@@ -4,7 +4,7 @@
 [![Language](https://img.shields.io/badge/Language-TypeScript%205.8-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Styling](https://img.shields.io/badge/Styling-Tailwind%20CSS%20v4-38B2AC?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
 [![Database](https://img.shields.io/badge/Database-Supabase%20PostgreSQL-3ECF8E?style=flat-square&logo=supabase)](https://supabase.com/)
-[![AI Engine](https://img.shields.io/badge/AI-Google%20Gemini%203.7%20Flash-4285F4?style=flat-square&logo=google)](https://ai.google.dev/)
+[![AI Engine](https://img.shields.io/badge/AI-Momentum%20Neural%20Intelligence-4285F4?style=flat-square&logo=google)](https://ai.google.dev/)
 [![Design](https://img.shields.io/badge/Theme-OLED%20Obsidian%20%26%20Tangerine-FF5C00?style=flat-square)](https://tedxakure.com)
 
 > **Momentum** is a private, single-owner **Personal Event Operating System** engineered for high-conviction networking, multimodal memory capture, contextual AI synthesis, and high-velocity relationship compounding at **TEDxAkure 2026**.
@@ -19,7 +19,7 @@
 4. [Tech Stack & Infrastructure](#4-tech-stack--infrastructure)
 5. [Data, Security & Single-Owner Privacy](#5-data-security--single-owner-privacy)
 6. [Offline-First Architecture & Event Resilience](#6-offline-first-architecture--event-resilience)
-7. [AI Integration & Gemini Engine](#7-ai-integration--gemini-engine)
+7. [AI Integration & Neural Engine](#7-ai-integration--gemini-engine)
 8. [UX/UI & Mobile-First Interaction Design](#8-uxui--mobile-first-interaction-design)
 9. [Development, Build & Deployment Guide](#9-development-build--deployment-guide)
 10. [Limitations & Engineering Roadmap](#10-limitations--engineering-roadmap)
@@ -63,7 +63,7 @@ $$\textbf{MEET} \longrightarrow \textbf{CAPTURE} \longrightarrow \textbf{UNDERST
 | :--- | :--- | :--- |
 | **1. MEET** | Break ice, establish presence, share identity | Quick QR Code badge display, 1-tap profile sharing, haptic feedback on target pacing. |
 | **2. CAPTURE** | Record context in under 15 seconds | Camera modal with client-side canvas compression, Web Speech voice dictation, multi-photo attachments. |
-| **3. UNDERSTAND** | Distill signal from noise | Gemini AI memory point synthesis, keynote quote attribution, priority categorization (`high`/`medium`/`low`). |
+| **3. UNDERSTAND** | Distill signal from noise | Neural AI memory point synthesis, keynote quote attribution, priority categorization (`high`/`medium`/`low`). |
 | **4. FOLLOW UP** | Eliminate latency between meeting & action | 1-tap WhatsApp/LinkedIn/Email generator, overdue/today/upcoming triage matrix. |
 | **5. COMPOUND** | Convert single interactions into long-term equity | Executive PDF journal generation, media archive ZIP, shareable social recap, 5-level gamification engine. |
 
@@ -123,7 +123,7 @@ Momentum categorizes all functionality into three clear operational states: **Im
 │ • Voice Recorder + Analyser  │                             │                            │
 │ • Keynotes & Ideas Vault     │                             │                            │
 │ • Follow-Ups Action Matrix   │                             │                            │
-│ • Gemini 3.7 AI Synthesis    │                             │                            │
+│ • Momentum Neural 3.7 AI Synthesis    │                             │                            │
 │ • Offline-First Sync Queue   │                             │                            │
 │ • Supabase RLS Persistence   │                             │                            │
 │ • 4-Digit Privacy Shade      │                             │                            │
@@ -204,14 +204,14 @@ flowchart TD
     subgraph Backend ["Backend Gateway (Express 4 on Node.js / Server.ts)"]
         Health["/api/health"]
         SSEPool["SSE Sync Engine (/api/sync/stream & /api/sync/push)"]
-        GeminiProxy["Server-Side Gemini Proxy (/api/gemini/*)"]
+        NeuralGatewayProxy["Server-Side Neural Gateway Proxy (/api/ai/*)"]
     end
 
     subgraph External ["External Cloud Services"]
         SupaAuth["Supabase Auth (JWT & Email Whitelist)"]
         SupaDB["Supabase PostgreSQL (Tables + RLS Enforcement)"]
         SupaStorage["Supabase Media Bucket ('moments')"]
-        GoogleGenAI["Google Gemini 3.7 Flash / Flash-Lite API"]
+        GoogleGenAI["Google Momentum Neural 3.7 Flash / Flash-Lite API"]
     end
 
     UI --> State
@@ -226,10 +226,10 @@ flowchart TD
     UI -->|Auth Requests| SupaAuth
     SupaAuth -->|Session Token| State
 
-    UI -->|AI Prompts| GeminiProxy
-    GeminiProxy -->|Secure API Key| GoogleGenAI
-    GoogleGenAI -->|JSON / Structured Text| GeminiProxy
-    GeminiProxy -->|Response / Fallback| UI
+    UI -->|AI Prompts| NeuralGatewayProxy
+    NeuralGatewayProxy -->|Secure API Key| GoogleGenAI
+    GoogleGenAI -->|JSON / Structured Text| NeuralGatewayProxy
+    NeuralGatewayProxy -->|Response / Fallback| UI
 
     SSEPool <-->|Real-Time Multi-Device Stream| SyncMgr
     CanvasEng -->|Compressed Blob Upload| SupaStorage
@@ -301,7 +301,7 @@ Every dependency in Momentum was chosen for performance, zero runtime overhead, 
 | **Tailwind CSS** | `v4.1.14` | Styling framework | Zero-runtime CSS engine, sub-millisecond utility compiles. |
 | **Motion** | `12.23.24` | Transitions & layout animations | Fluid tab switches, progress ring transitions, and modal physics. |
 | **Express** | `4.21.2` | Backend API gateway | Securely proxies Gemini API requests, serves SSE streams & SPA assets. |
-| **@google/genai** | `2.4.0` | Official Gemini SDK | High-performance server-side integration with Gemini 3.7 Flash. |
+| **@google/genai** | `2.4.0` | Official Gemini SDK | High-performance server-side integration with Momentum Neural 3.7 Flash. |
 | **@supabase/supabase-js**| `2.112.3`| Database & Auth SDK | Real-time PostgreSQL client, token management, and cloud storage. |
 | **jsPDF** | `4.2.1` | Document generation | Native client-side PDF rendering for executive conference dossiers. |
 | **JSZip** | `3.10.1` | Archive bundling | Generates complete `.zip` archives containing JSON, photos, and Markdown. |
@@ -411,9 +411,9 @@ stateDiagram-v2
 
 ---
 
-## 7. AI Integration & Gemini Engine
+## 7. AI Integration & Neural Engine
 
-Momentum integrates Google's **Gemini 3.7 Flash** model to provide real-time intelligence without introducing latency into the user experience.
+Momentum integrates Google's **Momentum Neural 3.7 Flash** model to provide real-time intelligence without introducing latency into the user experience.
 
 ### 7.1 Implemented AI Capabilities
 
@@ -601,7 +601,7 @@ Momentum was built with a build-in-public mindset. Here are **28 concrete conten
 
 ### 🛠️ Technical Deep-Dives
 11. **Browser-Based Image Downsampling**: Using Offscreen Canvas 2D smoothing to prevent memory leaks on mobile devices.
-12. **Multi-Model LLM Resilience**: Implementing automated model fallbacks from Gemini 3.7 Flash to Flash-Lite.
+12. **Multi-Model LLM Resilience**: Implementing automated model fallbacks from Momentum Neural 3.7 Flash to Flash-Lite.
 13. **WebAuthn Biometric Implementation**: How to register Touch ID / Face ID platform authenticators in React 19.
 14. **PDF Generation on the Edge**: Generating multi-page A4 executive dossiers entirely in client-side JavaScript using jsPDF.
 15. **Supabase RLS Hardening**: Eliminating `USING (true)` policies for private personal applications.

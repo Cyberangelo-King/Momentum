@@ -230,7 +230,7 @@ export const SessionDossierModal: React.FC<SessionDossierModalProps> = ({
           {isLoadingBriefing ? (
             <div className="py-12 flex flex-col items-center justify-center text-center space-y-3">
               <Loader2 className="w-8 h-8 text-[#FF5C00] animate-spin" />
-              <p className="text-xs font-semibold text-[#fadcd2]">Synthesizing Speaker Dossier via Gemini...</p>
+              <p className="text-xs font-semibold text-[#fadcd2]">Synthesizing Speaker Intelligence Dossier...</p>
               <p className="text-[11px] text-[#e4beb1]/60">Analyzing speaker background, session angle, and high-impact questions.</p>
             </div>
           ) : briefing ? (
@@ -316,7 +316,7 @@ export const SessionDossierModal: React.FC<SessionDossierModalProps> = ({
                       ) : (
                         <Sparkles className="w-3.5 h-3.5" />
                       )}
-                      <span>Generate More via Gemini</span>
+                      <span>Generate Strategic Questions</span>
                     </button>
                   </div>
 

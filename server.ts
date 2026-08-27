@@ -12,15 +12,15 @@ const PORT = 3000;
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Lazy initialize Gemini client
+// Lazy initialize Momentum Neural Engine client
 let geminiClient: GoogleGenAI | null = null;
-function getGemini(): GoogleGenAI | null {
+function getNeuralAI(): GoogleGenAI | null {
   if (!geminiClient && process.env.GEMINI_API_KEY) {
     geminiClient = new GoogleGenAI({
       apiKey: process.env.GEMINI_API_KEY,
       httpOptions: {
         headers: {
-          "User-Agent": "aistudio-build",
+          "User-Agent": "momentum-neural-gateway/2.4",
         },
       },
     });
@@ -28,12 +28,12 @@ function getGemini(): GoogleGenAI | null {
   return geminiClient;
 }
 
-// Helper to safely call Gemini with automatic model fallback and retry
+// Helper to safely call Momentum Neural Engine with automatic model fallback and retry
 async function generateWithFallback(
   prompt: string,
   config?: { responseMimeType?: string; responseSchema?: any }
 ): Promise<string | null> {
-  const ai = getGemini();
+  const ai = getNeuralAI();
   if (!ai) return null;
 
   const candidateModels = [
@@ -238,7 +238,7 @@ app.get("/api/sync/stream", (req, res) => {
 const OWNER_EMAIL = (process.env.VITE_OWNER_EMAIL || (process.env.NODE_ENV === "production" ? "" : "faithakinboyejo@gmail.com")).trim().toLowerCase();
 
 // API: Generate personalized follow-up message
-app.post("/api/gemini/quick-message", async (req, res) => {
+app.post(["/api/ai/quick-message", "/api/gemini/quick-message"], async (req, res) => {
   const { name, company, profession, relationship, notes, channel, talkContext } = req.body;
 
   const fallbackMessages: Record<string, string> = {
@@ -283,7 +283,7 @@ Output only the message text without quotes or preamble.`;
 });
 
 // API: Summarize conversation memory
-app.post("/api/gemini/summarize-connection", async (req, res) => {
+app.post(["/api/ai/summarize-connection", "/api/gemini/summarize-connection"], async (req, res) => {
   const { name, company, notes, quotes } = req.body;
 
   try {
@@ -331,7 +331,7 @@ Quotes/Mentions: ${quotes || "None"}`;
 });
 
 // API: Daily synthesis and LinkedIn event recap post
-app.post("/api/gemini/recap", async (req, res) => {
+app.post(["/api/ai/recap", "/api/gemini/recap"], async (req, res) => {
   const { totalConnections, momentsCount, ideasCount, connectionNames, topIdeas } = req.body;
 
   const peopleSample = Array.isArray(connectionNames) && connectionNames.length > 0
@@ -389,10 +389,10 @@ Return a JSON object with:
 });
 
 // ==========================================
-// GEMINI HIGH-PRECISION AUDIO TRANSCRIPTION & SPEECH INTELLIGENCE
+// MOMENTUM NEURAL HIGH-PRECISION AUDIO TRANSCRIPTION & SPEECH INTELLIGENCE
 // ==========================================
 
-app.post("/api/gemini/transcribe-audio", async (req, res) => {
+app.post(["/api/ai/transcribe-audio", "/api/gemini/transcribe-audio"], async (req, res) => {
   const { audioData, mimeType, context, sessionTitle, speakerName } = req.body;
 
   if (!audioData) {
@@ -437,7 +437,7 @@ Return a JSON object with:
 6. "suggestedTags": Array of 3-4 hashtags (e.g. ["#TEDxAkure", "#AfricanInnovation"]).
 7. "segments": Array of estimated timestamped segments [{"id": "s1", "startOffsetSec": 0, "timestampFormatted": "00:00", "speakerLabel": "${sanitizeText(speakerName) || "Speaker"}", "text": "..."}].`;
 
-    const ai = getGemini();
+    const ai = getNeuralAI();
     if (!ai) {
       const defaultText = "Voice memo captured successfully at TEDxAkure 2026.";
       return res.json({
@@ -551,7 +551,7 @@ Return a JSON object with:
 // BEFORE STAGE: SPEAKER BRIEFINGS & PREPARATION DOSSIER
 // ==========================================
 
-app.post("/api/gemini/speaker-briefing", async (req, res) => {
+app.post(["/api/ai/speaker-briefing", "/api/gemini/speaker-briefing"], async (req, res) => {
   const { speakerName, speakerRole, speakerBio, sessionTitle, stage, topics } = req.body;
 
   const safeSpeaker = sanitizeText(speakerName, 100) || "Featured Speaker";
@@ -647,7 +647,7 @@ Return a JSON object with:
 // UNDERSTAND STAGE: EXTRACT INSIGHTS, CONTRARIAN TAKEAWAYS & UNANSWERED QUESTIONS
 // ==========================================
 
-app.post("/api/gemini/extract-insights", async (req, res) => {
+app.post(["/api/ai/extract-insights", "/api/gemini/extract-insights"], async (req, res) => {
   const { content, rawTranscript, speakerName, sessionTitle, category } = req.body;
 
   const safeContent = sanitizeText(content, 10000) || sanitizeText(rawTranscript, 10000);
@@ -716,7 +716,7 @@ Return a JSON object with:
 // REFLECT STAGE: 5-PILLAR POST-EVENT REVIEW SYNTHESIS
 // ==========================================
 
-app.post("/api/gemini/post-event-review", async (req, res) => {
+app.post(["/api/ai/post-event-review", "/api/gemini/post-event-review"], async (req, res) => {
   const { connections, moments, ideas, notes, sessions, profile } = req.body;
 
   const attendeeName = profile?.name || "Attendee";
@@ -852,7 +852,7 @@ Return a JSON object conforming strictly to:
 });
 
 // API: Refine and format raw speech transcript
-app.post("/api/gemini/refine-transcript", async (req, res) => {
+app.post(["/api/ai/refine-transcript", "/api/gemini/refine-transcript"], async (req, res) => {
   const { transcript, context } = req.body;
 
   if (!transcript || !transcript.trim()) {
@@ -915,10 +915,10 @@ Return a JSON object with:
 });
 
 // ==========================================
-// GEMINI SMART NOTE CO-PILOT & ENHANCEMENT ENGINE
+// MOMENTUM NEURAL SMART NOTE CO-PILOT & ENHANCEMENT ENGINE
 // ==========================================
 
-app.post("/api/gemini/enhance-note", async (req, res) => {
+app.post(["/api/ai/enhance-note", "/api/gemini/enhance-note"], async (req, res) => {
   const { title, content, category, speakerName, action, sessionTitle } = req.body;
 
   try {
@@ -994,10 +994,10 @@ Return a JSON object with:
 });
 
 // ==========================================
-// GEMINI SPEAKER QUESTION GENERATOR ENGINE
+// MOMENTUM NEURAL SPEAKER QUESTION GENERATOR ENGINE
 // ==========================================
 
-app.post("/api/gemini/generate-questions", async (req, res) => {
+app.post(["/api/ai/generate-questions", "/api/gemini/generate-questions"], async (req, res) => {
   const { speakerName, speakerRole, topic, sessionTitle, talkNotes, angle } = req.body;
 
   try {
@@ -1242,7 +1242,7 @@ Return a JSON object:
 // ==========================================
 
 // 1. AI Warm Intro Matchmaker: Synergistic Pairings
-app.post("/api/gemini/warm-intro-matchmaker", async (req, res) => {
+app.post(["/api/ai/warm-intro-matchmaker", "/api/gemini/warm-intro-matchmaker"], async (req, res) => {
   const { connections, eventName } = req.body;
   const list = Array.isArray(connections) ? connections : [];
 
@@ -1323,7 +1323,7 @@ Return a JSON object:
 });
 
 // 2. AI Pitch Simulator & Charisma Coach
-app.post("/api/gemini/pitch-simulator", async (req, res) => {
+app.post(["/api/ai/pitch-simulator", "/api/gemini/pitch-simulator"], async (req, res) => {
   const { pitchText, personaKey, eventName, targetTimeSec } = req.body;
 
   const safePitch = sanitizeText(pitchText, 2000);
@@ -1383,7 +1383,7 @@ Evaluate ruthlessly but constructively. Return a JSON object:
 });
 
 // 3. AI Batch Personalized Follow-Up Composer
-app.post("/api/gemini/batch-follow-ups", async (req, res) => {
+app.post(["/api/ai/batch-follow-ups", "/api/gemini/batch-follow-ups"], async (req, res) => {
   const { connections, eventName, profileName } = req.body;
   const list = Array.isArray(connections) ? connections : [];
 
@@ -1436,7 +1436,7 @@ Return a JSON object:
 });
 
 // 4. AI Event ROI & Networking Scorecard
-app.post("/api/gemini/event-roi-analytics", async (req, res) => {
+app.post(["/api/ai/event-roi-analytics", "/api/gemini/event-roi-analytics"], async (req, res) => {
   const { connections, moments, ideas, notes, eventName, targetConnections } = req.body;
 
   const cCount = Array.isArray(connections) ? connections.length : 0;
@@ -1489,6 +1489,25 @@ Return a JSON object:
       "Schedule follow-up exploration calls with prospective partners"
     ],
     executiveSummary: `Attending ${eventName || "the event"} yielded exceptional relationship equity. With ${cCount} verified connections established, comprehensive session notes logged, and multiple collaborative threads initiated, this event represents a high-leverage milestone for ecosystem expansion.`,
+    source: "offline-fallback",
+  });
+});
+
+// 5. AI Speaker & Event Icebreaker Generator
+app.post(["/api/ai/speaker-icebreaker", "/api/gemini/speaker-icebreaker"], async (req, res) => {
+  const { speakerName, speakerRole, talkTitle } = req.body;
+  try {
+    const prompt = `Generate 1 magnetic, thoughtful conversation starter or icebreaker to approach ${speakerName || "the speaker"} (${speakerRole || "Guest"}) who gave a talk on "${talkTitle || "their work"}".
+Output ONLY the sentence.`;
+    const text = await generateWithFallback(prompt);
+    if (text) {
+      return res.json({ icebreaker: text.trim(), source: "gemini" });
+    }
+  } catch (err) {
+    console.warn("Icebreaker error:", err);
+  }
+  return res.json({
+    icebreaker: `I was really captivated by your points regarding ${talkTitle || "your talk"}—what was the hardest tradeoff you navigated there?`,
     source: "offline-fallback",
   });
 });

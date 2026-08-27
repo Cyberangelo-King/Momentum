@@ -55,7 +55,7 @@ export interface TranscriptionResult {
   keyPoints?: string[];
   suggestedTags?: string[];
   title?: string;
-  provider: 'gemini-multimodal' | 'web-speech' | 'offline-hybrid';
+  provider: 'neural-multimodal' | 'gemini-multimodal' | 'web-speech' | 'offline-hybrid';
   confidence?: number;
 }
 
@@ -67,7 +67,7 @@ export interface SpeakerBriefing {
   coreThemes: string[];
   recommendedAngles: string[];
   preGeneratedQuestions: SpeakerQuestionItem[];
-  source: 'gemini' | 'offline-dossier';
+  source: 'neural-engine' | 'gemini' | 'offline-dossier';
 }
 
 export interface PostEventReflection {
@@ -104,7 +104,7 @@ export interface PostEventReflection {
   executiveSummary: string;
   linkedInRecapPost: string;
   generatedAt: string;
-  source: 'gemini' | 'offline-synthesis';
+  source: 'neural-engine' | 'gemini' | 'offline-synthesis';
 }
 
 export interface NfcExchangeLog {

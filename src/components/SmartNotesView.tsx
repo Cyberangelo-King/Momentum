@@ -325,7 +325,7 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
               Smart Notes & AI Copilot
             </h1>
             <p className="text-xs sm:text-sm text-[var(--text-secondary)] max-w-2xl">
-              Better than pen and paper. Capture live talk reflections, extract action items, and let Gemini prepare sharp speaker questions.
+              Better than pen and paper. Capture live talk reflections, extract action items, and let the AI copilot prepare sharp speaker questions.
             </p>
           </div>
 
@@ -349,7 +349,7 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
                 setIsVoiceMemoOpen(true);
               }}
               className="py-2.5 px-3.5 rounded-xl bg-[var(--bg-surface-card)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] text-xs font-semibold text-[var(--accent-primary)] flex items-center gap-1.5 transition-colors active:scale-95 shadow-sm"
-              title="Record spoken audio memo with Gemini transcription"
+              title="Record spoken audio memo with neural transcription"
             >
               <Mic className="w-4 h-4 text-[var(--accent-primary)]" />
               <span>Voice Memo</span>
@@ -647,7 +647,7 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({
               {searchQuery ? 'No matching notes found' : 'Your Conference Notebook is Ready'}
             </h3>
             <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto leading-relaxed">
-              Capture keynote insights, brainstorm ideas, organize follow-up tasks, or let Gemini prepare strategic questions for any speaker.
+              Capture keynote insights, brainstorm ideas, organize follow-up tasks, or let AI prepare strategic questions for any speaker.
             </p>
           </div>
 

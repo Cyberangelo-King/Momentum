@@ -138,7 +138,7 @@ export const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
           <div className="flex items-center justify-between text-xs text-[#e4beb1]/70">
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-[#FF5C00]"></span>
-              {source === 'gemini' ? 'Gemini 3.7 Flash Model' : 'Smart Offline Template'}
+              {source === 'gemini' || source === 'neural-engine' ? 'Neural Synthesis Engine' : 'Smart Offline Template'}
             </span>
             <button
               onClick={() => loadDraft(channel)}

@@ -307,7 +307,7 @@ export const InstantCaptureBar: React.FC<InstantCaptureBarProps> = ({
         });
         setSuccessToast('🔖 Talk moment bookmarked!');
       } else {
-        // Standard Field Note with instant Gemini extract
+        // Standard Field Note with instant Neural extract
         const note: Partial<Note> = {
           id: `note_jot_${Date.now()}`,
           title: text.slice(0, 45) + (text.length > 45 ? '...' : ''),

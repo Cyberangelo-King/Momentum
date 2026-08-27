@@ -628,7 +628,7 @@ export const EventHubModal: React.FC<EventHubModalProps> = ({
                   <h3 className="text-sm font-bold text-white uppercase tracking-wider">AI Conference Schedule Extractor</h3>
                 </div>
                 <p className="text-xs text-neutral-400 mt-1">
-                  Paste raw agenda text, speaker lists, or timetable from any conference website or WhatsApp invite. Gemini will extract tracks, talks, and timings automatically!
+                  Paste raw agenda text, speaker lists, or timetable from any conference website or invite. The AI engine will extract tracks, talks, and timings automatically!
                 </p>
               </div>
 
@@ -669,7 +669,7 @@ export const EventHubModal: React.FC<EventHubModalProps> = ({
                       {isParsingAgenda ? (
                         <>
                           <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                          Analyzing Agenda with Gemini...
+                          Analyzing Agenda with AI...
                         </>
                       ) : (
                         <>

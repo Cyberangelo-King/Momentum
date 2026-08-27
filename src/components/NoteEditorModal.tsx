@@ -230,10 +230,10 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
         setAudioDataUrl(result.dataUrl);
         setAudioDurationFormatted(result.durationFormatted);
 
-        // Run Gemini Multimodal audio transcription
+        // Run Neural Multimodal audio transcription
         if (result.dataUrl) {
           setIsTranscribingAudio(true);
-          setStatusMessage('Gemini 3.7 is transcribing audio clip...');
+          setStatusMessage('Transcribing audio clip with verbatim neural intelligence...');
           
           const aiTranscribe = await transcribeAudioWithGemini(
             result.dataUrl,
@@ -298,7 +298,7 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
     }
 
     setIsEnhancing(true);
-    setStatusMessage('Gemini AI is structuring, polishing, and extracting insights...');
+    setStatusMessage('Neural Engine is structuring, polishing, and extracting insights...');
     triggerHaptic('medium');
 
     try {
@@ -343,7 +343,7 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
           setTags((prev) => [...new Set([...prev, ...returnedTags])]);
         }
 
-        setStatusMessage('Note enhanced & structured with Gemini AI!');
+        setStatusMessage('Note enhanced & structured with Neural Engine!');
         triggerHaptic('success');
         setTimeout(() => setStatusMessage(null), 3500);
       }
@@ -359,7 +359,7 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
   // Dedicated Speaker Questions generator for this note
   const handleGenerateQuestions = async () => {
     setIsGeneratingQuestions(true);
-    setStatusMessage('Gemini AI is crafting strategic speaker questions...');
+    setStatusMessage('Neural Engine is crafting strategic speaker questions...');
     triggerHaptic('medium');
 
     try {
@@ -816,7 +816,7 @@ export const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
               rows={8}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Capture speaker insights, core quotes, technical diagrams, questions, or ideas. Click 'Structure & Enhance' anytime for Gemini to polish and organize..."
+              placeholder="Capture speaker insights, core quotes, technical diagrams, questions, or ideas. Click 'Structure & Enhance' anytime for AI to polish and organize..."
               className="w-full bg-[#0b0502] border border-white/10 rounded-2xl p-4 text-xs sm:text-sm text-[#fadcd2] focus:border-[#FF5C00] focus:outline-none resize-y leading-relaxed font-sans"
             />
           </div>

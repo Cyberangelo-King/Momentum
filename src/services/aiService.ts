@@ -2,7 +2,7 @@ import { Connection, SpeakerBriefing, PostEventReflection, EventSession, Note, I
 
 export interface QuickMessageResponse {
   message: string;
-  source: 'gemini' | 'offline-template' | 'offline-fallback';
+  source: 'neural-engine' | 'gemini' | 'offline-template' | 'offline-fallback';
 }
 
 export interface SummarizeResponse {
@@ -27,7 +27,7 @@ export interface AudioTranscribeResponse {
   suggestedTags: string[];
   segments?: TranscriptSegment[];
   speakersDetected?: number;
-  source: 'gemini' | 'offline-fallback';
+  source: 'neural-engine' | 'gemini' | 'offline-fallback';
 }
 
 export interface RefineTranscriptResponse {
@@ -35,7 +35,7 @@ export interface RefineTranscriptResponse {
   title: string;
   keyPoints: string[];
   suggestedTags: string[];
-  source: 'gemini' | 'offline-fallback';
+  source: 'neural-engine' | 'gemini' | 'offline-fallback';
 }
 
 export interface EnhanceNoteResponse {
@@ -47,7 +47,7 @@ export interface EnhanceNoteResponse {
   suggestedQuestions: { id: string; question: string; angle?: string; context?: string; targetAngle?: string; whyItWorks?: string; followUpHook?: string }[];
   suggestedTags: string[];
   tags?: string[];
-  source: 'gemini' | 'offline-fallback';
+  source: 'neural-engine' | 'gemini' | 'offline-fallback';
 }
 
 export interface SpeakerQuestionsResponse {
@@ -61,7 +61,7 @@ export interface SpeakerQuestionsResponse {
     followUpHook?: string;
   }[];
   speakerIcebreaker: string;
-  source: 'gemini' | 'offline-fallback';
+  source: 'neural-engine' | 'gemini' | 'offline-fallback';
 }
 
 export interface ExtractInsightsResponse {
@@ -71,12 +71,12 @@ export interface ExtractInsightsResponse {
   unansweredQuestions: string[];
   actionItems: { id: string; text: string; priority?: 'high' | 'medium' | 'low'; done: boolean }[];
   structuredSummary: string;
-  source: 'gemini' | 'offline-fallback';
+  source: 'neural-engine' | 'gemini' | 'offline-fallback';
 }
 
 export async function fetchSpeakerBriefing(session: Partial<EventSession>): Promise<SpeakerBriefing> {
   try {
-    const res = await fetch('/api/gemini/speaker-briefing', {
+    const res = await fetch('/api/ai/speaker-briefing', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -93,7 +93,7 @@ export async function fetchSpeakerBriefing(session: Partial<EventSession>): Prom
       return await res.json();
     }
   } catch (e) {
-    console.warn('Gemini speaker briefing error:', e);
+    console.warn('AI Engine speaker briefing error:', e);
   }
 
   const speaker = session.speaker || session.speakerName || 'Speaker';
@@ -117,7 +117,7 @@ export async function fetchSpeakerBriefing(session: Partial<EventSession>): Prom
   };
 }
 
-export async function extractInsightsWithGemini(params: {
+export async function extractInsightsWithAI(params: {
   content: string;
   rawTranscript?: string;
   speakerName?: string;
@@ -125,7 +125,7 @@ export async function extractInsightsWithGemini(params: {
   category?: string;
 }): Promise<ExtractInsightsResponse> {
   try {
-    const res = await fetch('/api/gemini/extract-insights', {
+    const res = await fetch('/api/ai/extract-insights', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
@@ -135,7 +135,7 @@ export async function extractInsightsWithGemini(params: {
       return await res.json();
     }
   } catch (e) {
-    console.warn('Gemini extract insights error:', e);
+    console.warn('AI Engine extract insights error:', e);
   }
 
   return {
@@ -165,7 +165,7 @@ export async function fetchPostEventReview(data: {
   profile: UserProfile;
 }): Promise<PostEventReflection> {
   try {
-    const res = await fetch('/api/gemini/post-event-review', {
+    const res = await fetch('/api/ai/post-event-review', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -175,7 +175,7 @@ export async function fetchPostEventReview(data: {
       return await res.json();
     }
   } catch (e) {
-    console.warn('Gemini post-event review error:', e);
+    console.warn('AI Engine post-event review error:', e);
   }
 
   const connCount = data.connections.length;
@@ -220,13 +220,13 @@ export async function fetchPostEventReview(data: {
   };
 }
 
-export async function transcribeAudioWithGemini(
+export async function transcribeAudioWithAI(
   audioData: string,
   mimeType: string = 'audio/webm',
   context?: string
 ): Promise<AudioTranscribeResponse> {
   try {
-    const res = await fetch('/api/gemini/transcribe-audio', {
+    const res = await fetch('/api/ai/transcribe-audio', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ audioData, mimeType, context }),
@@ -236,7 +236,7 @@ export async function transcribeAudioWithGemini(
       return await res.json();
     }
   } catch (e) {
-    console.warn('Gemini audio transcription error, using offline fallback', e);
+    console.warn('AI Engine audio transcription error, using offline fallback', e);
   }
 
   return {
@@ -249,12 +249,12 @@ export async function transcribeAudioWithGemini(
   };
 }
 
-export async function refineTranscriptWithGemini(
+export async function refineTranscriptWithAI(
   transcript: string,
   context?: string
 ): Promise<RefineTranscriptResponse> {
   try {
-    const res = await fetch('/api/gemini/refine-transcript', {
+    const res = await fetch('/api/ai/refine-transcript', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ transcript, context }),
@@ -264,7 +264,7 @@ export async function refineTranscriptWithGemini(
       return await res.json();
     }
   } catch (e) {
-    console.warn('Gemini transcript refinement error', e);
+    console.warn('AI Engine transcript refinement error', e);
   }
 
   return {
@@ -276,7 +276,7 @@ export async function refineTranscriptWithGemini(
   };
 }
 
-export async function enhanceNoteWithGemini(
+export async function enhanceNoteWithAI(
   paramsOrTitle:
     | {
         title: string;
@@ -300,7 +300,7 @@ export async function enhanceNoteWithGemini(
       : paramsOrTitle;
 
   try {
-    const res = await fetch('/api/gemini/enhance-note', {
+    const res = await fetch('/api/ai/enhance-note', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -310,7 +310,7 @@ export async function enhanceNoteWithGemini(
       return await res.json();
     }
   } catch (e) {
-    console.warn('Gemini note enhance error', e);
+    console.warn('AI Engine note enhance error', e);
   }
 
   return {
@@ -358,7 +358,7 @@ export async function generateSpeakerQuestions(
       : paramsOrSpeaker;
 
   try {
-    const res = await fetch('/api/gemini/generate-questions', {
+    const res = await fetch('/api/ai/generate-questions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -368,7 +368,7 @@ export async function generateSpeakerQuestions(
       return await res.json();
     }
   } catch (e) {
-    console.warn('Gemini speaker question generator error', e);
+    console.warn('AI Engine speaker question generator error', e);
   }
 
   const topicName = payload.topic || payload.sessionTitle || 'innovation';
@@ -421,7 +421,7 @@ export async function generateQuickMessage(
   channel: 'whatsapp' | 'linkedin' | 'email'
 ): Promise<QuickMessageResponse> {
   try {
-    const res = await fetch('/api/gemini/quick-message', {
+    const res = await fetch('/api/ai/quick-message', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -467,7 +467,7 @@ export async function summarizeConnection(
   notes: string
 ): Promise<SummarizeResponse> {
   try {
-    const res = await fetch('/api/gemini/summarize-connection', {
+    const res = await fetch('/api/ai/summarize-connection', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, company, notes }),
@@ -499,7 +499,7 @@ export async function generateDailyRecap(
   topIdeas: string[]
 ): Promise<RecapResponse> {
   try {
-    const res = await fetch('/api/gemini/recap', {
+    const res = await fetch('/api/ai/recap', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -528,7 +528,7 @@ export async function generateDailyRecap(
 export interface ParseAgendaResponse {
   sessions: EventSession[];
   detectedStages: string[];
-  source: 'gemini' | 'offline-fallback';
+  source: 'neural-engine' | 'gemini' | 'offline-fallback';
 }
 
 export async function parseAgendaText(
@@ -574,9 +574,9 @@ export async function parseAgendaText(
 export async function fetchWarmIntroRecommendations(
   connections: Connection[],
   eventName?: string
-): Promise<{ recommendations: WarmIntroRecommendation[]; source: 'gemini' | 'offline-fallback' }> {
+): Promise<{ recommendations: WarmIntroRecommendation[]; source: 'neural-engine' | 'gemini' | 'offline-fallback' }> {
   try {
-    const res = await fetch('/api/gemini/warm-intro-matchmaker', {
+    const res = await fetch('/api/ai/warm-intro-matchmaker', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ connections, eventName }),
@@ -616,9 +616,9 @@ export async function fetchPitchSimulation(
   personaKey: string = 'tech-vc',
   eventName?: string,
   targetTimeSec: number = 30
-): Promise<PitchFeedback & { source: 'gemini' | 'offline-fallback' }> {
+): Promise<PitchFeedback & { source: 'neural-engine' | 'gemini' | 'offline-fallback' }> {
   try {
-    const res = await fetch('/api/gemini/pitch-simulator', {
+    const res = await fetch('/api/ai/pitch-simulator', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pitchText, personaKey, eventName, targetTimeSec }),
@@ -649,9 +649,9 @@ export async function fetchBatchFollowUps(
   connections: Connection[],
   eventName?: string,
   profileName?: string
-): Promise<{ messages: Array<{ connectionId: string; subject: string; message: string; channel: 'whatsapp' | 'email' | 'linkedin' }>; source: 'gemini' | 'offline-fallback' }> {
+): Promise<{ messages: Array<{ connectionId: string; subject: string; message: string; channel: 'whatsapp' | 'email' | 'linkedin' }>; source: 'neural-engine' | 'gemini' | 'offline-fallback' }> {
   try {
-    const res = await fetch('/api/gemini/batch-follow-ups', {
+    const res = await fetch('/api/ai/batch-follow-ups', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ connections, eventName, profileName }),
@@ -687,10 +687,10 @@ export async function fetchEventROIAnalytics(
   keyWins: string[];
   followUpActionPlan: string[];
   executiveSummary: string;
-  source: 'gemini' | 'offline-fallback';
+  source: 'neural-engine' | 'gemini' | 'offline-fallback';
 }> {
   try {
-    const res = await fetch('/api/gemini/event-roi-analytics', {
+    const res = await fetch('/api/ai/event-roi-analytics', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ connections, moments, ideas, notes, eventName, targetConnections }),
@@ -731,9 +731,9 @@ export async function fetchEventIcebreakers(
   eventType: string,
   themeDescription?: string,
   location?: string
-): Promise<{ icebreakers: string[]; source: 'gemini' | 'offline-fallback' }> {
+): Promise<{ icebreakers: string[]; source: 'neural-engine' | 'gemini' | 'offline-fallback' }> {
   try {
-    const res = await fetch('/api/gemini/speaker-icebreaker', {
+    const res = await fetch('/api/ai/speaker-icebreaker', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -752,7 +752,7 @@ export async function fetchEventIcebreakers(
             `What is the most unexpected insight you've picked up from the floor today?`,
             `What is the biggest operational hurdle your team is solving right now?`,
           ],
-          source: 'gemini',
+          source: 'neural-engine',
         };
       }
     }
@@ -772,3 +772,9 @@ export async function fetchEventIcebreakers(
 }
 
 
+
+// Aliases for backwards compatibility
+export const extractInsightsWithGemini = extractInsightsWithAI;
+export const transcribeAudioWithGemini = transcribeAudioWithAI;
+export const refineTranscriptWithGemini = refineTranscriptWithAI;
+export const enhanceNoteWithGemini = enhanceNoteWithAI;

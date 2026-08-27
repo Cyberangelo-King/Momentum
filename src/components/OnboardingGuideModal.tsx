@@ -71,8 +71,8 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
       },
       {
         icon: BrainCircuit,
-        title: 'Google Gemini 3.7 Flash AI',
-        detail: 'Instant keynote synthesis, audio transcription, speaker briefings, and customized follow-up emails.',
+        title: 'Momentum Neural Engine AI',
+        detail: 'Instant keynote synthesis, verbatim audio transcription, speaker briefings, and customized follow-ups.',
       },
     ],
     proTip: 'You can access all controls offline. When connectivity returns, changes automatically sync.',
@@ -114,7 +114,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     title: 'Intelligence & Live Copilot',
     subtitle: 'Executive tools built to give you the upper hand in every room.',
     description:
-      'Leverage Gemini 3.7 Flash across every interaction for instant briefing dossiers, pitch practice, and relational network graph discovery.',
+      'Leverage Momentum Neural Intelligence across every interaction for instant briefing dossiers, pitch practice, and relational network graph discovery.',
     icon: BrainCircuit,
     iconBg: 'bg-purple-500/10 border-purple-500/20',
     iconColor: 'text-purple-400',

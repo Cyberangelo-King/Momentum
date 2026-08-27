@@ -344,10 +344,10 @@ export const VoiceMemoModal: React.FC<VoiceMemoModalProps> = ({
             </div>
             <div>
               <h2 className="text-base font-bold font-serif-display text-[#fadcd2]">
-                Voice Memo & Gemini Transcription
+                Voice Memo & Neural Transcription
               </h2>
               <p className="text-[11px] text-[#e4beb1]/70">
-                Gemini 3.7 Multimodal Audio Intelligence + Real-Time Capture
+                Verbatim Multimodal Audio Intelligence + Real-Time Capture
               </p>
             </div>
           </div>
@@ -382,7 +382,7 @@ export const VoiceMemoModal: React.FC<VoiceMemoModalProps> = ({
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-[#FF5C00] shadow-[0_0_8px_rgba(255,92,0,0.8)]" />
               <span className="text-[#e4beb1]/90 text-[11px] font-medium">
-                High-Precision Gemini Audio Transcription Engine
+                High-Precision Neural Audio Transcription Engine
               </span>
             </div>
             <button
@@ -406,7 +406,7 @@ export const VoiceMemoModal: React.FC<VoiceMemoModalProps> = ({
                   <strong className="text-[#FF5C00]">Zero Background Listening:</strong> The microphone stream is only active during explicit user-initiated recording sessions.
                 </li>
                 <li>
-                  <strong className="text-[#FF5C00]">Direct Gemini Multimodal:</strong> Spoken audio is analyzed for verbatim accuracy, speaker inflection, and executive bullet points.
+                  <strong className="text-[#FF5C00]">Direct Neural Multimodal:</strong> Spoken audio is analyzed for verbatim accuracy, speaker inflection, and executive bullet points.
                 </li>
                 <li>
                   <strong className="text-[#FF5C00]">Encrypted Local Sandbox:</strong> Recordings are saved locally in the single-owner sandbox.
@@ -475,7 +475,7 @@ export const VoiceMemoModal: React.FC<VoiceMemoModalProps> = ({
                     className="px-6 py-3.5 rounded-2xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-500 flex items-center gap-2.5 shadow-xl shadow-rose-600/30 active:scale-95 transition-all"
                   >
                     <Square className="w-5 h-5 fill-current" />
-                    <span>Stop & Transcribe with Gemini</span>
+                    <span>Stop & Transcribe Audio</span>
                   </button>
                 </div>
               )}
@@ -546,11 +546,11 @@ export const VoiceMemoModal: React.FC<VoiceMemoModalProps> = ({
                 </div>
               </div>
 
-              {/* Gemini Transcribing Status Banner */}
+              {/* Transcribing Status Banner */}
               {isTranscribingWithGemini && (
                 <div className="p-3 bg-[#FF5C00]/10 border border-[#FF5C00]/30 rounded-xl flex items-center gap-3 animate-pulse text-xs text-[#FF8246]">
                   <Loader2 className="w-4 h-4 animate-spin shrink-0" />
-                  <span>Gemini AI is transcribing and punctuating the audio recording...</span>
+                  <span>Neural Engine is transcribing and punctuating the audio recording...</span>
                 </div>
               )}
 
@@ -588,7 +588,7 @@ export const VoiceMemoModal: React.FC<VoiceMemoModalProps> = ({
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-xs font-semibold text-[#e4beb1] flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-[#FF5C00]" />
-                    <span>Gemini Transcribed Text (Pristine & Editable)</span>
+                    <span>Neural Transcribed Text (Pristine & Editable)</span>
                   </label>
                   <div className="flex items-center gap-2">
                     <button

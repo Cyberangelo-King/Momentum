@@ -115,7 +115,7 @@ export const SpeakerQuestionGeneratorModal: React.FC<SpeakerQuestionGeneratorMod
     if (onSaveAsNote) {
       onSaveAsNote({
         title: `Q&A Prep: ${speakerName || talkTopic}`,
-        content: `### Prepared Question for ${speakerName || 'Speaker'}\n\n**"${qItem.question}"**\n\n#### Why this question matters\n${qItem.context}\n\n#### Target Angle\n${qItem.targetAngle}\n\n#### Context / Talk Topic\n${talkTopic}\n\n---\n*Captured via Gemini Speaker Q&A Copilot for TEDxAkure 2026*`,
+        content: `### Prepared Question for ${speakerName || 'Speaker'}\n\n**"${qItem.question}"**\n\n#### Why this question matters\n${qItem.context}\n\n#### Target Angle\n${qItem.targetAngle}\n\n#### Context / Talk Topic\n${talkTopic}\n\n---\n*Captured via Speaker Q&A Strategy Copilot for TEDxAkure 2026*`,
         speaker: speakerName || undefined,
         category: 'Talk',
         tags: ['Q&A', 'Speaker Questions', qItem.targetAngle.toLowerCase().replace(/\s+/g, '-')],
@@ -169,7 +169,7 @@ export const SpeakerQuestionGeneratorModal: React.FC<SpeakerQuestionGeneratorMod
                 Speaker Q&A Strategy Generator
               </h2>
               <p className="text-[11px] text-[#e4beb1]/70">
-                Gemini 3.7 AI • Thought-Provoking, High-Impact Questions
+                Strategic Neural Engine • High-Impact, Thought-Provoking Questions
               </p>
             </div>
           </div>
@@ -316,7 +316,7 @@ export const SpeakerQuestionGeneratorModal: React.FC<SpeakerQuestionGeneratorMod
             ) : (
               <>
                 <Sparkles className="w-4 h-4 fill-current" />
-                <span>Generate Solid Questions with Gemini</span>
+                <span>Generate Strategic Questions</span>
               </>
             )}
           </button>
@@ -417,7 +417,7 @@ export const SpeakerQuestionGeneratorModal: React.FC<SpeakerQuestionGeneratorMod
         {/* Footer */}
         <div className="p-4 bg-[#180b06] border-t border-white/10 flex items-center justify-between">
           <span className="text-[11px] text-[#e4beb1]/60">
-            Powered by Google Gemini 3.7
+            Powered by Momentum Neural Engine
           </span>
           <button
             type="button"

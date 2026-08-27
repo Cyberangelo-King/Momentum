@@ -538,7 +538,7 @@ export const ConnectionDetailModal: React.FC<ConnectionDetailModalProps> = ({
                   ) : (
                     <Sparkles className="w-3 h-3" />
                   )}
-                  Gemini Recall
+                  Neural Recall
                 </button>
               </div>
 
