@@ -654,13 +654,7 @@ When attempting to execute a direct `git push origin main` or sync the workspace
 
 ### 3. Step-by-Step GitHub Push Instructions
 
-#### Method A: Instant 1-Click Export (Recommended in AI Studio)
-1. In the Google AI Studio interface, locate the top-right header menu.
-2. Click **Export** $\rightarrow$ **Export to GitHub**.
-3. Select or link your target repository (e.g. `faithakinboyejo/momentum-conference-os`).
-4. AI Studio will automatically handle OAuth credentials and push the entire commit tree to GitHub.
-
-#### Method B: Direct Git CLI Remote Push
+#### Method A: Direct Git CLI Remote Push
 If pushing from the terminal or a local clone using a GitHub Personal Access Token (Classic or Fine-Grained with `repo` scope):
 ```bash
 # 1. Add your remote GitHub repository origin (replace USER and REPO)
