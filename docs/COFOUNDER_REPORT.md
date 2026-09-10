@@ -24,7 +24,7 @@ The existing Event OS remains valuable because high-density events are a strong 
 The strongest evidence wins; no hypothesis is sacred.
 
 ## Immediate priorities
-1. Find the killer Momentum workflow / Momentum Moment.
+1. Prove the killer Momentum workflow / Momentum Moment.
 2. Constrain feature expansion until the highest-value workflow is clear.
 3. Validate H1/H2/H3 with real users and operators.
 4. Establish willingness-to-pay evidence.
@@ -37,8 +37,31 @@ The strongest evidence wins; no hypothesis is sacred.
 Target loop:
 **Meet → Capture → Understand → Follow Up → Compound**
 
+Implementation contract:
+**Connection → Memory → Opportunity → Action → Outcome**
+
 Potential deeper loop:
 **Interaction → Memory → Relationship Graph → Recommendation → Action → Outcome → Learning**
+
+## 2026-09-10 execution update
+
+### FACT
+PR #4 (`feat/mvp-product-cleanup`) is the active MVP hardening branch. It removes 2,237 lines while adding 618 across eight files, reducing the primary experience to Home / People / Capture / Follow-ups / More and explicitly deferring secondary surfaces.
+
+### FACT
+The PR deploy preview is succeeding, but the first CI run on the branch failed during **Setup Node** before dependency installation, typecheck or build. The branch has now been updated to use the repository's Bun lockfile and adds a lightweight credential scan. CI needs to rerun and pass before the PR can be considered verified.
+
+### FACT
+A reversible relationship-intelligence architecture contract has been added at `docs/RELATIONSHIP-INTELLIGENCE-MODEL.md`. It defines Connection, Memory, Opportunity, Action and Outcome as the minimum conceptual model, keeps event context optional, and preserves human authorization for consequential actions.
+
+### FACT
+M1 execution is now tracked in GitHub Issue #5: deterministic relationship loop + outcome instrumentation. The milestone explicitly requires a non-AI happy path and a deterministic baseline so intelligence claims can later be measured rather than asserted.
+
+### BLOCKER
+Issue #1 remains a production security gate. Repository-side secret removal/scanning does **not** prove that the previously exposed Gemini credential was revoked/rotated in Google AI Studio or replaced and protected in Netlify.
+
+### DECISION
+Do not merge or declare production readiness merely because the UI looks cleaner or the deploy preview works. Require CI + core-loop verification + security evidence.
 
 ## Reversibility
 **Green:** UI, onboarding, messaging, experiments, recommendations, dashboards, feature flags.  
@@ -56,17 +79,18 @@ No scan, finding or remediation is considered complete without evidence.
 - Strategy: 🟢
 - Event OS foundation: 🟢
 - Relationship Intelligence: 🟡 validation required
-- Product convergence: 🟡
+- Product convergence: 🟢 improving
 - Customer validation: 🟡 priority
 - Willingness to pay: 🔴 unproven
 - Production security: 🟡 evidence required
+- CI verification: 🟡 rerun pending after fix
 - Commercial readiness: 🔴 not validated
 - Reversibility: 🟢 required
 
 ## Team directives
 **Product Manager:** customer/problem validation, JTBD, MVP hypothesis, evidence tracking.  
 **Product Designer:** killer workflow and Momentum Moment.  
-**Senior Engineer + Lead Developer:** reversible architecture and production blockers.  
+**Senior Engineer + Lead Developer:** implement Issue #5 without expanding the surface area.  
 **Security teams:** red-team, remediation and independent verification.  
 **Endor Labs:** SCA/supply-chain/CI-CD evidence where execution access permits.  
 **Manager:** coordination and consolidated reporting.  
@@ -77,5 +101,7 @@ Use: **FACT / HYPOTHESIS / DECISION / RECOMMENDATION / BLOCKER / OPPORTUNITY**.
 
 ## Latest decision
 **Pursue Relationship Intelligence while preserving Event OS rollback capability.**
+
+**Operating principle:** build less, measure more, learn faster.
 
 *Living document — update as Momentum evolves.*
