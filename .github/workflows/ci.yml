@@ -20,17 +20,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 20
-          cache: npm
+          bun-version: 1.2.2
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Typecheck
         run: npm run lint
 
       - name: Build
         run: npm run build
+
+      - name: Secret scanning
+        run: |
+          # Fail the build if a live credential is ever committed to the repository.
+          # Placeholder token patterns will not match because values must exceed 30 chars.
+          for pattern in "AIza[0-9A-Za-z_-]{35}" "AKIA[0-9A-Z]{16}" "sk-live-[0-9A-Za-z_-]{40}"; do
+            if grep -rEon "$pattern" --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=dist --exclude=bun.lock .; then
+              echo "Credential-like value detected; failing CI to prevent secret leakage." >&2
+              exit 1
+            fi
+          done
+          echo "Secret scan complete: no live credentials found."
