@@ -255,3 +255,170 @@
   backdrop-filter: none !important;
   box-shadow: none !important;
 }
+
+
+/* -------------------------------------------------------------------------- */
+/* Momentum Simple UI                                                         */
+/* A deliberate visual reset: fewer surfaces, less chrome, clearer hierarchy. */
+/* -------------------------------------------------------------------------- */
+
+.ui-simple {
+  --simple-radius: 12px;
+  --simple-radius-sm: 9px;
+  --simple-border: rgba(255,255,255,.075);
+  --simple-surface: color-mix(in srgb, var(--bg-surface-card) 92%, transparent);
+}
+
+.ui-simple * {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.ui-simple [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.ui-simple [class*="rounded-3xl"],
+.ui-simple [class*="rounded-2xl"] {
+  border-radius: var(--simple-radius) !important;
+}
+
+.ui-simple [class*="rounded-xl"] {
+  border-radius: var(--simple-radius-sm) !important;
+}
+
+.ui-simple [class*="rounded-lg"] {
+  border-radius: 7px !important;
+}
+
+.ui-simple [class*="shadow-"] {
+  box-shadow: none !important;
+}
+
+.ui-simple [class*="border-"] {
+  border-color: var(--simple-border) !important;
+}
+
+.ui-simple [class*="bg-white/"],
+.ui-simple [class*="bg-black/"] {
+  background-image: none !important;
+}
+
+.ui-simple button,
+.ui-simple a[role="button"] {
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease, opacity .15s ease !important;
+}
+
+.ui-simple button:active {
+  transform: none !important;
+}
+
+.ui-simple main {
+  max-width: 1100px;
+}
+
+.ui-simple main > * {
+  max-width: 100%;
+}
+
+/* Simplify the desktop rail without removing any controls. */
+@media (min-width: 768px) {
+  .ui-simple aside {
+    width: 220px !important;
+    padding: 16px !important;
+  }
+
+  .ui-simple main {
+    margin-left: 220px !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    padding-top: 24px !important;
+  }
+
+  .ui-simple aside [class*="p-3"][class*="rounded"] {
+    padding: 10px !important;
+  }
+
+  .ui-simple aside [class*="p-4"][class*="rounded"] {
+    padding: 10px !important;
+  }
+
+  .ui-simple aside nav button {
+    min-height: 38px;
+  }
+}
+
+/* Mobile chrome: one quiet bar, one quiet tab bar. */
+@media (max-width: 767px) {
+  .ui-simple header {
+    height: 56px !important;
+    background: var(--bg-canvas) !important;
+  }
+
+  .ui-simple header button {
+    min-width: 34px !important;
+    min-height: 34px !important;
+  }
+
+  .ui-simple nav[class*="fixed"][class*="bottom"] {
+    height: 64px !important;
+    background: var(--bg-canvas) !important;
+    backdrop-filter: none !important;
+  }
+
+  .ui-simple main {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+    padding-top: 68px !important;
+  }
+}
+
+/* Turn common cards into quiet containers. */
+.ui-simple [class*="bg-[var(--bg-surface-card)]"] {
+  background: var(--simple-surface) !important;
+}
+
+.ui-simple [class*="bg-[var(--bg-surface-subtle)]"] {
+  background: color-mix(in srgb, var(--bg-surface-card) 72%, var(--bg-canvas)) !important;
+}
+
+/* Remove decorative glow/hover amplification. */
+.ui-simple [class*="hover:scale"],
+.ui-simple [class*="group-hover:scale"],
+.ui-simple [class*="animate-pulse"],
+.ui-simple [class*="animate-spin"] {
+  transform: none !important;
+}
+
+.ui-simple [class*="theme-glow"] {
+  box-shadow: none !important;
+}
+
+/* Consistent typography hierarchy. */
+.ui-simple h1 { font-size: clamp(1.45rem, 2vw, 1.8rem) !important; }
+.ui-simple h2 { font-size: 1.2rem !important; }
+.ui-simple h3 { font-size: 1rem !important; }
+
+/* Keep dense data readable without oversized controls. */
+.ui-simple input,
+.ui-simple textarea,
+.ui-simple select {
+  border-radius: var(--simple-radius-sm) !important;
+}
+
+/* Modals: simple sheet/card instead of visual spectacle. */
+.ui-simple [class*="fixed"][class*="inset-0"] {
+  background: rgba(0,0,0,.72) !important;
+  backdrop-filter: none !important;
+}
+
+.ui-simple [class*="fixed"][class*="inset-0"] > [class*="rounded-3xl"],
+.ui-simple [class*="fixed"][class*="inset-0"] > [class*="rounded-2xl"] {
+  border-radius: var(--simple-radius) !important;
+}
+
+/* Accessibility remains first-class. */
+.ui-simple :focus-visible {
+  box-shadow: 0 0 0 2px var(--bg-canvas), 0 0 0 3px var(--accent-primary) !important;
+}
