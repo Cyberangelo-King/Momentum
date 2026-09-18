@@ -659,7 +659,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className={`min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col md:flex-row antialiased selection:bg-[var(--accent-primary)] selection:text-black ${isUltraPowerSaver ? 'ultra-power-saver' : ''}`}>
+    <div className={`ui-simple min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col md:flex-row antialiased selection:bg-[var(--accent-primary)] selection:text-black ${isUltraPowerSaver ? 'ultra-power-saver' : ''}`}>
       {/* Navigation Layout */}
       <Navigation
         currentTab={currentTab}
